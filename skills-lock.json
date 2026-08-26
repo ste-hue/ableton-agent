@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ableton-lom": {
+      "source": "mikecfisher/ableton-lom-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "4f0321a1cb4f41818a950ebfb5975dba116ea17faf974f36a2398e57f1693aaf"
+    }
+  }
+}

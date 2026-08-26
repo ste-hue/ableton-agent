@@ -1,0 +1,29 @@
+{
+  "enabledMcpjsonServers": ["ableton_live"],
+  "permissions": {
+    "allow": [
+      "mcp__ableton_live__live_ping",
+      "mcp__ableton_live__live_bridge_status",
+      "mcp__ableton_live__live_get",
+      "mcp__ableton_live__live_set_summary",
+      "mcp__ableton_live__live_children",
+      "mcp__ableton_live__live_clip_notes",
+      "mcp__ableton_live__live_device_parameters",
+      "mcp__ableton_live__live_browser_roots",
+      "mcp__ableton_live__live_browser_capabilities",
+      "mcp__ableton_live__live_browser_search",
+      "mcp__ableton_live__live_transport"
+    ],
+    "deny": [
+      "mcp__ableton_live__live_exec",
+      "mcp__ableton_live__live_eval",
+      "mcp__ableton_live__live_batch",
+      "mcp__ableton_live__live_agent_m4l_device",
+      "mcp__ableton_live__live_agent_m4l_cleanup",
+      "mcp__ableton_live__live_agent_audio_tap",
+      "mcp__ableton_live__live_agent_audio_tap_setup",
+      "mcp__ableton_live__live_visual_capture",
+      "mcp__ableton_live__live_max_console_capture"
+    ]
+  }
+}

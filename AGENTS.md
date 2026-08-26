@@ -1,0 +1,73 @@
+# Ableton Agent — operating rules for any LLM host
+
+These rules apply to every agent session (Codex, Claude Code, or any other MCP host)
+opened in this directory. They encode what was learned and validated in the real-Live
+end-to-end proof (see `docs/architecture.md` and `docs/validation-plan.md`).
+
+## What this project is
+
+Natural language → LLM → MCP → Remote Script → Live Object Model → real Ableton Live.
+
+The MCP server is the pinned upstream `ableton-live-mcp` installed in `.venv/`
+(commit `70f7df9192b78d9bd9405f369c9e046c88f1610e`). The Remote Script
+`Ableton_Live_MCP` is installed as a Control Surface in Live and listens on
+`127.0.0.1:8765`. Host configs: `.codex/config.toml` (Codex), `.mcp.json` +
+`.claude/settings.json` (Claude Code).
+
+## Knowledge sources
+
+- **What exists in the LOM** (objects, properties, methods): the `ableton-lom` skill
+  in `.agents/skills/ableton-lom/` (`SKILL.md` + `references/*.md`). It is written
+  from the Remote Script perspective (`song.tempo`); the MCP tools use path syntax
+  (`live_set`, canonical paths like `live_set tracks 4 clip_slots 0 clip`). Same
+  object model, same names — map mechanically.
+- **How to call it**: the MCP tool schemas advertised by the server. Trust the
+  schemas over memory; wrong argument shapes are rejected locally and never reach Live.
+
+## Hard rules
+
+1. **One driver at a time.** Never issue Live calls while another agent session may
+   be doing the same. If unsure, ask the user which session is active.
+2. **All Live calls are sequential.** Never parallel. One request in flight, read the
+   result, then the next. The Remote Script enforces this with a semaphore; do not
+   test it.
+3. **Preflight before any mutation.** Run upstream validation and require both
+   `runtime_current: true` and `live_mutations_safe: true`. Then read
+   `live_set_summary` and record the `set_signature`.
+4. **Signature-guard every mutation.** Pass the latest `set_signature` as
+   `expected_set_signature`. Re-read the summary after each persistent mutation
+   before the next one.
+5. **Readback after every mutation.** Ableton is the authoritative state. A success
+   response is not proof; read the affected object back (notes via `live_clip_notes`
+   exactly — the signature does not cover note contents).
+6. **Sent-call timeouts have unknown outcomes.** Do not resend the mutation. Call
+   `live_bridge_status` only, wait, re-read the Set, then classify the operation as
+   applied / not applied / unknown.
+7. **Never fire a clip twice** while waiting for launch quantization; poll instead.
+   Stops must be issued as isolated calls and verified with a separate delayed read
+   (an aggregated stop was observed not to stick).
+8. **Work only in unsaved, disposable Sets** (`file_path == ""`) unless the user
+   explicitly authorizes touching a saved Set. Never target existing user tracks or
+   clips without being asked.
+9. **Modals and UI stalls are blockers.** Never click through dialogs, restart Live,
+   reload the Control Surface, close a Set, or discard changes without explicit user
+   authorization.
+10. **No arbitrary code in Live.** `live_exec`, `live_eval`, `live_batch`, audio tap,
+    visual capture, and all Max for Live tools are off-limits (deny-listed in the
+    Claude config, excluded from `enabled_tools` in the Codex config). Do not work
+    around this.
+11. **Cleanup is the user's call.** Closing a Set without saving requires explicit
+    authorization.
+
+## Musical sessions (making music with a non-Ableton user)
+
+- The user speaks in musical terms; you translate to LOM operations. Explain what you
+  are doing in plain language, not in tool jargon.
+- New MIDI tracks are silent until an instrument is loaded. Load stock instruments
+  via browser search/load (`live_browser_search`, `live_browser_load`,
+  `live_load_device`) and verify the device actually appears on the track before
+  adding notes.
+- Prefer creating variations over destroying work: duplicate clips, use undo
+  (`Song.undo`, one call, then observe what actually reverted).
+- "Fammi sentire" → fire the relevant clips/scene, confirm playing state via readback,
+  and stop when asked.
