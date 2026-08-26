@@ -59,6 +59,27 @@ The MCP server is the pinned upstream `ableton-live-mcp` installed in `.venv/`
 11. **Cleanup is the user's call.** Closing a Set without saving requires explicit
     authorization.
 
+## Project storage and naming convention
+
+Working Sets stay unsaved and disposable by default (rule 8). When the user asks to
+save a song — or when you direct them to save it manually — always use this layout:
+
+- **Root for all Ableton projects:** `/Users/stefanodellapietra/Music/Ableton/Projects/`
+- **One folder per song/project**, named `YYYY-MM-DD_project-slug` with the
+  descriptive part in lowercase kebab-case (e.g. `2026-08-26_primo-prova`,
+  `2026-08-27_dark-rnb-01`).
+- **The main `.als` uses the same base name** as its folder. Subsequent versions
+  append `_v01`, `_v02`, … :
+  `Projects/2026-08-26_primo-prova/2026-08-26_primo-prova_v01.als`
+- Keep Ableton-generated `Samples/`, `Backup/`, and `Ableton Project Info/` inside
+  the same project folder.
+- A project is portable only after **Collect All and Save**.
+- **Never save song projects inside the User Library** (that is for devices,
+  presets, and Remote Scripts only).
+- Throwaway experiments go under `Projects/Sketches/` with the same naming.
+
+Default to this structure without asking, unless the user names another location.
+
 ## Musical sessions (making music with a non-Ableton user)
 
 - The user speaks in musical terms; you translate to LOM operations. Explain what you

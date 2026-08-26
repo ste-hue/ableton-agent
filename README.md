@@ -50,6 +50,10 @@ gira in locale: il bridge è solo su `127.0.0.1` e non va mai esposto in rete.
   se non senti niente, chiedigli "carica uno strumento sulla traccia".
 - L'agente non può eseguire codice arbitrario dentro Live (bloccato in config).
 - Non può chiudere Set, cliccare dialoghi o salvare senza il tuo ok esplicito.
+- **Quando salvi un brano**, va in `~/Music/Ableton/Projects/`, una cartella per
+  brano col nome `YYYY-MM-DD_nome-breve` (es. `2026-08-26_primo-prova`) e il file
+  `.als` con lo stesso nome (`_v01`, `_v02`… per le versioni). Gli esperimenti in
+  `Projects/Sketches/`. Mai salvare brani dentro la User Library.
 
 ## Cosa c'è dentro
 
