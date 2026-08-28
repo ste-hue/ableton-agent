@@ -1,7 +1,9 @@
 """Tests for tools/recipe_check.py. Stdlib only; run with:
 python3 -m unittest discover -s tests -v
 """
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -157,6 +159,51 @@ class TestDiff(unittest.TestCase):
         a, b = make_recipe(), make_recipe()
         b["omissions"] = ["third-party plugin internal state not captured"]
         self.assertEqual(recipe_check.diff_recipes(a, b), [])
+
+
+class TestCli(unittest.TestCase):
+    def _write(self, data):
+        f = tempfile.NamedTemporaryFile(
+            "w", suffix=".json", delete=False, encoding="utf-8"
+        )
+        json.dump(data, f)
+        f.close()
+        self.addCleanup(Path(f.name).unlink)
+        return f.name
+
+    def test_validate_ok_returns_0(self):
+        self.assertEqual(recipe_check.main(["validate", self._write(make_recipe())]), 0)
+
+    def test_validate_invalid_returns_1(self):
+        bad = make_recipe()
+        del bad["environment"]
+        self.assertEqual(recipe_check.main(["validate", self._write(bad)]), 1)
+
+    def test_validate_unreadable_returns_2(self):
+        self.assertEqual(recipe_check.main(["validate", "/nonexistent.json"]), 2)
+
+    def test_diff_identical_returns_0(self):
+        a = self._write(make_recipe())
+        b = self._write(make_recipe())
+        self.assertEqual(recipe_check.main(["diff", a, b]), 0)
+
+    def test_diff_different_returns_1(self):
+        changed = make_recipe()
+        changed["song"]["tempo"] = 120
+        a = self._write(make_recipe())
+        b = self._write(changed)
+        self.assertEqual(recipe_check.main(["diff", a, b]), 1)
+
+    def test_diff_invalid_input_returns_2(self):
+        bad = make_recipe()
+        del bad["tracks"]
+        a = self._write(make_recipe())
+        b = self._write(bad)
+        self.assertEqual(recipe_check.main(["diff", a, b]), 2)
+
+    def test_usage_error_returns_2(self):
+        self.assertEqual(recipe_check.main([]), 2)
+        self.assertEqual(recipe_check.main(["frobnicate", "x"]), 2)
 
 
 if __name__ == "__main__":

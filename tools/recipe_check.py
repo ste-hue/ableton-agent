@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import sys
 
 FLOAT_TOL = 1e-6
 TRACK_TYPES = {"midi", "audio", "return"}
@@ -313,3 +314,46 @@ def diff_recipes(a, b):
     out = []
     _cmp("recipe", canonicalize(a), canonicalize(b), out)
     return out
+
+
+USAGE = "usage: recipe_check.py validate FILE | diff FILE_A FILE_B"
+
+
+def main(argv):
+    if len(argv) == 2 and argv[0] == "validate":
+        try:
+            data = load_recipe(argv[1])
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"error: {exc}")
+            return 2
+        errors = validate_recipe(data)
+        for err in errors:
+            print(err)
+        print("valid" if not errors else f"{len(errors)} error(s)")
+        return 0 if not errors else 1
+
+    if len(argv) == 3 and argv[0] == "diff":
+        recipes = []
+        for arg in argv[1:]:
+            try:
+                data = load_recipe(arg)
+            except (OSError, json.JSONDecodeError) as exc:
+                print(f"error: {exc}")
+                return 2
+            errors = validate_recipe(data)
+            if errors:
+                print(f"error: {arg} is not a valid recipe ({len(errors)} error(s))")
+                return 2
+            recipes.append(data)
+        diffs = diff_recipes(*recipes)
+        for line in diffs:
+            print(line)
+        print("identical (canonical)" if not diffs else f"{len(diffs)} difference(s)")
+        return 0 if not diffs else 1
+
+    print(USAGE)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
