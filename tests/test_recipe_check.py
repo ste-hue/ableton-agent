@@ -206,5 +206,16 @@ class TestCli(unittest.TestCase):
         self.assertEqual(recipe_check.main(["frobnicate", "x"]), 2)
 
 
+class TestRepositoryRecipes(unittest.TestCase):
+    def test_all_committed_recipes_are_valid(self):
+        repo_root = Path(__file__).resolve().parent.parent
+        recipe_files = sorted((repo_root / "recipes").rglob("*.json"))
+        self.assertTrue(recipe_files, "recipes/ must contain at least the example")
+        for path in recipe_files:
+            with self.subTest(recipe=path.name):
+                errors = recipe_check.validate_recipe(recipe_check.load_recipe(str(path)))
+                self.assertEqual(errors, [], f"{path}: {errors}")
+
+
 if __name__ == "__main__":
     unittest.main()

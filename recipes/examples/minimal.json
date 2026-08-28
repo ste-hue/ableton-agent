@@ -1,0 +1,38 @@
+{
+  "recipe_version": 1,
+  "name": "example-minimal",
+  "created": "2026-08-28",
+  "environment": {
+    "recipe_schema_version": 1,
+    "live_version": "12.0.5",
+    "ableton_agent_version": "70f7df9",
+    "chordarium_engine_commit": "",
+    "platform": "macOS"
+  },
+  "song": { "tempo": 100 },
+  "tracks": [
+    {
+      "name": "Keys",
+      "type": "midi",
+      "mixer": { "volume": { "value": 0.85, "display": "0.0 dB" } },
+      "devices": [
+        { "load": { "name": "Electric", "root": "instruments" }, "params": {} }
+      ],
+      "clips": [
+        {
+          "slot": 0,
+          "name": "loop",
+          "length": 4.0,
+          "loop": true,
+          "notes": [
+            { "pitch": 60, "start": 0.0, "dur": 1.0, "vel": 100 },
+            { "pitch": 64, "start": 1.0, "dur": 1.0, "vel": 96 },
+            { "pitch": 67, "start": 2.0, "dur": 2.0, "vel": 92 }
+          ]
+        }
+      ]
+    }
+  ],
+  "scenes": [{ "index": 0, "name": "A" }],
+  "omissions": []
+}
