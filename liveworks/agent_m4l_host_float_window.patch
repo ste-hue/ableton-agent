@@ -1,0 +1,117 @@
+--- /private/tmp/claude-501/-Users-stefanodellapietra-dev-Projects-ableton-agent/ff545e7a-5d76-4d6a-996c-34863cd93b9f/scratchpad/agent_m4l_host.js.backup	2026-08-28 19:00:14
++++ .venv/lib/python3.12/site-packages/m4l/agent_m4l_host.js	2026-08-28 19:05:39
+@@ -23,6 +23,7 @@
+ var webObjects = [];
+ var webObjectById = {};
+ var webRouterById = {};
++var floatWebByHolder = {};
+ var webObjectNameById = {};
+ var webUiIdByTag = {};
+ var loadedWebUis = {};
+@@ -1128,8 +1129,106 @@
+         }
+     }
+     scheduleWebUiReadSeries(obj, path, id, readMessage, fallbackPath);
++    if (webui.float_window) {
++        createFloatingWebWindow(webui, path);
++    }
+ }
+ 
++function createFloatingWebWindow(webui, path) {
++    var cfg = (webui.float_window === true) ? {} : (webui.float_window || {});
++    var rect = cfg.rect || [120, 120, 760, 420];
++    var title = String(cfg.title || "LIVEWORKS");
++    var holderName = safeScriptName("__float_" + String(webui.id || "webui"));
++    state.float_window = "creating";
++    state.float_window_error = "";
++    try {
++        var holder = floatWebByHolder[holderName] ? getNamed(holderName) : null;
++        if (!holder) {
++            holder = this.patcher.newdefault(20, 700, "p", holderName);
++            if (!holder) {
++                state.float_window = "failed";
++                state.float_window_error = "holder_create_failed";
++                return;
++            }
++            try { holder.varname = holderName; } catch (errVarname) {}
++            rememberDynamicObject(holder);
++            floatWebByHolder[holderName] = null;
++        }
++        var sub = holder.subpatcher();
++        if (!sub) {
++            state.float_window = "failed";
++            state.float_window_error = "no_subpatcher";
++            return;
++        }
++        var jw = floatWebByHolder[holderName];
++        if (!jw) {
++            jw = sub.newdefault(4, 4, "jweb");
++            floatWebByHolder[holderName] = jw;
++        }
++        if (!jw) {
++            state.float_window = "failed";
++            state.float_window_error = "jweb_create_failed";
++            return;
++        }
++        try { jw.rect = [4, 4, Number(rect[2]) - 8, Number(rect[3]) - 8]; } catch (errRect) {}
++        try { sub.wind.title = title; } catch (errTitle) {}
++        try { sub.wind.location = [Number(rect[0]), Number(rect[1]), Number(rect[0]) + Number(rect[2]), Number(rect[1]) + Number(rect[3])]; } catch (errLoc) {}
++        var opener = null;
++        try { opener = sub.getnamed("__float_opener"); } catch (errGet) {}
++        if (!opener) {
++            try {
++                var inl = sub.newdefault(4, 200, "inlet");
++                var msgFront = sub.newdefault(4, 240, "message");
++                try { msgFront.message("set", "front"); } catch (errSet) {}
++                opener = sub.newdefault(4, 280, "thispatcher");
++                try { opener.varname = "__float_opener"; } catch (errOv) {}
++                try {
++                    sub.connect(inl, 0, msgFront, 0);
++                    sub.connect(msgFront, 0, opener, 0);
++                } catch (errWire) {
++                    state.float_window_error = "sub_wire: " + String(errWire);
++                }
++            } catch (errOp) {
++                state.float_window_error = "thispatcher: " + String(errOp);
++            }
++        }
++        var btn = getNamed("__float_btn");
++        if (!btn) {
++            btn = createNamedDefault("__float_btn", 20, 760, ["button"]);
++            if (btn) {
++                rememberDynamicObject(btn);
++                configureObject(btn, {
++                    id: "__float_btn",
++                    presentation: true,
++                    presentation_rect: [Number(cfg.button_rect ? cfg.button_rect[0] : 394), Number(cfg.button_rect ? cfg.button_rect[1] : 2), 20, 20],
++                    patching_rect: [20, 760, 20, 20],
++                    box_attrs: {}
++                });
++                try { this.patcher.connect(btn, 0, holder, 0); } catch (errBtnWire) {
++                    state.float_window_error = "btn_wire: " + String(errBtnWire);
++                }
++            } else {
++                state.float_window_error = "btn_create_failed";
++            }
++        }
++        if (opener) {
++            try { opener.message("front"); } catch (errFrontMsg) {}
++        }
++        try { sub.wind.visible = 1; } catch (errVis) {}
++        try { state.float_window_visible = sub.wind.visible ? 1 : 0; } catch (errVisRead) { state.float_window_visible = -1; }
++        try { jw.message("readfile", String(path)); } catch (errRead) {
++            state.float_window_error = "readfile: " + String(errRead);
++        }
++        if (!containsObject(webObjects, jw)) {
++            webObjects.push(jw);
++        }
++        state.float_window = "open";
++    } catch (err) {
++        state.float_window = "failed";
++        state.float_window_error = String(err);
++    }
++}
++
+ function reusableWebIdsForSpec(spec) {
+     var preserve = {};
+     var list = webuiList(spec.webuis || spec.webui);
