@@ -112,5 +112,47 @@ class TestValidate(unittest.TestCase):
         self.assertTrue(any("recipe_version" in e for e in errors))
 
 
+class TestDiff(unittest.TestCase):
+    def test_identical_recipes_have_no_diff(self):
+        self.assertEqual(recipe_check.diff_recipes(make_recipe(), make_recipe()), [])
+
+    def test_diff_ignores_display_created_environment(self):
+        a, b = make_recipe(), make_recipe()
+        b["created"] = "2026-09-01"
+        b["environment"]["live_version"] = "12.9.0"
+        b["tracks"][0]["devices"][0]["params"]["Volume"]["display"] = "OTHER"
+        self.assertEqual(recipe_check.diff_recipes(a, b), [])
+
+    def test_diff_detects_param_value_change(self):
+        a, b = make_recipe(), make_recipe()
+        b["tracks"][0]["devices"][0]["params"]["Volume"]["value"] = 0.5
+        diffs = recipe_check.diff_recipes(a, b)
+        self.assertEqual(len(diffs), 1)
+        self.assertIn("params.Volume.value", diffs[0])
+
+    def test_diff_within_float_tolerance_is_equal(self):
+        a, b = make_recipe(), make_recipe()
+        b["song"]["tempo"] = 82 + 1e-9
+        self.assertEqual(recipe_check.diff_recipes(a, b), [])
+
+    def test_diff_note_order_insensitive(self):
+        a, b = make_recipe(), make_recipe()
+        b["tracks"][0]["clips"][0]["notes"].reverse()
+        self.assertEqual(recipe_check.diff_recipes(a, b), [])
+
+    def test_diff_detects_missing_note(self):
+        a, b = make_recipe(), make_recipe()
+        del b["tracks"][0]["clips"][0]["notes"][1]
+        diffs = recipe_check.diff_recipes(a, b)
+        self.assertTrue(any("notes" in d for d in diffs))
+
+    def test_diff_symbol_compared_exactly(self):
+        a, b = make_recipe(), make_recipe()
+        a["tracks"][0]["devices"][0]["params"]["Mode"] = {"value": 2, "symbol": "MS"}
+        b["tracks"][0]["devices"][0]["params"]["Mode"] = {"value": 2, "symbol": "LR"}
+        diffs = recipe_check.diff_recipes(a, b)
+        self.assertTrue(any("Mode.symbol" in d for d in diffs))
+
+
 if __name__ == "__main__":
     unittest.main()

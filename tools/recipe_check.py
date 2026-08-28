@@ -7,6 +7,7 @@ Stdlib only, Python 3.10+. No Live/MCP access.
 from __future__ import annotations
 
 import json
+import math
 import re
 
 FLOAT_TOL = 1e-6
@@ -211,3 +212,104 @@ def validate_recipe(data):
         if not isinstance(oms, list) or not all(isinstance(o, str) for o in oms):
             errors.append("omissions: must be list of strings")
     return errors
+
+
+def _canon_param(obj):
+    if _is_num(obj):
+        return {"value": float(obj)}
+    out = {"value": float(obj["value"])}
+    if "symbol" in obj:
+        out["symbol"] = obj["symbol"]
+    return out
+
+
+def _canon_notes(notes):
+    canon = [
+        {
+            "pitch": n["pitch"],
+            "start": float(n["start"]),
+            "dur": float(n["dur"]),
+            "vel": n["vel"],
+            "mute": bool(n.get("mute", False)),
+        }
+        for n in notes
+    ]
+    return sorted(canon, key=lambda n: (n["pitch"], n["start"], n["dur"], n["vel"]))
+
+
+def canonicalize(data):
+    """Strip debug/context fields, normalize floats, sort notes."""
+    out = {"recipe_version": data.get("recipe_version"), "name": data.get("name")}
+    if "song" in data:
+        out["song"] = {
+            k: (float(v) if _is_num(v) else v) for k, v in data["song"].items()
+        }
+    tracks_out = []
+    for track in data.get("tracks", []):
+        t = {"name": track.get("name"), "type": track.get("type")}
+        if "color_index" in track:
+            t["color_index"] = track["color_index"]
+        if "mixer" in track:
+            m = {}
+            for key in ("volume", "pan"):
+                if key in track["mixer"]:
+                    m[key] = _canon_param(track["mixer"][key])
+            if "sends" in track["mixer"]:
+                m["sends"] = [_canon_param(s) for s in track["mixer"]["sends"]]
+            t["mixer"] = m
+        if "devices" in track:
+            t["devices"] = [
+                {
+                    "load": dict(d.get("load", {})),
+                    **({"class_name": d["class_name"]} if "class_name" in d else {}),
+                    "params": {
+                        name: _canon_param(val)
+                        for name, val in d.get("params", {}).items()
+                    },
+                }
+                for d in track["devices"]
+            ]
+        if "clips" in track:
+            t["clips"] = [
+                {
+                    "slot": c.get("slot"),
+                    **({"name": c["name"]} if "name" in c else {}),
+                    "length": float(c.get("length", 0)),
+                    "loop": bool(c.get("loop", False)),
+                    "notes": _canon_notes(c.get("notes", [])),
+                    **({"generator": c["generator"]} if "generator" in c else {}),
+                }
+                for c in track["clips"]
+            ]
+        tracks_out.append(t)
+    out["tracks"] = tracks_out
+    if "scenes" in data:
+        out["scenes"] = data["scenes"]
+    return out
+
+
+def _cmp(path, a, b, out):
+    if _is_num(a) and _is_num(b):
+        if not math.isclose(a, b, abs_tol=FLOAT_TOL):
+            out.append(f"{path}: {a} != {b}")
+    elif isinstance(a, dict) and isinstance(b, dict):
+        for key in sorted(set(a) | set(b)):
+            if key not in a:
+                out.append(f"{path}.{key}: only in B")
+            elif key not in b:
+                out.append(f"{path}.{key}: only in A")
+            else:
+                _cmp(f"{path}.{key}", a[key], b[key], out)
+    elif isinstance(a, list) and isinstance(b, list):
+        if len(a) != len(b):
+            out.append(f"{path}: length {len(a)} != {len(b)}")
+        for i, (x, y) in enumerate(zip(a, b)):
+            _cmp(f"{path}[{i}]", x, y, out)
+    elif a != b:
+        out.append(f"{path}: {a!r} != {b!r}")
+
+
+def diff_recipes(a, b):
+    out = []
+    _cmp("recipe", canonicalize(a), canonicalize(b), out)
+    return out
