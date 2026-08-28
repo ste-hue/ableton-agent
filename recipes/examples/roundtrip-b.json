@@ -1,0 +1,1161 @@
+{
+  "recipe_version": 1,
+  "name": "roundtrip-a",
+  "created": "2026-08-28",
+  "environment": {
+    "recipe_schema_version": 1,
+    "live_version": "12",
+    "ableton_agent_version": "70f7df9",
+    "chordarium_engine_commit": "",
+    "platform": "macOS"
+  },
+  "song": {
+    "tempo": 100,
+    "root_note": 0,
+    "scale_name": "Major"
+  },
+  "tracks": [
+    {
+      "name": "Keys",
+      "type": "midi",
+      "color_index": 12,
+      "mixer": {
+        "volume": {
+          "value": 0.85,
+          "display": "0"
+        },
+        "pan": {
+          "value": 0,
+          "display": "0"
+        },
+        "sends": [
+          {
+            "value": 0,
+            "display": "-70"
+          },
+          {
+            "value": 0,
+            "display": "-70"
+          }
+        ]
+      },
+      "devices": [
+        {
+          "load": {
+            "name": "Electric",
+            "root": "instruments"
+          },
+          "class_name": "LoungeLizard",
+          "params": {
+            "Device On": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Voices": {
+              "value": 30,
+              "display": "32",
+              "symbol": "32"
+            },
+            "PB Range": {
+              "value": 1,
+              "display": "12.00"
+            },
+            "Note PB Range": {
+              "value": 0,
+              "display": "0 st"
+            },
+            "Volume": {
+              "value": 0.704789,
+              "display": "0.0 dB"
+            },
+            "Semitone": {
+              "value": 12,
+              "display": "0 st"
+            },
+            "Detune": {
+              "value": 0.5,
+              "display": "0.00"
+            },
+            "KB Stretch": {
+              "value": 0.5,
+              "display": "0 %"
+            },
+            "M Stiffness": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "M Stiff < Key": {
+              "value": 0.5,
+              "display": "50"
+            },
+            "M Stiff < Vel": {
+              "value": 0.5,
+              "display": "50"
+            },
+            "M Force": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "M Force < Key": {
+              "value": 0.5,
+              "display": "50"
+            },
+            "M Force < Vel": {
+              "value": 0.5,
+              "display": "50"
+            },
+            "Noise Pitch": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "Noise Decay": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "Noise Amount": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "Noise < Key": {
+              "value": 0.5,
+              "display": "50"
+            },
+            "F Release": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "F Tine Decay": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "F Tine Vol": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "F Tine < Key": {
+              "value": 0.5,
+              "display": "50"
+            },
+            "F Tine Color": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "F Tone Decay": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "F Tone Vol": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "P Symmetry": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "P Distance": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "Pickup Model": {
+              "value": 0,
+              "display": "R",
+              "symbol": "R"
+            },
+            "P Amp In": {
+              "value": 0.42,
+              "display": "42 %"
+            },
+            "P Amp Out": {
+              "value": 0.42,
+              "display": "42 %"
+            },
+            "P Amp < Key": {
+              "value": 0.5,
+              "display": "50"
+            },
+            "Damp Tone": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "Damp Amount": {
+              "value": 0.5,
+              "display": "50 %"
+            },
+            "Damp Balance": {
+              "value": 0.5,
+              "display": "0 %"
+            }
+          }
+        }
+      ],
+      "clips": [
+        {
+          "slot": 0,
+          "name": "keys-loop",
+          "length": 4,
+          "loop": true,
+          "notes": [
+            {
+              "pitch": 60,
+              "start": 0,
+              "dur": 1,
+              "vel": 100
+            },
+            {
+              "pitch": 64,
+              "start": 1,
+              "dur": 1,
+              "vel": 96
+            },
+            {
+              "pitch": 67,
+              "start": 2,
+              "dur": 2,
+              "vel": 92
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bass",
+      "type": "midi",
+      "color_index": 26,
+      "mixer": {
+        "volume": {
+          "value": 0.85,
+          "display": "0"
+        },
+        "pan": {
+          "value": 0,
+          "display": "0"
+        },
+        "sends": [
+          {
+            "value": 0,
+            "display": "-70"
+          },
+          {
+            "value": 0,
+            "display": "-70"
+          }
+        ]
+      },
+      "devices": [
+        {
+          "load": {
+            "name": "Operator",
+            "root": "instruments"
+          },
+          "class_name": "Operator",
+          "params": {
+            "Device On": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Algorithm": {
+              "value": 0,
+              "display": "Alg. 1",
+              "symbol": "Alg. 1"
+            },
+            "Transpose": {
+              "value": 0,
+              "display": "0 st"
+            },
+            "PB Range": {
+              "value": 5,
+              "display": "+5 st"
+            },
+            "Volume": {
+              "value": 0.4,
+              "display": "-18 dB"
+            },
+            "Panorama": {
+              "value": 0,
+              "display": "C"
+            },
+            "Pan < Key": {
+              "value": 0,
+              "display": "0"
+            },
+            "Pan < Rnd": {
+              "value": 0,
+              "display": "0"
+            },
+            "Tone": {
+              "value": 0.7,
+              "display": "70 %"
+            },
+            "Spread": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Glide On": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "Glide Time": {
+              "value": 0.539794,
+              "display": "50.0 ms"
+            },
+            "Osc-A On": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "A Coarse": {
+              "value": 1,
+              "display": "1"
+            },
+            "A Fine": {
+              "value": 0,
+              "display": "0"
+            },
+            "A Freq<Vel": {
+              "value": 0,
+              "display": "0"
+            },
+            "A Quantize": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "A Fix On ": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "A Fix Freq": {
+              "value": 0.434588,
+              "display": "100 Hz"
+            },
+            "A Fix Freq Mul": {
+              "value": 4,
+              "display": "1"
+            },
+            "Osc-A Level": {
+              "value": 1,
+              "display": "0.0 dB"
+            },
+            "Osc-A Retrig": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Osc-A Phase": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-A Lev < Vel": {
+              "value": 50,
+              "display": "50 %"
+            },
+            "Osc-A Lev < Key": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-A Wave": {
+              "value": 0,
+              "display": "Sine",
+              "symbol": "Sine"
+            },
+            "Osc-A Feedb": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-A < Pe": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Osc-A < LFO": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Ae Attack": {
+              "value": 0,
+              "display": "0.00 ms"
+            },
+            "Ae Init": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "Ae Decay": {
+              "value": 0.627858,
+              "display": "1.00 s"
+            },
+            "Ae Peak": {
+              "value": 1,
+              "display": "0.0 dB"
+            },
+            "Ae Sustain": {
+              "value": 1,
+              "display": "0.0 dB"
+            },
+            "Ae Release": {
+              "value": 0.544575,
+              "display": "400 ms"
+            },
+            "Ae Mode": {
+              "value": 0,
+              "display": "None",
+              "symbol": "None"
+            },
+            "Ae Loop": {
+              "value": 0.539794,
+              "display": "100 ms"
+            },
+            "Ae Retrig": {
+              "value": 3,
+              "display": "1/16"
+            },
+            "Ae R < Vel": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-B On": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "B Coarse": {
+              "value": 1,
+              "display": "1"
+            },
+            "B Fine": {
+              "value": 0,
+              "display": "0"
+            },
+            "B Freq<Vel": {
+              "value": 0,
+              "display": "0"
+            },
+            "B Quantize": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "B Fix On ": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "B Fix Freq": {
+              "value": 0.434588,
+              "display": "100 Hz"
+            },
+            "B Fix Freq Mul": {
+              "value": 4,
+              "display": "1"
+            },
+            "Osc-B Level": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "Osc-B Retrig": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Osc-B Phase": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-B Lev < Vel": {
+              "value": 50,
+              "display": "50 %"
+            },
+            "Osc-B Lev < Key": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-B Wave": {
+              "value": 0,
+              "display": "Sine",
+              "symbol": "Sine"
+            },
+            "Osc-B Feedb": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-B < Pe": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Osc-B < LFO": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Be Attack": {
+              "value": 0,
+              "display": "0.00 ms"
+            },
+            "Be Init": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "Be Decay": {
+              "value": 0.544575,
+              "display": "400 ms"
+            },
+            "Be Peak": {
+              "value": 1,
+              "display": "0.0 dB"
+            },
+            "Be Sustain": {
+              "value": 0.4,
+              "display": "-24 dB"
+            },
+            "Be Release": {
+              "value": 0.544575,
+              "display": "400 ms"
+            },
+            "Be Mode": {
+              "value": 0,
+              "display": "None",
+              "symbol": "None"
+            },
+            "Be Loop": {
+              "value": 0.539794,
+              "display": "100 ms"
+            },
+            "Be Retrig": {
+              "value": 3,
+              "display": "1/16"
+            },
+            "Be R < Vel": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-C On": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "C Coarse": {
+              "value": 1,
+              "display": "1"
+            },
+            "C Fine": {
+              "value": 0,
+              "display": "0"
+            },
+            "C Freq<Vel": {
+              "value": 0,
+              "display": "0"
+            },
+            "C Quantize": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "C Fix On ": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "C Fix Freq": {
+              "value": 0.434588,
+              "display": "100 Hz"
+            },
+            "C Fix Freq Mul": {
+              "value": 4,
+              "display": "1"
+            },
+            "Osc-C Level": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "Osc-C Retrig": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Osc-C Phase": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-C Lev < Vel": {
+              "value": 50,
+              "display": "50 %"
+            },
+            "Osc-C Lev < Key": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-C Wave": {
+              "value": 0,
+              "display": "Sine",
+              "symbol": "Sine"
+            },
+            "Osc-C Feedb": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-C < Pe": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Osc-C < LFO": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Ce Attack": {
+              "value": 0,
+              "display": "0.00 ms"
+            },
+            "Ce Init": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "Ce Decay": {
+              "value": 0.544575,
+              "display": "400 ms"
+            },
+            "Ce Peak": {
+              "value": 1,
+              "display": "0.0 dB"
+            },
+            "Ce Sustain": {
+              "value": 0.4,
+              "display": "-24 dB"
+            },
+            "Ce Release": {
+              "value": 0.544575,
+              "display": "400 ms"
+            },
+            "Ce Mode": {
+              "value": 0,
+              "display": "None",
+              "symbol": "None"
+            },
+            "Ce Loop": {
+              "value": 0.539794,
+              "display": "100 ms"
+            },
+            "Ce Retrig": {
+              "value": 3,
+              "display": "1/16"
+            },
+            "Ce R < Vel": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-D On": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "D Coarse": {
+              "value": 1,
+              "display": "1"
+            },
+            "D Fine": {
+              "value": 0,
+              "display": "0"
+            },
+            "D Freq<Vel": {
+              "value": 0,
+              "display": "0"
+            },
+            "D Quantize": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "D Fix On ": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "D Fix Freq": {
+              "value": 0.434588,
+              "display": "100 Hz"
+            },
+            "D Fix Freq Mul": {
+              "value": 4,
+              "display": "1"
+            },
+            "Osc-D Level": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "Osc-D Retrig": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Osc-D Phase": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-D Lev < Vel": {
+              "value": 50,
+              "display": "50 %"
+            },
+            "Osc-D Lev < Key": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-D Wave": {
+              "value": 0,
+              "display": "Sine",
+              "symbol": "Sine"
+            },
+            "Osc-D Feedb": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Osc-D < Pe": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Osc-D < LFO": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "De Attack": {
+              "value": 0,
+              "display": "0.00 ms"
+            },
+            "De Init": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "De Decay": {
+              "value": 0.544575,
+              "display": "400 ms"
+            },
+            "De Peak": {
+              "value": 1,
+              "display": "0.0 dB"
+            },
+            "De Sustain": {
+              "value": 0.4,
+              "display": "-24 dB"
+            },
+            "De Release": {
+              "value": 0.544575,
+              "display": "400 ms"
+            },
+            "De Mode": {
+              "value": 0,
+              "display": "None",
+              "symbol": "None"
+            },
+            "De Loop": {
+              "value": 0.539794,
+              "display": "100 ms"
+            },
+            "De Retrig": {
+              "value": 3,
+              "display": "1/16"
+            },
+            "De R < Vel": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Time": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Time < Key": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Pe On": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "Pe Attack": {
+              "value": 0,
+              "display": "0.00 ms"
+            },
+            "Pe Init": {
+              "value": 12,
+              "display": "+12 st"
+            },
+            "Pe A Slope": {
+              "value": 0,
+              "display": "0.0 %"
+            },
+            "Pe Decay": {
+              "value": 0.544575,
+              "display": "400 ms"
+            },
+            "Pe Peak": {
+              "value": 12,
+              "display": "+12 st"
+            },
+            "Pe D Slope": {
+              "value": 1,
+              "display": "100 %"
+            },
+            "Pe Sustain": {
+              "value": 0,
+              "display": "0 st"
+            },
+            "Pe Release": {
+              "value": 0.355571,
+              "display": "50.0 ms"
+            },
+            "Pe End": {
+              "value": 0,
+              "display": "0 st"
+            },
+            "Pe R Slope": {
+              "value": 1,
+              "display": "100 %"
+            },
+            "Pe Mode": {
+              "value": 0,
+              "display": "None",
+              "symbol": "None"
+            },
+            "Pe Loop": {
+              "value": 0.539794,
+              "display": "100 ms"
+            },
+            "Pe Retrig": {
+              "value": 3,
+              "display": "1/16"
+            },
+            "Pe R < Vel": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Pe Amount": {
+              "value": 1,
+              "display": "100 %"
+            },
+            "Pe Amt A": {
+              "value": 100,
+              "display": "100 %"
+            },
+            "Pe Dst B": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "Pe Amt B": {
+              "value": 100,
+              "display": "100 %"
+            },
+            "LFO On": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "LFO Type": {
+              "value": 0,
+              "display": "Sine",
+              "symbol": "Sine"
+            },
+            "LFO Range": {
+              "value": 0,
+              "display": "Low",
+              "symbol": "Low"
+            },
+            "LFO Rate": {
+              "value": 100,
+              "display": "100.00"
+            },
+            "LFO Sync": {
+              "value": 3,
+              "display": "1/16"
+            },
+            "LFO R < K": {
+              "value": 0,
+              "display": "0.0 %"
+            },
+            "LFO Retrigger": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "LFO Amt": {
+              "value": 0.1,
+              "display": "10 %"
+            },
+            "LFO Amt A": {
+              "value": 100,
+              "display": "100 %"
+            },
+            "LFO Dst B": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "LFO Amt B": {
+              "value": 100,
+              "display": "100 %"
+            },
+            "LFO < Vel": {
+              "value": 0,
+              "display": "0.0 %"
+            },
+            "LFO < Pe": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Le Attack": {
+              "value": 0,
+              "display": "0.00 ms"
+            },
+            "Le Init": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "Le Decay": {
+              "value": 0.581428,
+              "display": "600 ms"
+            },
+            "Le Peak": {
+              "value": 1,
+              "display": "0.0 dB"
+            },
+            "Le Sustain": {
+              "value": 1,
+              "display": "0.0 dB"
+            },
+            "Le Release": {
+              "value": 0.355571,
+              "display": "50.0 ms"
+            },
+            "Le End": {
+              "value": 0,
+              "display": "-inf dB"
+            },
+            "Le Mode": {
+              "value": 0,
+              "display": "None",
+              "symbol": "None"
+            },
+            "Le Loop": {
+              "value": 0.539794,
+              "display": "100 ms"
+            },
+            "Le Retrig": {
+              "value": 3,
+              "display": "1/16"
+            },
+            "Le R < Vel": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Filter On": {
+              "value": 1,
+              "display": "On",
+              "symbol": "On"
+            },
+            "Filter Type": {
+              "value": 0,
+              "display": "Lowpass",
+              "symbol": "Lowpass"
+            },
+            "Filter Circuit - LP/HP": {
+              "value": 0,
+              "display": "Clean",
+              "symbol": "Clean"
+            },
+            "Filter Circuit - BP/NO/Morph": {
+              "value": 0,
+              "display": "Clean",
+              "symbol": "Clean"
+            },
+            "Filter Slope": {
+              "value": 1,
+              "display": "24 dB",
+              "symbol": "24 dB"
+            },
+            "Filter Freq": {
+              "value": 0.932621,
+              "display": "12.0 kHz"
+            },
+            "Filter Res": {
+              "value": 0.277778,
+              "display": "28 %"
+            },
+            "Filter Morph": {
+              "value": 0,
+              "display": "0 lp/bp"
+            },
+            "Filter Drive": {
+              "value": 0,
+              "display": "0.00 dB"
+            },
+            "Filt < Vel": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Filt < Key": {
+              "value": 100,
+              "display": "100 %"
+            },
+            "Fe Amount": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Filt < LFO": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "Fe Attack": {
+              "value": 0,
+              "display": "0.00 ms"
+            },
+            "Fe Init": {
+              "value": 0,
+              "display": "0.0 %"
+            },
+            "Fe A Slope": {
+              "value": 0,
+              "display": "0.0 %"
+            },
+            "Fe Decay": {
+              "value": 0.581428,
+              "display": "600 ms"
+            },
+            "Fe Peak": {
+              "value": 1,
+              "display": "100 %"
+            },
+            "Fe D Slope": {
+              "value": 1,
+              "display": "100 %"
+            },
+            "Fe Sustain": {
+              "value": 0,
+              "display": "0.0 %"
+            },
+            "Fe Release": {
+              "value": 0.355571,
+              "display": "50.0 ms"
+            },
+            "Fe End": {
+              "value": 0,
+              "display": "0.0 %"
+            },
+            "Fe R Slope": {
+              "value": 1,
+              "display": "100 %"
+            },
+            "Fe Mode": {
+              "value": 0,
+              "display": "None",
+              "symbol": "None"
+            },
+            "Fe Loop": {
+              "value": 0.539794,
+              "display": "100 ms"
+            },
+            "Fe Retrig": {
+              "value": 3,
+              "display": "1/16"
+            },
+            "Fe R < Vel": {
+              "value": 0,
+              "display": "0 %"
+            },
+            "Shaper Type": {
+              "value": 0,
+              "display": "Off",
+              "symbol": "Off"
+            },
+            "Shaper Mix": {
+              "value": 100,
+              "display": "100 %"
+            },
+            "Shaper Drive": {
+              "value": 0,
+              "display": "0.00 dB"
+            }
+          }
+        }
+      ],
+      "clips": [
+        {
+          "slot": 0,
+          "name": "bass-loop",
+          "length": 4,
+          "loop": true,
+          "notes": [
+            {
+              "pitch": 36,
+              "start": 0,
+              "dur": 2,
+              "vel": 110
+            },
+            {
+              "pitch": 43,
+              "start": 2,
+              "dur": 2,
+              "vel": 104
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "index": 0,
+      "name": "",
+      "tempo": null
+    },
+    {
+      "index": 1,
+      "name": "",
+      "tempo": null
+    },
+    {
+      "index": 2,
+      "name": "",
+      "tempo": null
+    },
+    {
+      "index": 3,
+      "name": "",
+      "tempo": null
+    },
+    {
+      "index": 4,
+      "name": "",
+      "tempo": null
+    },
+    {
+      "index": 5,
+      "name": "",
+      "tempo": null
+    },
+    {
+      "index": 6,
+      "name": "",
+      "tempo": null
+    },
+    {
+      "index": 7,
+      "name": "",
+      "tempo": null
+    }
+  ],
+  "omissions": [
+    "return tracks (A-Reverb, B-Delay) and master track not captured (recipe v1)",
+    "track arm and monitoring state not captured",
+    "per-note probability, velocity_deviation and release_velocity not captured (observed at Live defaults)",
+    "song scale_mode flag not captured"
+  ]
+}
