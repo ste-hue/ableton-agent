@@ -22,6 +22,32 @@ ENV_KEYS = {
     "platform": str,
 }
 
+TOP_LEVEL_KEYS = {
+    "recipe_version", "name", "created", "environment", "song", "tracks",
+    "scenes", "omissions",
+}
+SONG_KEYS = {"tempo", "root_note", "scale_name"}
+TRACK_KEYS = {"name", "type", "color_index", "mixer", "devices", "clips"}
+MIXER_KEYS = {"volume", "pan", "sends"}
+PARAM_OBJ_KEYS = {"value", "display", "symbol"}
+DEVICE_KEYS = {"load", "class_name", "params"}
+LOAD_KEYS = {"name", "root"}
+CLIP_KEYS = {"slot", "name", "length", "loop", "notes", "generator"}
+NOTE_KEYS = {"pitch", "start", "dur", "vel", "mute"}
+GENERATOR_KEYS = {"engine", "engine_commit", "seed", "settings"}
+SCENE_KEYS = {"index", "name", "tempo"}
+
+
+def _check_unknown(errors, path, obj, allowed):
+    """Flag keys in `obj` not in `allowed`. `path` is the dotted path to `obj`
+    itself (empty string for the top-level object)."""
+    if not isinstance(obj, dict):
+        return
+    prefix = f"{path}." if path else ""
+    for key in obj:
+        if key not in allowed:
+            errors.append(f"{prefix}{key}: unknown key")
+
 
 def load_recipe(path):
     with open(path, encoding="utf-8") as fh:
@@ -49,6 +75,7 @@ def _check_param(errors, path, obj):
         errors.append(f"{path}.display: must be string")
     if "symbol" in obj and not (isinstance(obj["symbol"], str) or _is_int(obj["symbol"])):
         errors.append(f"{path}.symbol: must be string or int")
+    _check_unknown(errors, path, obj, PARAM_OBJ_KEYS)
 
 
 def _check_note(errors, path, note):
@@ -65,6 +92,7 @@ def _check_note(errors, path, note):
         errors.append(f"{path}.vel: required int 1..127")
     if "mute" in note and not isinstance(note["mute"], bool):
         errors.append(f"{path}.mute: must be bool")
+    _check_unknown(errors, path, note, NOTE_KEYS)
 
 
 def _check_generator(errors, path, gen):
@@ -76,6 +104,7 @@ def _check_generator(errors, path, gen):
             errors.append(f"{path}.{key}: required string")
     if not isinstance(gen.get("settings"), dict):
         errors.append(f"{path}.settings: required object")
+    _check_unknown(errors, path, gen, GENERATOR_KEYS)
 
 
 def _check_clip(errors, path, clip):
@@ -98,6 +127,7 @@ def _check_clip(errors, path, clip):
             _check_note(errors, f"{path}.notes[{i}]", note)
     if "generator" in clip:
         _check_generator(errors, f"{path}.generator", clip["generator"])
+    _check_unknown(errors, path, clip, CLIP_KEYS)
 
 
 def _check_device(errors, path, dev):
@@ -109,6 +139,7 @@ def _check_device(errors, path, dev):
         errors.append(f"{path}.load.name: required non-empty string")
     elif "root" in load and not isinstance(load["root"], str):
         errors.append(f"{path}.load.root: must be string")
+    _check_unknown(errors, f"{path}.load", load, LOAD_KEYS)
     if "class_name" in dev and not isinstance(dev["class_name"], str):
         errors.append(f"{path}.class_name: must be string")
     params = dev.get("params", {})
@@ -117,6 +148,7 @@ def _check_device(errors, path, dev):
     else:
         for pname, pval in params.items():
             _check_param(errors, f"{path}.params.{pname}", pval)
+    _check_unknown(errors, path, dev, DEVICE_KEYS)
 
 
 def _check_mixer(errors, path, mixer):
@@ -132,6 +164,7 @@ def _check_mixer(errors, path, mixer):
         else:
             for i, send in enumerate(mixer["sends"]):
                 _check_param(errors, f"{path}.sends[{i}]", send)
+    _check_unknown(errors, path, mixer, MIXER_KEYS)
 
 
 def _check_track(errors, path, track):
@@ -153,6 +186,7 @@ def _check_track(errors, path, track):
             else:
                 for i, item in enumerate(track[key]):
                     checker(errors, f"{path}.{key}[{i}]", item)
+    _check_unknown(errors, path, track, TRACK_KEYS)
 
 
 def _check_scene(errors, path, scene):
@@ -165,6 +199,7 @@ def _check_scene(errors, path, scene):
         errors.append(f"{path}.name: must be string")
     if "tempo" in scene and scene["tempo"] is not None and not _is_num(scene["tempo"]):
         errors.append(f"{path}.tempo: must be number or null")
+    _check_unknown(errors, path, scene, SCENE_KEYS)
 
 
 def validate_recipe(data):
@@ -185,8 +220,9 @@ def validate_recipe(data):
             val = env.get(key)
             if not isinstance(val, typ) or isinstance(val, bool):
                 errors.append(f"environment.{key}: required {typ.__name__}")
-    song = data.get("song")
-    if song is not None:
+        _check_unknown(errors, "environment", env, set(ENV_KEYS))
+    if "song" in data:
+        song = data["song"]
         if not isinstance(song, dict):
             errors.append("song: must be object")
         else:
@@ -196,6 +232,7 @@ def validate_recipe(data):
                 errors.append("song.root_note: must be int 0..11")
             if "scale_name" in song and not isinstance(song["scale_name"], str):
                 errors.append("song.scale_name: must be string")
+            _check_unknown(errors, "song", song, SONG_KEYS)
     tracks = data.get("tracks")
     if not isinstance(tracks, list):
         errors.append("tracks: required list")
@@ -212,6 +249,7 @@ def validate_recipe(data):
         oms = data["omissions"]
         if not isinstance(oms, list) or not all(isinstance(o, str) for o in oms):
             errors.append("omissions: must be list of strings")
+    _check_unknown(errors, "", data, TOP_LEVEL_KEYS)
     return errors
 
 
@@ -235,13 +273,13 @@ def _canon_notes(notes):
         }
         for n in notes
     ]
-    return sorted(canon, key=lambda n: (n["pitch"], n["start"], n["dur"], n["vel"]))
+    return sorted(canon, key=lambda n: (n["pitch"], n["start"], n["dur"], n["vel"], n["mute"]))
 
 
 def canonicalize(data):
     """Strip debug/context fields (created, environment, display, omissions), normalize floats, sort notes."""
     out = {"recipe_version": data.get("recipe_version"), "name": data.get("name")}
-    if "song" in data:
+    if isinstance(data.get("song"), dict):
         out["song"] = {
             k: (float(v) if _is_num(v) else v) for k, v in data["song"].items()
         }

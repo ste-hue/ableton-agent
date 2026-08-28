@@ -50,7 +50,8 @@ Build strictly top-down, one Live call at a time:
 3. per track: create → rename/color → devices (browser load by
    `load.name`/`load.root`, or native `insert_device` when applicable; verify
    the device appears before continuing) → parameters (`value` only) →
-   mixer → clips (create with `create_clip_length`, write notes) → scenes.
+   mixer → clips (create via `live_clip_add_notes` with `create_clip_length`,
+   write notes) → scenes.
 
 The loop is transaction-like — for each unit:
 
@@ -59,7 +60,7 @@ The loop is transaction-like — for each unit:
 After each verified unit, append a checkpoint line to
 `~/.ableton-live-mcp/liveworks_trace.jsonl`:
 
-    {"ts": "<iso8601>", "recipe": "<name>", "step": "tracks[0].devices[0]", "checkpoint": true}
+    {"ts": "<iso8601>", "recipe": "<name>", "step": "recipe.tracks[0].devices[0]", "checkpoint": true}
 
 `step` uses the same canonical paths as `recipe_check.py` diff output, so the
 trace always answers "how far did this recipe get?".
@@ -75,3 +76,6 @@ and leave the partial build in the Set for inspection.
 3. Replay `A.json`; snapshot again → `B.json`.
 4. `python3 tools/recipe_check.py diff A.json B.json` → exit 0
    (zero canonical differences outside documented omissions).
+5. Then compare the two `omissions` arrays by hand; any entry present in B but
+   not in A is a replay loss (omissions are excluded from the canonical diff
+   by design).

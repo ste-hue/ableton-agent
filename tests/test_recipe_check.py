@@ -113,6 +113,24 @@ class TestValidate(unittest.TestCase):
         errors = recipe_check.validate_recipe(r)
         self.assertTrue(any("recipe_version" in e for e in errors))
 
+    def test_song_null_fails(self):
+        r = make_recipe()
+        r["song"] = None
+        errors = recipe_check.validate_recipe(r)
+        self.assertTrue(any(e.startswith("song:") for e in errors))
+
+    def test_unknown_top_level_key_fails(self):
+        r = make_recipe()
+        r["warp"] = True
+        errors = recipe_check.validate_recipe(r)
+        self.assertTrue(any("warp: unknown key" in e for e in errors))
+
+    def test_unknown_track_key_fails(self):
+        r = make_recipe()
+        r["tracks"][0]["arm"] = True
+        errors = recipe_check.validate_recipe(r)
+        self.assertTrue(any("tracks[0].arm: unknown key" in e for e in errors))
+
 
 class TestDiff(unittest.TestCase):
     def test_identical_recipes_have_no_diff(self):
@@ -158,6 +176,16 @@ class TestDiff(unittest.TestCase):
     def test_diff_ignores_omissions(self):
         a, b = make_recipe(), make_recipe()
         b["omissions"] = ["third-party plugin internal state not captured"]
+        self.assertEqual(recipe_check.diff_recipes(a, b), [])
+
+    def test_diff_note_order_insensitive_with_mute_ties(self):
+        a, b = make_recipe(), make_recipe()
+        notes_a = [
+            {"pitch": 60, "start": 0.0, "dur": 1.0, "vel": 100},
+            {"pitch": 60, "start": 0.0, "dur": 1.0, "vel": 100, "mute": True},
+        ]
+        a["tracks"][0]["clips"][0]["notes"] = list(notes_a)
+        b["tracks"][0]["clips"][0]["notes"] = list(reversed(notes_a))
         self.assertEqual(recipe_check.diff_recipes(a, b), [])
 
 
