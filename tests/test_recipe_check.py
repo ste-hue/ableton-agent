@@ -153,6 +153,11 @@ class TestDiff(unittest.TestCase):
         diffs = recipe_check.diff_recipes(a, b)
         self.assertTrue(any("Mode.symbol" in d for d in diffs))
 
+    def test_diff_ignores_omissions(self):
+        a, b = make_recipe(), make_recipe()
+        b["omissions"] = ["third-party plugin internal state not captured"]
+        self.assertEqual(recipe_check.diff_recipes(a, b), [])
+
 
 if __name__ == "__main__":
     unittest.main()

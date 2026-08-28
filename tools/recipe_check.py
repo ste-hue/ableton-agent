@@ -238,7 +238,7 @@ def _canon_notes(notes):
 
 
 def canonicalize(data):
-    """Strip debug/context fields, normalize floats, sort notes."""
+    """Strip debug/context fields (created, environment, display, omissions), normalize floats, sort notes."""
     out = {"recipe_version": data.get("recipe_version"), "name": data.get("name")}
     if "song" in data:
         out["song"] = {
