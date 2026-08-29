@@ -9,8 +9,10 @@ click nel piano roll. Il testo racconta esattamente il modo in cui è stato fatt
 
 ## Due versioni dello stesso pezzo
 
-Il Set tiene entrambe le versioni in Session view, una per scena. Il tempo è
-globale, quindi si cambia a mano passando dall'una all'altra.
+Il Set tiene entrambe le versioni in Session view, una per scena. Ogni scena si
+porta dietro il proprio tempo (`Scene.tempo`, che attiva da solo
+`tempo_enabled`), quindi lanciando la scena il tempo cambia da sé — non serve
+toccare il BPM a mano.
 
 | | Scena 1 — boom bap | Scena 2 — trap |
 |---|---|---|
