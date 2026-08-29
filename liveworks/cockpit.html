@@ -40,7 +40,7 @@ html,body{margin:0;padding:0;background:#14161a;color:#cfd6e4;font:10px "SF Mono
 <div class="row" id="hdr2"><span id="op">cockpit v0f</span><span id="sig">&#8212;</span></div>
 <div id="log"></div>
 </div>
-<div id="doc"><div id="dochdr"><span id="doctitle">LOM</span><span id="docx">chiudi &#10005;</span></div><div id="docbody"></div><div id="docopen">apri la doc nel browser &#8599;</div></div>
+<div id="doc"><div id="dochdr"><span id="doctitle">LOM</span><span id="docx">clicca qui per tornare al log &#10005;</span></div><div id="docbody"></div><div id="docopen">apri la doc nel browser &#8599;</div></div>
 <script>
 (function(){
 var seq=null;
@@ -79,7 +79,7 @@ function openDoc(step){
  el('doc').className="open";
  el('docopen').onclick=function(){
   var marker='LIVEWORKS_OPEN:'+Date.now()+':'+d.url;
-  function done(ok){var b=el('docopen');b.textContent=ok?'richiesta inviata... si apre tra un attimo':'errore appunti';b.className=ok?'sent':'';setTimeout(function(){b.textContent='apri la doc nel browser \u2197';b.className='';},3000);}
+  function done(ok){var b=el('docopen');b.textContent=ok?'richiesta inviata... si apre tra un attimo':'errore appunti';if(ok)setTimeout(function(){el('doc').className='';},1600);b.className=ok?'sent':'';setTimeout(function(){b.textContent='apri la doc nel browser \u2197';b.className='';},3000);}
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(marker).then(function(){done(true);},function(){done(false);});}else{try{var t=document.createElement('textarea');t.value=marker;document.body.appendChild(t);t.select();var ok=document.execCommand('copy');document.body.removeChild(t);done(ok);}catch(e){done(false);}}
  };
 }
@@ -91,7 +91,7 @@ function copyLog(){
  function fallback(){try{var t=document.createElement('textarea');t.value=lines;document.body.appendChild(t);t.select();var ok=document.execCommand('copy');document.body.removeChild(t);done(ok);}catch(e){done(false);}}
 }
 document.getElementById('copybtn').addEventListener('click',copyLog);
-document.getElementById('docx').addEventListener('click',function(){el('doc').className="";});
+document.getElementById('dochdr').addEventListener('click',function(){el('doc').className="";});
 function add(t,ck){var d=document.createElement('div');d.className='tr'+(ck?' ck':'');d.textContent=t;
  if(ck){d.title="clicca per la doc LOM";d.addEventListener('click',function(){var m=t.match(/recipe\\.[A-Za-z0-9_.\\[\\]-]+/);openDoc(m?m[0]:t);});}
  var l=el('log');l.appendChild(d);while(l.children.length>80)l.removeChild(l.firstChild);l.scrollTop=l.scrollHeight;}
