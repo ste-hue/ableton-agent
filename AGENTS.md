@@ -23,6 +23,12 @@ The MCP server is the pinned upstream `ableton-live-mcp` installed in `.venv/`
   object model, same names — map mechanically.
 - **How to call it**: the MCP tool schemas advertised by the server. Trust the
   schemas over memory; wrong argument shapes are rejected locally and never reach Live.
+- **How to make music with it**: the musical skills in `.agents/skills/`
+  (`beat-making`, `harmony-melody`, `song-from-scratch`) — see
+  `.agents/skills/README.md` for what each covers and the principle behind them.
+  Hosts with a skill mechanism load them automatically; on any other host, read
+  the relevant `SKILL.md` when the task is musical. They carry constraints,
+  musical primitives and working method — never patterns to reproduce.
 
 ## Hard rules
 
@@ -52,10 +58,17 @@ The MCP server is the pinned upstream `ableton-live-mcp` installed in `.venv/`
 9. **Modals and UI stalls are blockers.** Never click through dialogs, restart Live,
    reload the Control Surface, close a Set, or discard changes without explicit user
    authorization.
-10. **No arbitrary code in Live.** `live_exec`, `live_eval`, `live_batch`, audio tap,
-    visual capture, and all Max for Live tools are off-limits (deny-listed in the
-    Claude config, excluded from `enabled_tools` in the Codex config). Do not work
-    around this.
+10. **No arbitrary code in Live.** `live_exec`, `live_eval`, and `live_batch` are
+    off-limits (deny-listed in the Claude config, excluded from `enabled_tools` in
+    the Codex config). Do not work around this.
+    **Max for Live tools are unlocked** (user decision, 2026-08-27, on the Live 12
+    Suite trial): `live_agent_m4l_device`, `live_agent_m4l_cleanup`,
+    `live_agent_audio_tap`, `live_agent_audio_tap_setup`, `live_visual_capture`,
+    `live_max_console_capture`. Conditions: run the upstream validator WITHOUT
+    `--allow-stale-m4l-host` and `--allow-missing-visual-capture` before the first
+    M4L operation of a session; follow the server's M4L verification rules (visual
+    UI verification via pixel inspection, real telemetry only, no fake data); M4L
+    device work happens in disposable Sets like everything else (rule 8).
 11. **Cleanup is the user's call.** Closing a Set without saving requires explicit
     authorization.
 

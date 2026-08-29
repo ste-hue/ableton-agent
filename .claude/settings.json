@@ -1,5 +1,7 @@
 {
-  "enabledMcpjsonServers": ["ableton_live"],
+  "enabledMcpjsonServers": [
+    "ableton_live"
+  ],
   "permissions": {
     "allow": [
       "mcp__ableton_live__live_ping",
@@ -17,13 +19,7 @@
     "deny": [
       "mcp__ableton_live__live_exec",
       "mcp__ableton_live__live_eval",
-      "mcp__ableton_live__live_batch",
-      "mcp__ableton_live__live_agent_m4l_device",
-      "mcp__ableton_live__live_agent_m4l_cleanup",
-      "mcp__ableton_live__live_agent_audio_tap",
-      "mcp__ableton_live__live_agent_audio_tap_setup",
-      "mcp__ableton_live__live_visual_capture",
-      "mcp__ableton_live__live_max_console_capture"
+      "mcp__ableton_live__live_batch"
     ]
   }
 }
