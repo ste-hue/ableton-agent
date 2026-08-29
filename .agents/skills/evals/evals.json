@@ -1,0 +1,54 @@
+{
+  "skill_names": ["beat-making", "harmony-melody", "song-from-scratch"],
+  "note": "Runs are offline on purpose: Ableton allows one driver at a time (AGENTS.md rule 1), so subagents produce the note data they would send instead of touching Live. Assertions are computed by scratchpad measure.py from the note data alone.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "antitemplate",
+      "skill": "beat-making",
+      "prompt": "fammi un beat hip hop sporco, ma che non sembri boom bap nostalgico — voglio che sia strano",
+      "expected_output": "A drum pattern (plus bass if warranted) that honours hip hop priors — pocket, space, hard backbeat weight — without reproducing the boom bap archetype. The point of this eval is that the correct answer is NOT the canonical pattern.",
+      "assertions": [
+        "Drum pitches are all valid General MIDI drum numbers (35-81)",
+        "Velocities are all within 1-127 and no duplicate note occupies the same pitch and instant",
+        "Velocity is tiered rather than flat: at least 4 distinct values and a standard deviation above 12",
+        "Ghost notes are present: at least one drum hit below velocity 60",
+        "Timing is not fully quantised: at least one onset sits off the sixteenth grid, or an explicit swing/microtiming choice is described in the rationale",
+        "The result departs from the boom bap archetype in at least one measurable way (tempo outside 85-95, snare not exclusively on the 2/4 backbeat, unusual drum voices, or a non-standard subdivision) — this is the anti-template check",
+        "The rationale explains musical decisions in terms of dimensions (density, syncopation, accent, microtiming, register) rather than naming a genre template"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "feeling-to-dimensions",
+      "skill": "beat-making",
+      "prompt": "qualcosa di cupo e spoglio a 100, che respiri — batteria e basso, niente di piu'",
+      "expected_output": "A sparse, dark drums-and-bass pair at exactly 100 BPM where the sparseness is real (low density, audible gaps) and the kick and bass do not fight for the same instant.",
+      "assertions": [
+        "Tempo is exactly 100, as the brief specified",
+        "Only drums and bass are present — no chord or melody clip was added beyond the brief",
+        "The pattern is genuinely sparse: drum density at or below 3 notes per beat, and at least one gap of a beat or more between consecutive onsets",
+        "Bass notes sit in the bass register (all below MIDI 55)",
+        "The kick and the bass do not collide: at most one bass onset lands on a kick instant",
+        "Velocity is tiered rather than flat: at least 4 distinct values in the drum clip",
+        "The rationale connects the words 'cupo', 'spoglio' and 'respiri' to concrete musical dimensions rather than to a genre"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "harmonic-ambiguity",
+      "skill": "harmony-melody",
+      "prompt": "accordi che non si capisce se sono tristi o allegri, sospesi, e sotto un basso che li tiene fermi",
+      "expected_output": "Chords that withhold the information which would settle major or minor — suspended, quartal, open fifths, or thirds deliberately absent — over a static or pedal bass.",
+      "assertions": [
+        "Ambiguity is actually realised in the notes: the chord voicings omit the third, or use sus2/sus4/quartal/open-fifth structures, rather than being ordinary major or minor triads",
+        "Chord notes sit in a register that does not turn to mud (all chord tones at or above MIDI 48)",
+        "The bass holds still as the brief asked: it uses two or fewer distinct pitches, or repeats a single pitch as a pedal",
+        "Bass notes are below MIDI 55 and do not double the chord voicing in the same octave",
+        "Chords are voiced as simultaneous notes (at least 3 notes sharing a start time)",
+        "Velocities are all within 1-127 and no duplicate note occupies the same pitch and instant",
+        "The rationale explains the ambiguity in terms of a musical force (missing third, suspension, pedal, function withheld) rather than naming a chord progression from a style"
+      ]
+    }
+  ]
+}
