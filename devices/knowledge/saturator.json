@@ -1,0 +1,223 @@
+{
+ "device": "Saturator",
+ "class_name": "Saturator",
+ "kind": "audio_effect",
+ "live_version": "12",
+ "harvested": "2026-08-29",
+ "source": "live_device_parameters dump (fresh load)",
+ "parameter_count": 19,
+ "parameters": [
+  {
+   "name": "Device On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Drive",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 dB"
+  },
+  {
+   "name": "Pre Dc Filter",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Off",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Type",
+   "value": 0,
+   "min": 0,
+   "max": 7,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Analog Clip",
+   "value_items": [
+    "Analog Clip",
+    "Soft Sine",
+    "Bass Shaper",
+    "Medium Curve",
+    "Hard Curve",
+    "Sinoid Fold",
+    "Digital Clip",
+    "Waveshaper"
+   ]
+  },
+  {
+   "name": "Color On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Color Amt Low",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "Color Freq",
+   "value": 0.5458248257637024,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5458248257637024,
+   "display_value": 1000,
+   "is_quantized": false,
+   "display": "1.00 kHz"
+  },
+  {
+   "name": "Color Width",
+   "value": 0.30000001192092896,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.30000001192092896,
+   "display_value": 30,
+   "is_quantized": false,
+   "display": "30 %"
+  },
+  {
+   "name": "Color Amt Hi",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "Post Clip Mode",
+   "value": 0,
+   "min": 0,
+   "max": 2,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "No Clip",
+   "value_items": [
+    "No Clip",
+    "Soft Clip",
+    "Hard Clip"
+   ]
+  },
+  {
+   "name": "Output",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "default_value": 1,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 dB"
+  },
+  {
+   "name": "Dry/Wet",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "default_value": 1,
+   "display_value": 100,
+   "is_quantized": false,
+   "display": "100 %"
+  },
+  {
+   "name": "Threshold",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": -50,
+   "is_quantized": false,
+   "display": "-50 dB"
+  },
+  {
+   "name": "WS Drive",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "default_value": 1,
+   "display_value": 100,
+   "is_quantized": false,
+   "display": "100 %"
+  },
+  {
+   "name": "WS Linearity",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "WS Curve",
+   "value": 0.05000000074505806,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 5,
+   "is_quantized": false,
+   "display": "5.0 %"
+  },
+  {
+   "name": "WS Damp",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "WS Period",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "WS Depth",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  }
+ ]
+}

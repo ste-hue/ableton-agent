@@ -1,0 +1,276 @@
+{
+ "device": "Compressor",
+ "class_name": "Compressor2",
+ "kind": "audio_effect",
+ "live_version": "12",
+ "harvested": "2026-08-29",
+ "source": "live_device_parameters dump (fresh load)",
+ "parameter_count": 23,
+ "parameters": [
+  {
+   "name": "Device On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Threshold",
+   "value": 0.8500000238418579,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.8500000238418579,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 dB"
+  },
+  {
+   "name": "Ratio",
+   "value": 0.75,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.75,
+   "display_value": 4,
+   "is_quantized": false,
+   "display": "4.00 : 1"
+  },
+  {
+   "name": "Expansion Ratio",
+   "value": 1.149999976158142,
+   "min": 1,
+   "max": 2,
+   "default_value": 1.149999976158142,
+   "display_value": 1.149999976158142,
+   "is_quantized": false,
+   "display": "1 : 1.15"
+  },
+  {
+   "name": "Attack",
+   "value": 0.4000000059604645,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.4000000059604645,
+   "display_value": 1,
+   "is_quantized": false,
+   "display": "1.00 ms"
+  },
+  {
+   "name": "Release",
+   "value": 0.1569925993680954,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.1569925993680954,
+   "display_value": 30,
+   "is_quantized": false,
+   "display": "30.0 ms"
+  },
+  {
+   "name": "Auto Release On/Off",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Off",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Output",
+   "value": 0,
+   "min": -36,
+   "max": 36,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 dB"
+  },
+  {
+   "name": "Makeup",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Off",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Dry/Wet",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "default_value": 1,
+   "display_value": 100,
+   "is_quantized": false,
+   "display": "100 %"
+  },
+  {
+   "name": "Model",
+   "value": 1,
+   "min": 0,
+   "max": 2,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "RMS",
+   "value_items": [
+    "Peak",
+    "RMS",
+    "Expand"
+   ]
+  },
+  {
+   "name": "Env Mode",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "is_quantized": true,
+   "display": "Log",
+   "value_items": [
+    "Lin",
+    "Log"
+   ]
+  },
+  {
+   "name": "Knee",
+   "value": 6,
+   "min": 0,
+   "max": 18,
+   "default_value": 6,
+   "display_value": 6,
+   "is_quantized": false,
+   "display": "6.0 dB"
+  },
+  {
+   "name": "LookAhead",
+   "value": 0,
+   "min": 0,
+   "max": 2,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "0 ms",
+   "value_items": [
+    "0 ms",
+    "1 ms",
+    "10 ms"
+   ]
+  },
+  {
+   "name": "S/C Listen",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Off",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "S/C EQ On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "S/C EQ Type",
+   "value": 5,
+   "min": 0,
+   "max": 5,
+   "display_value": 5,
+   "is_quantized": true,
+   "display": "High pass",
+   "value_items": [
+    "Low Shelf",
+    "Bell",
+    "High Shelf",
+    "Low pass",
+    "Peak",
+    "High pass"
+   ]
+  },
+  {
+   "name": "S/C EQ Freq",
+   "value": 0.15782640874385834,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.15782640874385834,
+   "display_value": 80,
+   "is_quantized": false,
+   "display": "80.0 Hz"
+  },
+  {
+   "name": "S/C EQ Q",
+   "value": 0.40856707096099854,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.40856707096099854,
+   "display_value": 0.7099999785423279,
+   "is_quantized": false,
+   "display": "0.71"
+  },
+  {
+   "name": "S/C EQ Gain",
+   "value": 0,
+   "min": -15,
+   "max": 15,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 dB"
+  },
+  {
+   "name": "S/C On",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Off",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "S/C Gain",
+   "value": 0.4000000059604645,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.4000000059604645,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 dB"
+  },
+  {
+   "name": "S/C Mix",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "default_value": 1,
+   "display_value": 100,
+   "is_quantized": false,
+   "display": "100 %"
+  }
+ ]
+}

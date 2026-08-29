@@ -1,0 +1,389 @@
+{
+ "device": "Electric",
+ "class_name": "LoungeLizard",
+ "kind": "instrument",
+ "live_version": "12",
+ "harvested": "2026-08-29",
+ "source": "live_device_parameters dump (sessione reale)",
+ "parameter_count": 34,
+ "parameters": [
+  {
+   "name": "Device On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Voices",
+   "value": 30,
+   "min": 0,
+   "max": 30,
+   "display_value": 30,
+   "is_quantized": true,
+   "display": "32",
+   "value_items": [
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+    "24",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "31",
+    "32"
+   ]
+  },
+  {
+   "name": "PB Range",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "default_value": 1,
+   "display_value": 12,
+   "is_quantized": false,
+   "display": "12.00"
+  },
+  {
+   "name": "Note PB Range",
+   "value": 0,
+   "min": 0,
+   "max": 48,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0 st"
+  },
+  {
+   "name": "Volume",
+   "value": 0.7047892212867737,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.7047892212867737,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 dB"
+  },
+  {
+   "name": "Semitone",
+   "value": 12,
+   "min": 0,
+   "max": 24,
+   "default_value": 12,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0 st"
+  },
+  {
+   "name": "Detune",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00"
+  },
+  {
+   "name": "KB Stretch",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0 %"
+  },
+  {
+   "name": "M Stiffness",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "M Stiff < Key",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50"
+  },
+  {
+   "name": "M Stiff < Vel",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50"
+  },
+  {
+   "name": "M Force",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "M Force < Key",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50"
+  },
+  {
+   "name": "M Force < Vel",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50"
+  },
+  {
+   "name": "Noise Pitch",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "Noise Decay",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "Noise Amount",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "Noise < Key",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50"
+  },
+  {
+   "name": "F Release",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "F Tine Decay",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "F Tine Vol",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "F Tine < Key",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50"
+  },
+  {
+   "name": "F Tine Color",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "F Tone Decay",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "F Tone Vol",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "P Symmetry",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "P Distance",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "Pickup Model",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "R",
+   "value_items": [
+    "R",
+    "W"
+   ]
+  },
+  {
+   "name": "P Amp In",
+   "value": 0.41999998688697815,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 42,
+   "is_quantized": false,
+   "display": "42 %"
+  },
+  {
+   "name": "P Amp Out",
+   "value": 0.41999998688697815,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 42,
+   "is_quantized": false,
+   "display": "42 %"
+  },
+  {
+   "name": "P Amp < Key",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50"
+  },
+  {
+   "name": "Damp Tone",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "Damp Amount",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "Damp Balance",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0 %"
+  }
+ ]
+}

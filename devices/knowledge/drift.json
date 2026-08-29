@@ -1,0 +1,742 @@
+{
+ "device": "Drift",
+ "class_name": "Drift",
+ "kind": "instrument",
+ "live_version": "12",
+ "harvested": "2026-08-29",
+ "source": "live_device_parameters dump (fresh load)",
+ "parameter_count": 66,
+ "parameters": [
+  {
+   "name": "Device On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "LP Freq",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "default_value": 1,
+   "display_value": 20000,
+   "is_quantized": false,
+   "display": "20.0 kHz"
+  },
+  {
+   "name": "LP Res",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 "
+  },
+  {
+   "name": "LP Type",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "I",
+   "value_items": [
+    "I",
+    "II"
+   ]
+  },
+  {
+   "name": "HP Freq",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 10,
+   "is_quantized": false,
+   "display": "10.0 Hz"
+  },
+  {
+   "name": "Key > LPF",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 "
+  },
+  {
+   "name": "LP Mod Amt 1",
+   "value": 0.9675928950309753,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 80,
+   "is_quantized": false,
+   "display": "80 %"
+  },
+  {
+   "name": "LP Mod Amt 2",
+   "value": 0.7828459739685059,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 15,
+   "is_quantized": false,
+   "display": "15 %"
+  },
+  {
+   "name": "Osc 1 Flt On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Osc 2 Flt On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Noise Flt On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "LFO Time Mode",
+   "value": 0,
+   "min": 0,
+   "max": 3,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Freq",
+   "value_items": [
+    "Freq",
+    "Time",
+    "Ratio",
+    "Sync"
+   ]
+  },
+  {
+   "name": "LFO Rate",
+   "value": 0.11318051815032959,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.057398803532123566,
+   "display_value": 0.4000000059604645,
+   "is_quantized": false,
+   "display": "0.40 Hz"
+  },
+  {
+   "name": "LFO Ratio",
+   "value": 0.0476190485060215,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.0476190485060215,
+   "display_value": 1,
+   "is_quantized": false,
+   "display": "1.00 "
+  },
+  {
+   "name": "LFO Time",
+   "value": 0.29616981744766235,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.29616981744766235,
+   "display_value": 1000,
+   "is_quantized": false,
+   "display": "1.00 s"
+  },
+  {
+   "name": "LFO Synced",
+   "value": 15,
+   "min": 0,
+   "max": 21,
+   "default_value": 15,
+   "is_quantized": false,
+   "display": "1/8"
+  },
+  {
+   "name": "LFO Amt",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "default_value": 1,
+   "display_value": 100,
+   "is_quantized": false,
+   "display": "100 %"
+  },
+  {
+   "name": "LFO Wave",
+   "value": 0,
+   "min": 0,
+   "max": 8,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Sine",
+   "value_items": [
+    "Sine",
+    "Triangle",
+    "Saw Up",
+    "Saw Down",
+    "Square",
+    "Sample & Hold",
+    "Wander",
+    "Linear Env",
+    "Exponential Env"
+   ]
+  },
+  {
+   "name": "LFO Mod Amt",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "LFO Retrig On",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Off",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Osc 1 Wave",
+   "value": 4,
+   "min": 0,
+   "max": 6,
+   "display_value": 4,
+   "is_quantized": true,
+   "display": "Saw",
+   "value_items": [
+    "Sine",
+    "Triangle",
+    "Shark Tooth",
+    "Saturated",
+    "Saw",
+    "Pulse",
+    "Rectangle"
+   ]
+  },
+  {
+   "name": "Osc 1 Shape",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 "
+  },
+  {
+   "name": "Osc 1 Oct",
+   "value": 0,
+   "min": -2,
+   "max": 3,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0 "
+  },
+  {
+   "name": "Osc 1 Shape Mod Amt",
+   "value": 0.5249999761581421,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 5,
+   "is_quantized": false,
+   "display": "5.0 %"
+  },
+  {
+   "name": "Osc 2 Wave",
+   "value": 0,
+   "min": 0,
+   "max": 4,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Sine",
+   "value_items": [
+    "Sine",
+    "Triangle",
+    "Saturated",
+    "Saw",
+    "Rectangle"
+   ]
+  },
+  {
+   "name": "Osc 2 Detune",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 "
+  },
+  {
+   "name": "Osc 2 Oct",
+   "value": -1,
+   "min": -3,
+   "max": 2,
+   "default_value": -1,
+   "display_value": -1,
+   "is_quantized": false,
+   "display": "-1 "
+  },
+  {
+   "name": "Pitch Mod Amt 1",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "Pitch Mod Amt 2",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "Osc 1 Gain",
+   "value": 0.5478326082229614,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5478326082229614,
+   "display_value": -6,
+   "is_quantized": false,
+   "display": "-6.0 dB"
+  },
+  {
+   "name": "Osc 2 Gain",
+   "value": 0.4987773895263672,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5478326082229614,
+   "display_value": -8,
+   "is_quantized": false,
+   "display": "-8.0 dB"
+  },
+  {
+   "name": "Osc 1 On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Osc 2 On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Noise Gain",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": -140,
+   "is_quantized": false,
+   "display": "-inf dB"
+  },
+  {
+   "name": "Noise On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Env 1 Attack",
+   "value": 0.11075662076473236,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.11075662076473236,
+   "display_value": 1,
+   "is_quantized": false,
+   "display": "1.00 ms"
+  },
+  {
+   "name": "Env 1 Decay",
+   "value": 0.3974480628967285,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.3974480628967285,
+   "display_value": 600,
+   "is_quantized": false,
+   "display": "600 ms"
+  },
+  {
+   "name": "Env 1 Release",
+   "value": 0.3967844247817993,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.3967844247817993,
+   "display_value": 600,
+   "is_quantized": false,
+   "display": "600 ms"
+  },
+  {
+   "name": "Env 1 Sustain",
+   "value": 0.699999988079071,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.699999988079071,
+   "display_value": 70,
+   "is_quantized": false,
+   "display": "70 %"
+  },
+  {
+   "name": "Env 2 Attack",
+   "value": 0.11075662076473236,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.11075662076473236,
+   "display_value": 1,
+   "is_quantized": false,
+   "display": "1.00 ms"
+  },
+  {
+   "name": "Env 2 Decay",
+   "value": 0.3974480628967285,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.3974480628967285,
+   "display_value": 600,
+   "is_quantized": false,
+   "display": "600 ms"
+  },
+  {
+   "name": "Env 2 Release",
+   "value": 0.3967844247817993,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.3967844247817993,
+   "display_value": 600,
+   "is_quantized": false,
+   "display": "600 ms"
+  },
+  {
+   "name": "Env 2 Sustain",
+   "value": 0.20000000298023224,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.699999988079071,
+   "display_value": 20,
+   "is_quantized": false,
+   "display": "20 %"
+  },
+  {
+   "name": "Cyc Env Time Mode",
+   "value": 0,
+   "min": 0,
+   "max": 3,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Freq",
+   "value_items": [
+    "Freq",
+    "Time",
+    "Ratio",
+    "Sync"
+   ]
+  },
+  {
+   "name": "Cyc Env Rate",
+   "value": 0.31225645542144775,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.31225648522377014,
+   "display_value": 5,
+   "is_quantized": false,
+   "display": "5.00 Hz"
+  },
+  {
+   "name": "Cyc Env Ratio",
+   "value": 0.0476190485060215,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.0476190485060215,
+   "display_value": 1,
+   "is_quantized": false,
+   "display": "1.00 "
+  },
+  {
+   "name": "Cyc Env Time",
+   "value": 0.29616981744766235,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.29616981744766235,
+   "display_value": 1000,
+   "is_quantized": false,
+   "display": "1.00 s"
+  },
+  {
+   "name": "Cyc Env Synced",
+   "value": 15,
+   "min": 0,
+   "max": 21,
+   "default_value": 15,
+   "is_quantized": false,
+   "display": "1/8"
+  },
+  {
+   "name": "Cyc Env Tilt",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0.5,
+   "is_quantized": false,
+   "display": "0.50 "
+  },
+  {
+   "name": "Cyc Env Hold",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 "
+  },
+  {
+   "name": "Mod Matrix Amt 1",
+   "value": 0.9675928950309753,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 80,
+   "is_quantized": false,
+   "display": "80 %"
+  },
+  {
+   "name": "Mod Matrix Amt 2",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "Mod Matrix Amt 3",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "Vel > Vol",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.10000000149011612,
+   "display_value": 50,
+   "is_quantized": false,
+   "display": "50 %"
+  },
+  {
+   "name": "Osc Retrig On",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Off",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Env 2 Cyc On",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Env",
+   "value_items": [
+    "Env",
+    "Cyc"
+   ]
+  },
+  {
+   "name": "Poly Voice Depth",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "Spread",
+   "value": 0.10000000149011612,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.699999988079071,
+   "display_value": 10,
+   "is_quantized": false,
+   "display": "10 %"
+  },
+  {
+   "name": "Strength",
+   "value": 0.05000000074505806,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": 5,
+   "is_quantized": false,
+   "display": "5.0 %"
+  },
+  {
+   "name": "Thickness",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.30000001192092896,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.0 %"
+  },
+  {
+   "name": "Drift",
+   "value": 0.07199999690055847,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.07249999791383743,
+   "display_value": 7.199999809265137,
+   "is_quantized": false,
+   "display": "7.2 %"
+  },
+  {
+   "name": "Legato On",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "display_value": 0,
+   "is_quantized": true,
+   "display": "Off",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Note Pitch Bend On",
+   "value": 1,
+   "min": 0,
+   "max": 1,
+   "display_value": 1,
+   "is_quantized": true,
+   "display": "On",
+   "value_items": [
+    "Off",
+    "On"
+   ]
+  },
+  {
+   "name": "Glide Time",
+   "value": 0,
+   "min": 0,
+   "max": 1,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0.00 ms"
+  },
+  {
+   "name": "Volume",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "default_value": 0.5,
+   "display_value": -6,
+   "is_quantized": false,
+   "display": "-6.0 dB"
+  },
+  {
+   "name": "Transpose",
+   "value": 0,
+   "min": -48,
+   "max": 48,
+   "default_value": 0,
+   "display_value": 0,
+   "is_quantized": false,
+   "display": "0 st"
+  }
+ ]
+}
