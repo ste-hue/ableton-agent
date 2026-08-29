@@ -64,6 +64,6 @@ gira in locale: il bridge è solo su `127.0.0.1` e non va mai esposto in rete.
 | `docs/validation-plan.md` | Procedura di validazione end-to-end (superata il 2026-08-26) |
 | `AGENTS.md` | Regole operative condivise da tutti gli agenti |
 | `.agents/skills/ableton-lom/` | Riferimento completo del Live Object Model |
-| `.mcp.json`, `.claude/settings.json` | Config Claude Code |
-| `.codex/config.toml` | Config Codex |
+| `.mcp.json.example`, `.claude/settings.json` | Config Claude Code (`.mcp.json` è generato da `setup.sh`, non versionato) |
+| `.codex/config.toml.example` | Config Codex (`.codex/config.toml` è generato da `setup.sh`, non versionato) |
 | `.venv/` | Server MCP `ableton-live-mcp` pinnato (non toccare) |

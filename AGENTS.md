@@ -77,7 +77,7 @@ The MCP server is the pinned upstream `ableton-live-mcp` installed in `.venv/`
 Working Sets stay unsaved and disposable by default (rule 8). When the user asks to
 save a song — or when you direct them to save it manually — always use this layout:
 
-- **Root for all Ableton projects:** `/Users/stefanodellapietra/Music/Ableton/Projects/`
+- **Root for all Ableton projects:** `~/Music/Ableton/Projects/`
 - **One folder per song/project**, named `YYYY-MM-DD_project-slug` with the
   descriptive part in lowercase kebab-case (e.g. `2026-08-26_primo-prova`,
   `2026-08-27_dark-rnb-01`).

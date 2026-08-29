@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # Ableton Agent — setup su un nuovo Mac dopo il clone del repo.
-# Ricrea l'ambiente pinnato, riscrive le config con i path locali,
+# Ricrea l'ambiente pinnato, genera le config host con i path locali,
 # installa il Remote Script nella User Library di Ableton e valida.
+#
+# Uso:
+#   ./setup.sh                 setup completo (interattivo)
+#   ./setup.sh --configs-only  rigenera solo .mcp.json e .codex/config.toml
+#                              dai template *.example (idempotente, non tocca
+#                              .venv né Ableton). Utile dopo aver spostato il
+#                              clone o aggiornato un template.
 set -euo pipefail
 
 PIN="70f7df9192b78d9bd9405f369c9e046c88f1610e"
@@ -12,6 +19,35 @@ ROOT="$(pwd)"
 
 step() { printf '\n\033[1m== %s ==\033[0m\n' "$1"; }
 fail() { printf '\033[31mERRORE: %s\033[0m\n' "$1" >&2; exit 1; }
+
+# Genera un file locale dal suo template .example sostituendo il segnaposto
+# __ABLETON_AGENT_ROOT__ con il path assoluto del clone. I file generati sono
+# in .gitignore: l'unica fonte di verità versionata è il template.
+render_template() {
+  local template="$1" target="$2"
+  [[ -f "$template" ]] || fail "template mancante: $template"
+  # Escape dei caratteri speciali di sed (& | \) nel path, per sicurezza.
+  local root_escaped
+  root_escaped="$(printf '%s' "$ROOT" | sed 's/[&|\\]/\\&/g')"
+  sed "s|__ABLETON_AGENT_ROOT__|${root_escaped}|g" "$template" > "$target"
+  if grep -q '__ABLETON_AGENT_ROOT__' "$target"; then
+    fail "segnaposto non sostituito in $target"
+  fi
+  echo "scritto $target (da $template)"
+}
+
+render_configs() {
+  render_template .mcp.json.example .mcp.json                 # Claude Code
+  render_template .codex/config.toml.example .codex/config.toml  # Codex
+}
+
+if [[ "${1:-}" == "--configs-only" ]]; then
+  step "Config host con path locali"
+  render_configs
+  exit 0
+elif [[ $# -gt 0 ]]; then
+  fail "argomento sconosciuto: $1 (uso: ./setup.sh [--configs-only])"
+fi
 
 step "Prerequisiti"
 [[ "$(uname)" == "Darwin" ]] || fail "questo setup supporta solo macOS"
@@ -49,51 +85,7 @@ fi
 echo "ableton-live-mcp installato e pinnato a ${PIN}"
 
 step "Config host con path locali"
-cat > .mcp.json <<EOF
-{
-  "mcpServers": {
-    "ableton_live": {
-      "command": "${ROOT}/.venv/bin/ableton-live-mcp",
-      "args": [],
-      "env": {}
-    }
-  }
-}
-EOF
-echo "scritto .mcp.json (Claude Code)"
-
-cat > .codex/config.toml <<EOF
-[mcp_servers.ableton_live]
-command = "${ROOT}/.venv/bin/ableton-live-mcp"
-cwd = "${ROOT}"
-startup_timeout_sec = 20
-tool_timeout_sec = 45
-enabled = true
-required = false
-default_tools_approval_mode = "prompt"
-enabled_tools = [
-  "live_ping",
-  "live_bridge_status",
-  "live_get",
-  "live_set_summary",
-  "live_set",
-  "live_call",
-  "live_children",
-  "live_clip_add_notes",
-  "live_clip_update_notes",
-  "live_clip_notes",
-  "live_transport",
-  "live_browser_roots",
-  "live_browser_capabilities",
-  "live_browser_search",
-  "live_browser_load",
-  "live_load_device",
-  "live_track_insert_device",
-  "live_device_parameters",
-  "live_parameter_set",
-]
-EOF
-echo "scritto .codex/config.toml (Codex)"
+render_configs
 
 step "Remote Script nella User Library di Ableton"
 if pgrep -qf "Ableton Live" 2>/dev/null; then
