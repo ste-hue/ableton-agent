@@ -158,6 +158,6 @@ Infrastructure can be changed. A wrong musical representation, after millions of
 objects exist, is far more painful. Therefore the next artifact is **not code**: it
 is `docs/musical-memory.md` — the Musical Object Model specification, the full
 lifecycle (Ableton → snapshot → objects → embeddings → retrieval → LLM →
-reconstruction), ownership/export, and 15–20 real queries the system must resolve.
+reconstruction), ownership/export, and the 18 acceptance queries the system must resolve.
 That document is the architectural contract, before choosing schema or embedding
 model.
