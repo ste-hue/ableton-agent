@@ -1,18 +1,22 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import { createApp } from "../src/app.js";
+import type { AppConfig } from "../src/app.js";
 import { MemoryStore } from "../src/store.js";
 import { StubProvider, parseLlmOutput } from "../src/llm.js";
 import type { LlmProvider } from "../src/llm.js";
+import type { LicenseProvider } from "../src/billing.js";
 import type { Message } from "../src/types.js";
 
-function makeApp(llm?: LlmProvider, credits = 100) {
+function makeApp(llm?: LlmProvider, credits = 100, extra: Partial<AppConfig> = {}) {
   const store = new MemoryStore();
   const app = createApp({
     store,
     llm: llm ?? new StubProvider(),
     allowDevSignin: true,
     signupGrantCredits: credits,
+    ...extra,
   });
   return { app, store };
 }
@@ -31,7 +35,7 @@ async function signin(app: ReturnType<typeof makeApp>["app"], email: string) {
 function authed(token: string, body: unknown) {
   return {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify({ protocol_version: "0.1", ...(body as object) }),
     headers: {
       "content-type": "application/json",
       authorization: "Bearer " + token,
@@ -182,4 +186,203 @@ test("malformed selection.clip is rejected", async () => {
     }),
   );
   assert.equal(res.status, 400);
+});
+
+test("duplicate request ids cannot charge twice", async () => {
+  const { app } = makeApp(undefined, 2);
+  const { token } = await signin(app, "duplicate@example.com");
+  const request_id = "d1843f1e-f120-4bd7-87bb-a581c12dc17d";
+  const first = await app.request(
+    "/v0/chat",
+    authed(token, { request_id, message: "first" }),
+  );
+  assert.equal(first.status, 200);
+  const second = await app.request(
+    "/v0/chat",
+    authed(token, { request_id, message: "retry" }),
+  );
+  assert.equal(second.status, 409);
+  const credits = await app.request("/v0/credits", {
+    headers: { authorization: "Bearer " + token },
+  });
+  assert.equal(((await credits.json()) as { credits: number }).credits, 1);
+});
+
+test("concurrent charges cannot spend the same last credit", async () => {
+  const store = new MemoryStore();
+  const user = await store.createUser("concurrent@example.com");
+  await store.addCredits(user.id, 1, "grant:test", "one-credit");
+  const [first, second] = await Promise.all([
+    store.chargeCredits(user.id, 1, "416f659c-3b43-4d00-8fad-767c3e4551ba"),
+    store.chargeCredits(user.id, 1, "5af230aa-22d1-41e6-a403-26988f51c5b9"),
+  ]);
+  assert.equal(Number(first.charged) + Number(second.charged), 1);
+  assert.equal(await store.creditBalance(user.id), 0);
+});
+
+test("provider failure refunds the reserved chat credit", async () => {
+  const failing: LlmProvider = {
+    async complete() {
+      throw new Error("provider_down");
+    },
+  };
+  const { app } = makeApp(failing, 1);
+  const { token } = await signin(app, "refund@example.com");
+  const response = await app.request(
+    "/v0/chat",
+    authed(token, {
+      request_id: "bfdfaec1-4972-4bc6-9a55-447f43480060",
+      message: "try",
+    }),
+  );
+  assert.equal(response.status, 500);
+  const credits = await app.request("/v0/credits", {
+    headers: { authorization: "Bearer " + token },
+  });
+  assert.equal(((await credits.json()) as { credits: number }).credits, 1);
+});
+
+test("license activation verifies store, product and customer email", async () => {
+  const licenseProvider: LicenseProvider = {
+    async activateOrValidate() {
+      return {
+        licenseKeyId: 90,
+        instanceId: "2d473749-2037-4817-aa15-e2b44882a67c",
+        status: "active",
+        storeId: 10,
+        productId: 20,
+        variantId: 30,
+        customerId: 40,
+        customerEmail: "buyer@example.com",
+      };
+    },
+  };
+  const { app } = makeApp(undefined, 0, {
+    licenseProvider,
+    lemonStoreId: 10,
+    lemonProductId: 20,
+  });
+  const response = await app.request("/v0/auth/license", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "buyer@example.com",
+      license_key: "valid-license-key",
+      instance_name: "Studio Mac",
+    }),
+  });
+  assert.equal(response.status, 200);
+  const body = (await response.json()) as { token: string; instance_id: string };
+  assert.ok(body.token);
+  assert.equal(body.instance_id, "2d473749-2037-4817-aa15-e2b44882a67c");
+});
+
+test("license activation rejects a purchase for another customer", async () => {
+  const licenseProvider: LicenseProvider = {
+    async activateOrValidate() {
+      return {
+        licenseKeyId: 90,
+        instanceId: "2d473749-2037-4817-aa15-e2b44882a67c",
+        status: "active",
+        storeId: 10,
+        productId: 20,
+        variantId: 30,
+        customerId: 40,
+        customerEmail: "owner@example.com",
+      };
+    },
+  };
+  const { app } = makeApp(undefined, 0, {
+    licenseProvider,
+    lemonStoreId: 10,
+    lemonProductId: 20,
+  });
+  const response = await app.request("/v0/auth/license", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "attacker@example.com",
+      license_key: "someone-elses-license",
+      instance_name: "Studio Mac",
+    }),
+  });
+  assert.equal(response.status, 403);
+});
+
+test("signed subscription payment webhook grants credits exactly once", async () => {
+  const secret = "webhook-test-secret";
+  const { app, store } = makeApp(undefined, 0, {
+    lemonStoreId: 10,
+    lemonProductId: 20,
+    lemonWebhookSecret: secret,
+    subscriptionGrantCredits: 500,
+  });
+  const payload = JSON.stringify({
+    meta: { event_name: "subscription_payment_success" },
+    data: {
+      type: "subscription-invoices",
+      id: "invoice-1",
+      attributes: {
+        store_id: 10,
+        product_id: 20,
+        variant_id: 30,
+        customer_id: 40,
+        user_email: "buyer@example.com",
+      },
+    },
+  });
+  const signature = createHmac("sha256", secret).update(payload).digest("hex");
+  const send = () =>
+    app.request("/v0/webhooks/lemonsqueezy", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-signature": signature },
+      body: payload,
+    });
+  assert.equal((await send()).status, 200);
+  assert.equal((await send()).status, 200);
+  const user = await store.getUserByEmail("buyer@example.com");
+  assert.ok(user);
+  assert.equal(await store.creditBalance(user.id), 500);
+});
+
+test("unsigned billing webhook is rejected", async () => {
+  const { app } = makeApp(undefined, 0, {
+    lemonStoreId: 10,
+    lemonProductId: 20,
+    lemonWebhookSecret: "secret",
+  });
+  const response = await app.request("/v0/webhooks/lemonsqueezy", {
+    method: "POST",
+    body: "{}",
+  });
+  assert.equal(response.status, 401);
+});
+
+test("signed billing webhook for another store is rejected without a grant", async () => {
+  const secret = "webhook-test-secret";
+  const { app, store } = makeApp(undefined, 0, {
+    lemonStoreId: 10,
+    lemonProductId: 20,
+    lemonWebhookSecret: secret,
+  });
+  const payload = JSON.stringify({
+    meta: { event_name: "subscription_payment_success" },
+    data: {
+      type: "subscription-invoices",
+      id: "foreign-invoice",
+      attributes: {
+        store_id: 999,
+        customer_id: 40,
+        user_email: "buyer@example.com",
+      },
+    },
+  });
+  const signature = createHmac("sha256", secret).update(payload).digest("hex");
+  const response = await app.request("/v0/webhooks/lemonsqueezy", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-signature": signature },
+    body: payload,
+  });
+  assert.equal(response.status, 400);
+  assert.equal(await store.getUserByEmail("buyer@example.com"), null);
 });

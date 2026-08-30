@@ -106,6 +106,8 @@ export type LiveContext = z.infer<typeof LiveContextSchema>;
 // ---------------------------------------------------------------------------
 
 export const ChatRequestSchema = z.object({
+  request_id: z.string().uuid().optional(),
+  protocol_version: z.literal("0.1"),
   conversation_id: z.string().uuid().optional(),
   message: z.string().min(1).max(4000),
   live_context: LiveContextSchema.optional(),
@@ -113,11 +115,33 @@ export const ChatRequestSchema = z.object({
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 
 export interface ChatResponse {
+  request_id: string;
+  protocol_version: "0.1";
   conversation_id: string;
   reply: string;
   actions: ActionPlan;
   credits_remaining: number;
 }
+
+export const LicenseAuthRequestSchema = z.object({
+  email: z.string().email().transform((value) => value.trim().toLowerCase()),
+  license_key: z.string().min(8).max(256),
+  instance_name: z.string().min(1).max(128),
+  instance_id: z.string().uuid().optional(),
+});
+
+export const LemonWebhookSchema = z.object({
+  meta: z.object({
+    event_name: z.string(),
+    custom_data: z.record(z.unknown()).optional(),
+  }),
+  data: z.object({
+    type: z.string(),
+    id: z.string(),
+    attributes: z.record(z.unknown()),
+  }),
+});
+export type LemonWebhook = z.infer<typeof LemonWebhookSchema>;
 
 export const ClientEventSchema = z.object({
   kind: z.enum(["action.executed", "action.failed", "client.error", "readback.mismatch"]),

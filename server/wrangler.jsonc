@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "liveworks-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-30",
+  "observability": {
+    "enabled": true
+  }
+}

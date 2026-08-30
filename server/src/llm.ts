@@ -11,6 +11,12 @@ import { ActionPlanSchema } from "./types.js";
 export interface LlmResult {
   reply: string;
   actions: ActionPlan;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    model: string;
+  };
 }
 
 export interface LlmProvider {
@@ -60,6 +66,7 @@ export class HttpChatProvider implements LlmProvider {
     private readonly apiKey: string,
     private readonly model: string,
     private readonly fetchImpl: typeof fetch = fetch,
+    private readonly timeoutMs = 30_000,
   ) {}
 
   async complete(messages: Message[], liveContext?: LiveContext): Promise<LlmResult> {
@@ -72,8 +79,10 @@ export class HttpChatProvider implements LlmProvider {
         "content-type": "application/json",
         authorization: "Bearer " + this.apiKey,
       },
+      signal: AbortSignal.timeout(this.timeoutMs),
       body: JSON.stringify({
         model: this.model,
+        max_completion_tokens: 2_000,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -87,10 +96,28 @@ export class HttpChatProvider implements LlmProvider {
     }
     const data = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+      };
     };
     const content = data.choices?.[0]?.message?.content;
     if (!content) throw new Error("LLM provider returned no content");
-    return parseLlmOutput(content);
+    const result = parseLlmOutput(content);
+    return {
+      ...result,
+      ...(data.usage
+        ? {
+            usage: {
+              inputTokens: data.usage.prompt_tokens ?? 0,
+              outputTokens: data.usage.completion_tokens ?? 0,
+              totalTokens: data.usage.total_tokens ?? 0,
+              model: this.model,
+            },
+          }
+        : {}),
+    };
   }
 }
 
