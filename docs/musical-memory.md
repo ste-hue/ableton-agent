@@ -130,9 +130,10 @@ Ableton (LOM, write)                     ← reconstruction
 
 Reconstruction constraints (from the capability map — these shape the whole model):
 
-- **There is no MIDI-file import into Live.** Bringing an object "here" means
-  re-adding its notes via LOM note operations into a new clip. The canonical
-  `notes` array must therefore be LOM-shaped, losslessly.
+- **MIDI-file import is not exposed through our LOM action surface.** Agent
+  reconstruction therefore writes canonical note data directly through LOM
+  note operations into a new clip. The canonical `notes` array must be
+  LOM-shaped, losslessly.
 - **No save/export/render via LOM.** Snapshots are read-side only; the user's
   `.als` remains theirs and untouched.
 - Adaptation on the way in (transpose to the current Set's key, retime to its
