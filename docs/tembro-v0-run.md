@@ -53,14 +53,25 @@ send `Set tempo to 123`. The deterministic development provider emits only that
 single validated tempo action; other prompts return a chat reply with no Live
 changes. Production never enables dev sign-in or this provider.
 
-4. In Live, in a **new, unsaved, disposable Set** (4/4): drop a
-   **Max MIDI Effect** on a MIDI track → open it in Max → replace its contents
-   with `devices/Tembro/Tembro.maxpat` (File → Open, copy all, or open the
-   patch and save into the device) → **save as `Tembro.amxd`** next to
-   `devices/Tembro/code/` so `node.script code/tembro_main.js` resolves.
-5. In the device: click the `signin dev@tembro.local` message once
-   (token persists at `~/.tembro/session.json`), confirm the status line shows
-   `· connected · signed in`.
+4. Build the customer-shaped bundle:
+
+   ```bash
+   ./.venv/bin/python tools/build_tembro_release.py
+   ```
+
+   Copy the complete generated `dist/Tembro` folder into
+   `~/Music/Ableton/User Library/Presets/MIDI Effects/Max MIDI Effect/`.
+   The `.amxd` and flattened JavaScript modules must remain together; opening
+   an `.amxd` directly from an arbitrary checkout does not give Node for Max a
+   reliable relative search path.
+5. In Live, in a **new, unsaved, disposable Set** (4/4), load
+   **User Library → Presets → MIDI Effects → Max MIDI Effect → Tembro** on a
+   MIDI track. The explicit `loadbang → delay → script start` chain is required
+   because the bundled Max 9 runtime did not honor `node.script @autostart 1`
+   reliably during the real-Live V0 test.
+6. Create a development session with `TembroApi.devSignin()` as described in
+   the setup notes, then confirm the device status shows
+   `· connected · license active`.
 
 ## Acceptance test A — create from language
 

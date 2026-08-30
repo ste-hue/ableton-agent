@@ -10,3 +10,8 @@ __pycache__/
 # Emacs / editor autosave leftovers
 \#*\#
 *~
+
+# Generated local/release artifacts.
+/work/
+/dist/
+/devices/Tembro/*.amxd
