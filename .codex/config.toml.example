@@ -1,0 +1,35 @@
+# Config Codex per questo progetto. Il file .codex/config.toml (ignorato da git)
+# viene GENERATO da setup.sh a partire da .codex/config.toml.example, sostituendo
+# il segnaposto del root con il path assoluto del clone. Modifica il template,
+# poi rilancia `./setup.sh --configs-only`.
+[mcp_servers.ableton_live]
+command = "__ABLETON_AGENT_ROOT__/.venv/bin/ableton-live-mcp"
+cwd = "__ABLETON_AGENT_ROOT__"
+startup_timeout_sec = 20
+tool_timeout_sec = 45
+enabled = true
+required = false
+default_tools_approval_mode = "prompt"
+# Allowlist visibile al modello. Nessun tool di esecuzione codice (live_exec,
+# live_eval, live_batch): vedi AGENTS.md, regola 10.
+enabled_tools = [
+  "live_ping",
+  "live_bridge_status",
+  "live_get",
+  "live_set_summary",
+  "live_set",
+  "live_call",
+  "live_children",
+  "live_clip_add_notes",
+  "live_clip_update_notes",
+  "live_clip_notes",
+  "live_transport",
+  "live_browser_roots",
+  "live_browser_capabilities",
+  "live_browser_search",
+  "live_browser_load",
+  "live_load_device",
+  "live_track_insert_device",
+  "live_device_parameters",
+  "live_parameter_set",
+]

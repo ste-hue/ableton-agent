@@ -62,15 +62,21 @@ Con Live aperto su un Set vuoto:
 
 Deve uscire con exit 0 e `"runtime_current": true`, `"live_mutations_safe": true`.
 
-## 6. Apri l'agente
+## 6. Genera le config host e apri l'agente
+
+`.mcp.json` (Claude Code) e `.codex/config.toml` (Codex) contengono il path
+assoluto del clone, quindi non sono versionati: si generano dai template
+`.mcp.json.example` e `.codex/config.toml.example` con
 
 ```bash
+./setup.sh --configs-only
 claude   # dentro la cartella del repo
 ```
 
-`.mcp.json` e `.claude/settings.json` sono già nel repo: tool di lettura
-pre-approvati, mutazioni con conferma, `live_exec`/`live_eval`/`live_batch`
-negati. Le regole operative sono in `AGENTS.md` e valgono per qualunque host.
+Rilancia lo stesso comando se sposti la cartella o se cambia un template.
+`.claude/settings.json` è invece nel repo: tool di lettura pre-approvati,
+mutazioni con conferma, `live_exec`/`live_eval`/`live_batch` negati. Le regole
+operative sono in `AGENTS.md` e valgono per qualunque host.
 
 Primo comando da provare: *"crea una traccia con un piano elettrico e un giro
 di quattro accordi, poi fammi sentire"*.

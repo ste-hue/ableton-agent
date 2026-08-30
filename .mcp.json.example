@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ableton_live": {
+      "command": "__ABLETON_AGENT_ROOT__/.venv/bin/ableton-live-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}

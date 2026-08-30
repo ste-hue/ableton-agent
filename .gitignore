@@ -2,6 +2,10 @@
 .DS_Store
 __pycache__/
 
+# Config host generate da setup.sh con i path assoluti della macchina.
+# I template versionati sono .mcp.json.example e .codex/config.toml.example.
+.mcp.json
+.codex/config.toml
 
 # Emacs / editor autosave leftovers
 \#*\#

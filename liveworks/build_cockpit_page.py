@@ -6,7 +6,10 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, "/Users/stefanodellapietra/dev/Projects/ableton-agent/.venv/lib/python3.12/site-packages")
+# agent_m4l vive nel .venv del repo (upstream pinnato): risolto rispetto a
+# questo file, così lo script funziona su qualunque clone.
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / ".venv" / "lib" / "python3.12" / "site-packages"))
 from agent_m4l import write_webui  # noqa: E402
 
 HOME = Path.home()
