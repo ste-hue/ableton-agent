@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Context, Next } from "hono";
-import { randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import type { Store } from "./store.js";
 import { hashToken } from "./store.js";
@@ -70,7 +70,7 @@ export function createApp(config: AppConfig) {
       if (!existing) {
         await store.addCredits(user.id, signupGrantCredits, "grant:signup");
       }
-      const token = randomUUID() + randomUUID().replace(/-/g, "");
+      const token = randomBytes(32).toString("hex");
       await store.createSession(
         user.id,
         hashToken(token),
@@ -122,6 +122,9 @@ export function createApp(config: AppConfig) {
     await store.logEvent("chat.request", { conversationId }, userId);
     const result = await llm.complete(history, req.live_context);
 
+    // NOTE for the Postgres Store: the assistant-message append and the credit
+    // charge below must run in a single transaction so a crash between them
+    // cannot store a reply without charging (or vice versa).
     await store.appendMessage(conversationId, {
       role: "assistant",
       content: result.reply,
