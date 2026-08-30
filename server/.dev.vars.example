@@ -1,0 +1,9 @@
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+LLM_ENDPOINT=https://api.openai.com/v1/chat/completions
+LLM_API_KEY=replace-me
+LLM_MODEL=gpt-5.6-luna
+LEMON_SQUEEZY_STORE_ID=12345
+LEMON_SQUEEZY_PRODUCT_ID=12345
+LEMON_SQUEEZY_WEBHOOK_SECRET=replace-with-random-secret
+SUBSCRIPTION_GRANT_CREDITS=500
+CHAT_COST_CREDITS=1
