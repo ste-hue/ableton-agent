@@ -1,4 +1,4 @@
-# Liveworks — product vision and v1 architecture
+# Tembro — product vision and v1 architecture
 
 Status: north star, 2026-08-30. Supersedes the open positioning question in
 `docs/product-analysis.md` (option (b), closed consumer product, is the chosen path —
@@ -38,8 +38,8 @@ Four levels of edge:
 | 3 | Persistent structured musical memory | Much more interesting |
 | 4 | Personal musical intelligence — the system learns the user's corpus and can retrieve, combine, compare and reason over it | **The target** |
 
-After 18 months the value is not "Liveworks can create a bassline" (any model will).
-It is: "Liveworks knows the 417 basslines *I* made, which ones I kept, in which
+After 18 months the value is not "Tembro can create a bassline" (any model will).
+It is: "Tembro knows the 417 basslines *I* made, which ones I kept, in which
 tracks, with which devices and grooves, and can bring one into the current session" —
 and can say "you've already explored something very similar three times; want to see
 those versions before generating another?" A creative memory system, not a chatbot.
@@ -52,7 +52,7 @@ Ethically clean: an Export Library gives the user JSON + MIDI + metadata +
 The musician sees none of the architecture. They:
 
 1. Buy
-2. Download `liveworks.amxd`
+2. Download `Tembro.amxd`
 3. Drag it into Ableton
 4. Sign in
 5. Talk
@@ -101,7 +101,7 @@ Cloudflare in front. PostgreSQL at the heart. Google/AI providers behind.
 
                  USER'S MACHINE
                  Ableton Live ← Max for Live (HTML/JS UI) ← LOM bridge
-                       │ HTTPS → api.liveworks.ai
+                       │ HTTPS → api.tembro.ai
 ```
 
 One rule governs every technology choice: **each new technology must buy something

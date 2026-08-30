@@ -65,6 +65,12 @@ export type ActionPlan = z.infer<typeof ActionPlanSchema>;
 
 export const LiveContextSchema = z.object({
   tempo: z.number().min(20).max(999).optional(),
+  time_signature: z
+    .object({
+      numerator: z.number().int().min(1).max(99),
+      denominator: z.number().int().min(1).max(64),
+    })
+    .optional(),
   tracks: z
     .array(
       z.object({
@@ -76,10 +82,20 @@ export const LiveContextSchema = z.object({
     )
     .max(200)
     .default([]),
+  // Selection carries the selected MIDI clip (name, length, lossless LOM-shaped
+  // notes) when present — modification requests ("make it more syncopated")
+  // depend on the model seeing the exact notes of the clip it must change.
   selection: z
     .object({
       track: z.number().int().min(0).optional(),
       slot: z.number().int().min(0).optional(),
+      clip: z
+        .object({
+          name: z.string().optional(),
+          length_beats: z.number().positive(),
+          notes: z.array(NoteSchema).max(2000),
+        })
+        .optional(),
     })
     .optional(),
 });

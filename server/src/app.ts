@@ -9,12 +9,17 @@ import { ChatRequestSchema, ClientEventSchema } from "./types.js";
 import type { ChatResponse } from "./types.js";
 
 // ---------------------------------------------------------------------------
-// Liveworks V0 API — one Hono app, deployable to Cloudflare Workers or Node.
+// Tembro V0 API — one Hono app, deployable to Cloudflare Workers or Node.
 //
 // Client (M4L device) flow:
 //   sign in → POST /v0/chat with message + live context → receive reply +
 //   action plan → execute locally via MCP/LOM bridge → report outcomes to
 //   POST /v0/events. Credits are charged per chat; balance in every response.
+//
+// Credit invariant (V0 placeholder): the credit policy is server-side and
+// replaceable — the client only ever sees a balance. Credits are not chats
+// and are not provider tokens; the flat per-chat charge below is a stand-in
+// that can change without any client update.
 // ---------------------------------------------------------------------------
 
 export interface AppConfig {

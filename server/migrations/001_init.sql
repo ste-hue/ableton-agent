@@ -1,4 +1,4 @@
--- Liveworks V0 schema — plain Postgres, no pgvector.
+-- Tembro V0 schema — plain Postgres, no pgvector.
 -- The V1 musical memory layer (docs/musical-memory.md) is deliberately absent.
 
 CREATE TABLE users (

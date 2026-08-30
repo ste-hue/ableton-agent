@@ -1,4 +1,4 @@
-# liveworks-server — V0 backend
+# tembro-server — Tembro V0 backend
 
 The shortest path to a usable paid product:
 
@@ -37,6 +37,14 @@ Defined and zod-validated in `src/types.ts`, mirroring the verified capabilities
 in `../docs/lom-capability-map.md`: `set_tempo`, `create_midi_track`,
 `load_device`, `create_clip`, `replace_notes`, `fire_clip`, `fire_scene`,
 `stop_all`, `undo`. Invalid model output never reaches Live.
+
+## Credits (V0 invariant)
+
+The credit policy is **server-side and replaceable**. The current flat
+per-chat charge is a V0 placeholder; the client only ever receives a balance.
+Credits are **not** chats and are **not** provider tokens — pricing, metering
+granularity, and grants can all change behind `/v0/chat` and `/v0/credits`
+without any device update.
 
 ## Develop
 

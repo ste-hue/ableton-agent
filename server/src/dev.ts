@@ -33,5 +33,5 @@ createServer(async (req, res) => {
   res.writeHead(response.status, Object.fromEntries(response.headers));
   res.end(Buffer.from(await response.arrayBuffer()));
 }).listen(port, "127.0.0.1", () => {
-  console.log(`liveworks-server dev listening on http://127.0.0.1:${port}`);
+  console.log(`tembro-server dev listening on http://127.0.0.1:${port}`);
 });

@@ -1,8 +1,8 @@
 {
-  "name": "liveworks-server",
+  "name": "tembro-server",
   "version": "0.0.1",
   "private": true,
-  "description": "Liveworks V0 backend: auth, chat, LOM action plans, credits, logging",
+  "description": "Tembro V0 backend: auth, chat, LOM action plans, credits, logging",
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
