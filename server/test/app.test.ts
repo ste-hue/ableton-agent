@@ -134,3 +134,52 @@ test("client events are logged with the user id", async () => {
   assert.ok(evt);
   assert.equal(evt.userId, user_id);
 });
+
+test("selected clip context (notes) reaches the LLM provider", async () => {
+  let seenContext: unknown = null;
+  const capture: LlmProvider = {
+    async complete(_messages: Message[], liveContext?: unknown) {
+      seenContext = liveContext;
+      return { reply: "ok", actions: [] };
+    },
+  };
+  const { app } = makeApp(capture);
+  const { token } = await signin(app, "sel@example.com");
+  const live_context = {
+    tempo: 110,
+    time_signature: { numerator: 4, denominator: 4 },
+    tracks: [{ index: 0, name: "Bass", kind: "midi", devices: ["Operator"] }],
+    selection: {
+      track: 0,
+      slot: 0,
+      clip: {
+        name: "Bassline",
+        length_beats: 16,
+        notes: [{ pitch: 45, start: 0, duration: 1, velocity: 100 }],
+      },
+    },
+  };
+  const res = await app.request(
+    "/v0/chat",
+    authed(token, { message: "make it more syncopated", live_context }),
+  );
+  assert.equal(res.status, 200);
+  const ctx = seenContext as typeof live_context;
+  assert.ok(ctx.selection.clip);
+  assert.equal(ctx.selection.clip.notes.length, 1);
+  assert.equal(ctx.selection.clip.notes[0]?.pitch, 45);
+  assert.equal(ctx.selection.clip.length_beats, 16);
+});
+
+test("malformed selection.clip is rejected", async () => {
+  const { app } = makeApp();
+  const { token } = await signin(app, "bad@example.com");
+  const res = await app.request(
+    "/v0/chat",
+    authed(token, {
+      message: "hi",
+      live_context: { selection: { track: 0, slot: 0, clip: { notes: [] } } }, // missing length_beats
+    }),
+  );
+  assert.equal(res.status, 400);
+});

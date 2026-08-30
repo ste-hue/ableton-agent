@@ -1,0 +1,9 @@
+{
+  "name": "tembro-device",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tembro Max for Live device: chat UI + local action executor over the MCP/LOM bridge",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
