@@ -62,13 +62,20 @@ export function parseLlmOutput(raw: string): LlmResult {
  * vendors). Model/endpoint/key come from environment configuration at deploy.
  */
 export class HttpChatProvider implements LlmProvider {
+  private readonly fetchImpl: typeof fetch;
+
   constructor(
     private readonly endpoint: string,
     private readonly apiKey: string,
     private readonly model: string,
-    private readonly fetchImpl: typeof fetch = fetch,
+    fetchImpl: typeof fetch = fetch,
     private readonly timeoutMs = 30_000,
-  ) {}
+  ) {
+    // Cloudflare's native fetch rejects calls whose receiver is an arbitrary
+    // object. Keeping it as a class method and calling `this.fetchImpl(...)`
+    // would therefore throw "Illegal invocation" before any network request.
+    this.fetchImpl = fetchImpl.bind(globalThis);
+  }
 
   async complete(messages: Message[], liveContext?: LiveContext): Promise<LlmResult> {
     const contextMsg = liveContext
