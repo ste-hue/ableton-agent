@@ -10,6 +10,14 @@
       "custom_domain": true
     }
   ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tembro",
+      "database_id": "7467f156-4a2a-4bcc-924d-f348b6ebffd0",
+      "migrations_dir": "migrations/d1"
+    }
+  ],
   "vars": {
     "LLM_ENDPOINT": "https://api.openai.com/v1/chat/completions",
     "LLM_MODEL": "gpt-5.6-luna",

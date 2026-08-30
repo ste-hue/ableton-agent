@@ -1,5 +1,6 @@
 import { createApp } from "./app.js";
 import { LemonSqueezyLicenseProvider } from "./billing.js";
+import { D1Store } from "./d1-store.js";
 import { HttpChatProvider } from "./llm.js";
 import { PostgresStore } from "./postgres-store.js";
 
@@ -15,7 +16,7 @@ function optionalPositiveInteger(value: string | undefined, name: string): numbe
 
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
-    const store = new PostgresStore(env.DATABASE_URL);
+    const store = env.DB ? new D1Store(env.DB) : new PostgresStore(env.DATABASE_URL);
     const app = createApp({
       store,
       llm: new HttpChatProvider(env.LLM_ENDPOINT, env.LLM_API_KEY, env.LLM_MODEL),

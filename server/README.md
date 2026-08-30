@@ -2,15 +2,15 @@
 
 The first public Tembro build is a free beta downloaded from GitHub Releases.
 The user enters an email and shared beta access code; the Cloudflare Worker
-creates a session, owns the AI key, and keeps the user's credit balance in Neon
-Postgres. The same endpoint can validate Lemon Squeezy licenses when payments
+creates a session, owns the AI key, and keeps the user's credit balance in
+Cloudflare D1. The same endpoint can validate Lemon Squeezy licenses when payments
 are enabled later.
 
 ```text
 Worker landing page -> free GitHub download -> email + beta access code
                                           |
                                           v
-Ableton Live -> Max for Live chat -> Cloudflare Worker -> Neon Postgres
+Ableton Live -> Max for Live chat -> Cloudflare Worker -> Cloudflare D1
                                       |                    auth + credits
                                       v
                                   model API
@@ -107,16 +107,20 @@ or client-side API keys. Its content-security policy blocks framing and limits
 assets to the same origin. Keep the Lemon Squeezy and OpenAI credentials in the
 Worker environment; they never belong in the HTML or Max for Live bundle.
 
-## Neon setup
+## Cloudflare D1
 
-1. Create a Neon project and copy its pooled connection string.
-2. Run `migrations/001_init.sql` in the Neon SQL Editor (or with `psql`).
-3. Put the connection string in the Worker secret `DATABASE_URL`.
+The free beta uses the `DB` binding in `wrangler.jsonc`. Create and migrate a
+fresh database with:
 
-The production implementation is `src/postgres-store.ts`, using Neon's
-serverless HTTP driver. `users.credit_balance` is the atomic runtime balance;
-`credit_ledger`, `chat_charges`, and `billing_events` are the audit and
-idempotency records.
+```bash
+npx wrangler d1 create tembro
+npx wrangler d1 migrations apply tembro --remote
+```
+
+The production implementation is `src/d1-store.ts`.
+`users.credit_balance` is the atomic runtime balance; `credit_ledger`,
+`chat_charges`, and `billing_events` are the audit and idempotency records. The
+Postgres adapter remains available for a later data-plane migration.
 
 ## Lemon Squeezy setup
 
@@ -142,7 +146,6 @@ history:
 
 ```bash
 npx wrangler login
-npx wrangler secret put DATABASE_URL
 npx wrangler secret put LLM_API_KEY
 npx wrangler secret put BETA_ACCESS_CODE
 npm run deploy
@@ -152,8 +155,9 @@ Public non-secret values (`LLM_ENDPOINT`, `LLM_MODEL`, credit amounts, download
 URL, checkout URL, and support email) live in `wrangler.jsonc`. Lemon Squeezy
 IDs and webhook secret are only required once paid access is enabled.
 
-After deploy, verify `/v0/health`, attach the desired API custom domain in
-Cloudflare, and then paste that final webhook URL into Lemon Squeezy.
+After deploy, verify `/v0/health` on `gettembro.com`. When payments are enabled,
+use `https://gettembro.com/v0/webhooks/lemonsqueezy` as the Lemon Squeezy
+webhook URL.
 
 ## Still required for the sellable package
 
