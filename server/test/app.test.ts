@@ -175,7 +175,8 @@ test("system prompt converts non-quarter-note meters to Ableton beats", () => {
 
 test("OpenAI V0 provider uses Luna with bounded low-effort JSON output", async () => {
   let requestBody: Record<string, unknown> = {};
-  const fakeFetch = (async (_input: unknown, init?: RequestInit) => {
+  const fakeFetch = (async function (this: unknown, _input: unknown, init?: RequestInit) {
+    assert.equal(this, globalThis);
     requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
     return new Response(
       JSON.stringify({
