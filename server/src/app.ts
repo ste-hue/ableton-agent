@@ -127,9 +127,11 @@ export function createApp(config: AppConfig) {
     await store.logEvent("chat.request", { conversationId }, userId);
     const result = await llm.complete(history, req.live_context);
 
-    // NOTE for the Postgres Store: the assistant-message append and the credit
-    // charge below must run in a single transaction so a crash between them
-    // cannot store a reply without charging (or vice versa).
+    // NOTE for the Postgres Store: the balance check above, the assistant-
+    // message append, and the credit charge below must run in a single
+    // transaction (e.g. SELECT … FOR UPDATE on the ledger) so concurrent
+    // requests cannot over-spend and a crash cannot store a reply without
+    // charging (or vice versa).
     await store.appendMessage(conversationId, {
       role: "assistant",
       content: result.reply,
