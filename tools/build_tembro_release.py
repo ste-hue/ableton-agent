@@ -14,6 +14,7 @@ import shutil
 import tempfile
 import zipfile
 from pathlib import Path
+from urllib.parse import urlparse
 
 from agent_m4l import build_amxd, extract_ptch_chunk
 
@@ -51,9 +52,15 @@ def release_patch() -> dict:
     return patch
 
 
-def build(output_dir: Path, zip_path: Path) -> None:
+def build(output_dir: Path, zip_path: Path, api_url: str | None = None) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     patch = release_patch()
+
+    if api_url:
+        parsed = urlparse(api_url)
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise ValueError("--api-url must be an absolute HTTPS URL")
+        api_url = api_url.rstrip("/")
 
     with tempfile.TemporaryDirectory(prefix="tembro-build-") as temp:
         source = Path(temp) / "Tembro.maxpat"
@@ -61,8 +68,18 @@ def build(output_dir: Path, zip_path: Path) -> None:
         build_amxd(source, output_dir / "Tembro.amxd", "midi_effect")
 
     for source in sorted(CODE_DIR.glob("*.js")):
-        shutil.copy2(source, output_dir / source.name)
-    shutil.copy2(INSTALL_GUIDE, output_dir / "README.md")
+        content = source.read_text(encoding="utf-8")
+        if source.name == "tembro_main.js" and api_url:
+            content = content.replace(
+                'cfg.api_base || "http://127.0.0.1:8787"',
+                f'cfg.api_base || "{api_url}"',
+            )
+        (output_dir / source.name).write_text(content, encoding="utf-8")
+    guide = INSTALL_GUIDE.read_text(encoding="utf-8").replace(
+        "{{TEMBRO_API_URL}}",
+        api_url or "http://127.0.0.1:8787 (local development)",
+    )
+    (output_dir / "README.md").write_text(guide, encoding="utf-8")
 
     embedded = json.loads(
         extract_ptch_chunk((output_dir / "Tembro.amxd").read_bytes()).rstrip(b"\x00")
@@ -99,8 +116,12 @@ def main() -> None:
         default=REPO / "dist" / "Tembro-v0-mac.zip",
         help="ZIP written for release/Lemon Squeezy upload",
     )
+    parser.add_argument(
+        "--api-url",
+        help="Production HTTPS API URL embedded as the device default",
+    )
     args = parser.parse_args()
-    build(args.output_dir.resolve(), args.zip_path.resolve())
+    build(args.output_dir.resolve(), args.zip_path.resolve(), args.api_url)
 
 
 if __name__ == "__main__":

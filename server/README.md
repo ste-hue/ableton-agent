@@ -1,14 +1,15 @@
-# Tembro API — paid V0
+# Tembro API — free beta, paid V0 ready
 
-Tembro is sold as a Lemon Squeezy subscription with a downloadable Max for
-Live device and a generated license key. The device opens a session against this
-Cloudflare Worker; the Worker validates the license, owns the AI key, and keeps
-the user's credit balance in Neon Postgres.
+The first public Tembro build is a free beta downloaded from GitHub Releases.
+The user enters an email and shared beta access code; the Cloudflare Worker
+creates a session, owns the AI key, and keeps the user's credit balance in Neon
+Postgres. The same endpoint can validate Lemon Squeezy licenses when payments
+are enabled later.
 
 ```text
-Worker landing page -> Lemon Squeezy checkout -> receipt + download + license key
-                                                    |
-                                                    v
+Worker landing page -> free GitHub download -> email + beta access code
+                                          |
+                                          v
 Ableton Live -> Max for Live chat -> Cloudflare Worker -> Neon Postgres
                                       |                    auth + credits
                                       v
@@ -23,24 +24,24 @@ action plan; execution and readback remain on the customer's machine.
 
 ## Customer journey
 
-1. The customer opens the public product URL and pays in Lemon Squeezy.
-2. Lemon Squeezy emails the receipt, download link, and generated license key.
-3. The first `subscription_payment_success` webhook creates the user and grants
-   the month's credits. Webhook retries are idempotent by invoice ID.
-4. The customer installs the `.amxd`, drops it into a Live Set, and enters the
-   purchase email and license key once.
-5. `POST /v0/auth/license` activates the key for that computer and returns a
-   30-day bearer session. Only a SHA-256 hash of the raw license key is stored.
-6. Each chat request has a client-generated UUID. The API reserves one credit
+1. The user opens the public product URL and downloads the free beta.
+2. The user installs the bundle, drops Tembro into a Live Set, and enters an
+   email plus the shared beta access code once.
+3. `POST /v0/auth/license` verifies the access code, grants the configured beta
+   credits once per email, and returns a 30-day bearer session.
+4. When payments are enabled, the same endpoint validates a Lemon Squeezy
+   license instead; no device protocol change is required.
+5. Each chat request has a client-generated UUID. The API reserves one credit
    before calling the model, never charges a retry twice, and refunds the credit
    if the provider or response validation fails.
-7. The device shows the reply, executes the validated action plan locally, and
+6. The device shows the reply, executes the validated action plan locally, and
    reports the verified Live readback or the exact failed step.
 
 ## Credit model for V0
 
-`1 credit = 1 successful chat turn`. `SUBSCRIPTION_GRANT_CREDITS` controls the
-monthly allowance and `CHAT_COST_CREDITS` controls the per-turn charge. The
+`1 credit = 1 successful chat turn`. `BETA_GRANT_CREDITS` controls the one-time
+free-beta allowance, `SUBSCRIPTION_GRANT_CREDITS` controls the future monthly
+allowance, and `CHAT_COST_CREDITS` controls the per-turn charge. The
 model's input/output/total token counts are logged with each completed request,
 so the commercial allowance can be tuned from real usage without exposing the
 vendor API key or changing the customer protocol.
@@ -61,9 +62,9 @@ when it is absent.
 
 | Endpoint | Auth | Purpose |
 | --- | --- | --- |
-| `GET /` | no | public Tembro product page and Lemon Squeezy buy link |
+| `GET /` | no | public Tembro product page and free download or paid checkout link |
 | `GET /v0/health` | no | liveness and protocol version |
-| `POST /v0/auth/license` | no | activate/validate Lemon Squeezy license and create session |
+| `POST /v0/auth/license` | no | activate a beta access code or Lemon Squeezy license |
 | `POST /v0/webhooks/lemonsqueezy` | HMAC | grant subscription credits exactly once per invoice |
 | `GET /v0/credits` | bearer | current balance |
 | `POST /v0/chat` | bearer | chat + Live context -> reply and validated LOM action plan |
@@ -95,10 +96,11 @@ point never enables that route.
 ## Public product page
 
 The same Hono Worker serves the public Tembro page at `/`, so V0 needs only one
-Cloudflare deployment and one custom domain. Set `CHECKOUT_URL` to the hosted
-Lemon Squeezy checkout URL and `SUPPORT_EMAIL` to the public support address.
-Until a valid HTTPS checkout URL is configured, every buy button displays
-`[ ACCESS_PENDING ]` and cannot navigate anywhere.
+Cloudflare deployment and one custom domain. Set `DOWNLOAD_URL` to the public
+GitHub release asset for free beta mode. Later, setting `CHECKOUT_URL` takes
+priority and automatically changes the page back to its paid journey.
+`SUPPORT_EMAIL` is the public support address. If neither URL is configured,
+the primary button stays disabled.
 
 The page deliberately uses no third-party JavaScript, fonts, tracking pixels,
 or client-side API keys. Its content-security policy blocks framing and limits
@@ -117,6 +119,9 @@ serverless HTTP driver. `users.credit_balance` is the atomic runtime balance;
 idempotency records.
 
 ## Lemon Squeezy setup
+
+This is optional during the free beta and can be completed later without a
+client update.
 
 1. Create one subscription product and its paid variant.
 2. Enable license keys, choose an activation limit, and attach the `.amxd` as a
@@ -139,17 +144,13 @@ history:
 npx wrangler login
 npx wrangler secret put DATABASE_URL
 npx wrangler secret put LLM_API_KEY
-npx wrangler secret put LLM_ENDPOINT
-npx wrangler secret put LLM_MODEL
-npx wrangler secret put LEMON_SQUEEZY_STORE_ID
-npx wrangler secret put LEMON_SQUEEZY_PRODUCT_ID
-npx wrangler secret put LEMON_SQUEEZY_WEBHOOK_SECRET
-npx wrangler secret put SUBSCRIPTION_GRANT_CREDITS
-npx wrangler secret put CHAT_COST_CREDITS
-npx wrangler secret put CHECKOUT_URL
-npx wrangler secret put SUPPORT_EMAIL
+npx wrangler secret put BETA_ACCESS_CODE
 npm run deploy
 ```
+
+Public non-secret values (`LLM_ENDPOINT`, `LLM_MODEL`, credit amounts, download
+URL, checkout URL, and support email) live in `wrangler.jsonc`. Lemon Squeezy
+IDs and webhook secret are only required once paid access is enabled.
 
 After deploy, verify `/v0/health`, attach the desired API custom domain in
 Cloudflare, and then paste that final webhook URL into Lemon Squeezy.

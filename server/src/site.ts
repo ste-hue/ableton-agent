@@ -1,5 +1,6 @@
 export interface LandingPageOptions {
   checkoutUrl?: string;
+  downloadUrl?: string;
   supportEmail?: string;
 }
 
@@ -29,10 +30,22 @@ function escapeAttribute(value: string): string {
 
 export function landingPage(options: LandingPageOptions = {}): string {
   const checkoutUrl = safeHttpsUrl(options.checkoutUrl);
+  const downloadUrl = safeHttpsUrl(options.downloadUrl);
   const supportEmail = safeEmail(options.supportEmail);
-  const checkoutCta = checkoutUrl
-    ? `<a class="button button-primary" href="${escapeAttribute(checkoutUrl)}">Get Tembro <span aria-hidden="true">✿</span></a>`
+  const primaryUrl = checkoutUrl ?? downloadUrl;
+  const freeBeta = !checkoutUrl && Boolean(downloadUrl);
+  const primaryCta = primaryUrl
+    ? `<a class="button button-primary" href="${escapeAttribute(primaryUrl)}">${freeBeta ? "Download free beta" : "Get Tembro"} <span aria-hidden="true">✿</span></a>`
     : '<span class="button button-primary button-disabled" aria-disabled="true">Early access soon ♡</span>';
+  const firstStep = freeBeta
+    ? '<article class="step"><div class="num">01</div><h3>Download</h3><p>Get the free beta directly. No card, checkout, or subscription required.</p></article>'
+    : '<article class="step"><div class="num">01</div><h3>Buy</h3><p>Check out securely through LemonSqueezy and receive your personal license key.</p></article>';
+  const activationStep = freeBeta
+    ? '<article class="step"><div class="num">03</div><h3>Connect</h3><p>Enter your email and beta access code once. Customers never need an OpenAI key.</p></article>'
+    : '<article class="step"><div class="num">03</div><h3>Activate</h3><p>Enter your purchase email and license key once. Customers never need an OpenAI key.</p></article>';
+  const accessFeature = freeBeta
+    ? "Free beta access code activation"
+    : "License activation on one studio computer";
   const supportLink = supportEmail
     ? `<a href="mailto:${escapeAttribute(supportEmail)}">${escapeAttribute(supportEmail)}</a>`
     : '<a href="#how-it-works">Installation guide</a>';
@@ -646,7 +659,7 @@ export function landingPage(options: LandingPageOptions = {}): string {
         <h1>Big ideas.<br>Tiny clicks.</h1>
         <p class="lede">Tell Tembro what you want to hear. It makes the change inside Live, checks the result, and lets you stay with the music.</p>
         <div class="actions">
-          ${checkoutCta}
+          ${primaryCta}
           <a class="button button-secondary" href="#how-it-works">See how it works</a>
         </div>
         <p class="compat">For macOS · Ableton Live 12 with Max for Live · Internet required</p>
@@ -670,9 +683,9 @@ export function landingPage(options: LandingPageOptions = {}): string {
           <h2>From download to first prompt in four small steps.</h2>
         </div>
         <div class="steps">
-          <article class="step"><div class="num">01</div><h3>Buy</h3><p>Check out securely through LemonSqueezy and receive your personal license key.</p></article>
+          ${firstStep}
           <article class="step"><div class="num">02</div><h3>Install</h3><p>Download Tembro, copy it to your Ableton User Library, and complete the guided setup.</p></article>
-          <article class="step"><div class="num">03</div><h3>Activate</h3><p>Enter your purchase email and license key once. No OpenAI key is ever required from the customer.</p></article>
+          ${activationStep}
           <article class="step"><div class="num">04</div><h3>Chat</h3><p>Drop Tembro onto a MIDI track, describe the result you want, and keep making music.</p></article>
         </div>
       </div>
@@ -713,20 +726,20 @@ export function landingPage(options: LandingPageOptions = {}): string {
         <div class="pricing-copy">
           <p class="kicker">04 / Simple credits</p>
           <h2>One clear balance. No token homework.</h2>
-          <p>Tembro credits are product units, not OpenAI tokens. The customer balance is connected to their Tembro license; model usage is paid by Tembro and included in the product price.</p>
+          <p>Tembro credits are product units, not OpenAI tokens. The balance is connected to each Tembro account; model usage is paid by Tembro${freeBeta ? " during the free beta" : " and included in the product price"}.</p>
           <p>This lets pricing stay clear even when the underlying AI model changes. A failed AI request is automatically refunded.</p>
         </div>
         <div class="price-card" id="get-tembro">
-          <div class="price-title"><strong>Tembro early access</strong><span>macOS / Live 12</span></div>
+          <div class="price-title"><strong>${freeBeta ? "Tembro free beta" : "Tembro early access"}</strong><span>macOS / Live 12</span></div>
           <ul class="features">
             <li>Tembro Max for Live device</li>
             <li>Guided local bridge installation</li>
-            <li>License activation on one studio computer</li>
+            <li>${accessFeature}</li>
             <li>Included usage credits</li>
             <li>Updates during early access</li>
           </ul>
-          ${checkoutCta}
-          <p class="fine">Secure checkout and license delivery by LemonSqueezy.</p>
+          ${primaryCta}
+          <p class="fine">${freeBeta ? "Free during beta. An access code is required to use the AI service." : "Secure checkout and license delivery by LemonSqueezy."}</p>
         </div>
       </div>
     </section>
@@ -735,7 +748,7 @@ export function landingPage(options: LandingPageOptions = {}): string {
       <div class="wrap final">
         <p class="eyebrow">Stay in the song</p>
         <h2>Fewer tiny clicks.<br>More big ideas.</h2>
-        <div class="actions">${checkoutCta}</div>
+        <div class="actions">${primaryCta}</div>
       </div>
     </section>
   </main>

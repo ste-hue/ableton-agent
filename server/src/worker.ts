@@ -9,6 +9,10 @@ function positiveInteger(value: string, name: string): number {
   return parsed;
 }
 
+function optionalPositiveInteger(value: string | undefined, name: string): number | undefined {
+  return value ? positiveInteger(value, name) : undefined;
+}
+
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     const store = new PostgresStore(env.DATABASE_URL);
@@ -16,19 +20,22 @@ export default {
       store,
       llm: new HttpChatProvider(env.LLM_ENDPOINT, env.LLM_API_KEY, env.LLM_MODEL),
       licenseProvider: new LemonSqueezyLicenseProvider(),
-      lemonStoreId: positiveInteger(env.LEMON_SQUEEZY_STORE_ID, "LEMON_SQUEEZY_STORE_ID"),
-      lemonProductId: positiveInteger(
+      lemonStoreId: optionalPositiveInteger(env.LEMON_SQUEEZY_STORE_ID, "LEMON_SQUEEZY_STORE_ID"),
+      lemonProductId: optionalPositiveInteger(
         env.LEMON_SQUEEZY_PRODUCT_ID,
         "LEMON_SQUEEZY_PRODUCT_ID",
       ),
-      lemonWebhookSecret: env.LEMON_SQUEEZY_WEBHOOK_SECRET,
-      subscriptionGrantCredits: positiveInteger(
+      lemonWebhookSecret: env.LEMON_SQUEEZY_WEBHOOK_SECRET || undefined,
+      subscriptionGrantCredits: optionalPositiveInteger(
         env.SUBSCRIPTION_GRANT_CREDITS,
         "SUBSCRIPTION_GRANT_CREDITS",
       ),
       chatCostCredits: positiveInteger(env.CHAT_COST_CREDITS, "CHAT_COST_CREDITS"),
-      checkoutUrl: env.CHECKOUT_URL,
-      supportEmail: env.SUPPORT_EMAIL,
+      checkoutUrl: env.CHECKOUT_URL || undefined,
+      downloadUrl: env.DOWNLOAD_URL || undefined,
+      supportEmail: env.SUPPORT_EMAIL || undefined,
+      betaAccessCode: env.BETA_ACCESS_CODE || undefined,
+      betaGrantCredits: optionalPositiveInteger(env.BETA_GRANT_CREDITS, "BETA_GRANT_CREDITS"),
     });
     return app.fetch(request);
   },

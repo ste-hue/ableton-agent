@@ -80,6 +80,17 @@ test("landing page rejects unsafe checkout URLs", async () => {
   assert.match(body, /Early access soon/);
 });
 
+test("landing page switches to a free beta download without payment copy", async () => {
+  const { app } = makeApp(undefined, 100, {
+    downloadUrl: "https://github.com/ste-hue/ableton-agent/releases/download/v0-beta/Tembro.zip",
+  });
+  const body = await (await app.request("/")).text();
+  assert.match(body, /Download free beta/);
+  assert.match(body, /No card, checkout, or subscription required/);
+  assert.match(body, /Free beta access code activation/);
+  assert.doesNotMatch(body, /Secure checkout and license delivery/);
+});
+
 test("chat requires auth", async () => {
   const { app } = makeApp();
   const res = await app.request("/v0/chat", {
@@ -353,6 +364,43 @@ test("license activation verifies store, product and customer email", async () =
   const body = (await response.json()) as { token: string; instance_id: string };
   assert.ok(body.token);
   assert.equal(body.instance_id, "2d473749-2037-4817-aa15-e2b44882a67c");
+});
+
+test("free beta access grants credits once and needs no Lemon Squeezy account", async () => {
+  const { app } = makeApp(undefined, 0, {
+    betaAccessCode: "beta-secret-code",
+    betaGrantCredits: 25,
+  });
+  const signin = () =>
+    app.request("/v0/auth/license", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email: "beta@example.com",
+        license_key: "beta-secret-code",
+        instance_name: "Beta Mac",
+      }),
+    });
+  const first = await signin();
+  assert.equal(first.status, 200);
+  const firstBody = (await first.json()) as { credits: number; access_mode: string };
+  assert.equal(firstBody.credits, 25);
+  assert.equal(firstBody.access_mode, "free_beta");
+
+  const second = await signin();
+  assert.equal(second.status, 200);
+  assert.equal(((await second.json()) as { credits: number }).credits, 25);
+
+  const rejected = await app.request("/v0/auth/license", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "stranger@example.com",
+      license_key: "wrong-code",
+      instance_name: "Other Mac",
+    }),
+  });
+  assert.equal(rejected.status, 401);
 });
 
 test("license activation rejects a purchase for another customer", async () => {

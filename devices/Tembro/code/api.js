@@ -83,7 +83,7 @@ class TembroApi {
     this.instanceId = session.instanceId;
   }
 
-  /** Activate or validate a Lemon Squeezy license and persist the session. */
+  /** Activate a paid license or free-beta access code and persist the session. */
   async licenseSignin(email, licenseKey, instanceName = os.hostname()) {
     const body = {
       email,
@@ -93,7 +93,7 @@ class TembroApi {
     if (this.instanceId) body.instance_id = this.instanceId;
     const res = await this.request(this.baseUrl, "POST", "/v0/auth/license", body);
     if (res.status !== 200 || !res.json || !res.json.token || !res.json.instance_id) {
-      throw new Error("license activation failed (" + res.status + ")");
+      throw new Error("access activation failed (" + res.status + ")");
     }
     this.token = res.json.token;
     this.instanceId = res.json.instance_id;

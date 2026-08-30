@@ -13,7 +13,7 @@ Tembro.amxd
 ```
 
 The UI is intentionally compact: a transcript, chat input, send button,
-purchase-email and license-key fields, an activate button, and a status line
+email and access-code fields, a connect button, and a status line
 showing `⏳ working / ✓ success / ⚠ error`.
 
 ## Layout
@@ -44,7 +44,7 @@ Env overrides: `TEMBRO_API_BASE`, `TEMBRO_MCP_COMMAND`.
 
 ## Device messages
 
-- `license <purchase-email> <license-key>` — activate or validate the Lemon Squeezy license; the session persists locally.
+- `license <email> <access-code>` — activate a free-beta code or paid Lemon Squeezy license; the session persists locally.
 - `signin <email>` — local development only (server started with dev-signin enabled).
 - `chat <text…>` — the loop above. The input box + send button emit this.
 - `status` — re-report connection/auth state.
