@@ -110,6 +110,15 @@ while Studio Pilot is closed inside its own device.
 - **Bitwig**: the bridge is Ableton-specific (Remote Script + LOM). Porting to
   Bitwig is a separate project, not an extension.
 
+## Update 2026-08-30 — direction chosen
+
+The positioning question in Phase 1 has been answered: closed consumer product,
+with the musical memory layer as the differentiating asset. See
+`docs/product-vision.md` (thesis + v1 architecture: Cloudflare Workers control
+plane, Postgres + pgvector + JSONB, R2, LLM gateway, Cloud Run compute plane,
+Lemon Squeezy billing) and `docs/musical-memory.md` (the architectural contract:
+Musical Object Model, lifecycle, ownership/export, acceptance queries).
+
 ## Suggested next concrete step
 
 Write down the list of the ~23 things fixed for the second-Mac setup: it is the
