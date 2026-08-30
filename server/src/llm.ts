@@ -127,6 +127,14 @@ export class HttpChatProvider implements LlmProvider {
 export class StubProvider implements LlmProvider {
   async complete(messages: Message[]): Promise<LlmResult> {
     const last = messages[messages.length - 1]?.content ?? "";
+    const tempoMatch = last.match(/\b(?:set\s+)?tempo(?:\s+to)?\s+(\d{2,3}(?:\.\d+)?)\b/i);
+    const bpm = tempoMatch ? Number(tempoMatch[1]) : null;
+    if (bpm !== null && bpm >= 20 && bpm <= 999) {
+      return {
+        reply: `Setting tempo to ${bpm} BPM.`,
+        actions: [{ op: "set_tempo", bpm }],
+      };
+    }
     return {
       reply: `stub: ${last.slice(0, 60)}`,
       actions: [],

@@ -162,6 +162,14 @@ test("OpenAI V0 provider uses Luna with bounded low-effort JSON output", async (
   assert.deepEqual(requestBody.response_format, { type: "json_object" });
 });
 
+test("local stub supports a deterministic tempo smoke test", async () => {
+  const result = await new StubProvider().complete([
+    { role: "user", content: "Set tempo to 123" },
+  ]);
+  assert.equal(result.reply, "Setting tempo to 123 BPM.");
+  assert.deepEqual(result.actions, [{ op: "set_tempo", bpm: 123 }]);
+});
+
 test("memory store rejects appending to an unknown conversation", async () => {
   const store = new MemoryStore();
   await assert.rejects(

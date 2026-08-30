@@ -40,13 +40,18 @@ cd devices/Tembro && npm test && cd ../..
 cd server
 LLM_ENDPOINT=https://api.openai.com/v1/chat/completions \
 LLM_API_KEY=... \
-LLM_MODEL=gpt-4o-mini \
+LLM_MODEL=gpt-5.6-luna \
 npm run dev          # http://127.0.0.1:8787
 
 # 3. Preflight the bridge (Live open, Remote Script loaded, NEW unsaved Set)
 ./.venv/bin/ableton-live-mcp-validate
 #    → require "runtime_current": true and "live_mutations_safe": true
 ```
+
+For a no-key local smoke test, run `npm run dev` without `LLM_*` variables and
+send `Set tempo to 123`. The deterministic development provider emits only that
+single validated tempo action; other prompts return a chat reply with no Live
+changes. Production never enables dev sign-in or this provider.
 
 4. In Live, in a **new, unsaved, disposable Set** (4/4): drop a
    **Max MIDI Effect** on a MIDI track → open it in Max → replace its contents
