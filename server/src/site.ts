@@ -38,7 +38,7 @@ export function landingPage(options: LandingPageOptions = {}): string {
     ? `<a class="button button-primary" href="${escapeAttribute(primaryUrl)}">${freeBeta ? "Download free beta" : "Get Tembro"} <span aria-hidden="true">✿</span></a>`
     : '<span class="button button-primary button-disabled" aria-disabled="true">Early access soon ♡</span>';
   const firstStep = freeBeta
-    ? '<article class="step"><div class="num">01</div><h3>Download</h3><p>Get the free beta directly. No card, checkout, or subscription required.</p></article>'
+    ? '<article class="step"><div class="num">01</div><h3>Download</h3><p>Get one macOS disk image. No card, checkout, or subscription required during beta.</p></article>'
     : '<article class="step"><div class="num">01</div><h3>Buy</h3><p>Check out securely through LemonSqueezy and receive your personal license key.</p></article>';
   const activationStep = freeBeta
     ? '<article class="step"><div class="num">03</div><h3>Connect</h3><p>Enter your email and beta access code once. Customers never need an OpenAI key.</p></article>'
@@ -684,7 +684,7 @@ export function landingPage(options: LandingPageOptions = {}): string {
         </div>
         <div class="steps">
           ${firstStep}
-          <article class="step"><div class="num">02</div><h3>Install</h3><p>Download Tembro, copy it to your Ableton User Library, and complete the guided setup.</p></article>
+          <article class="step"><div class="num">02</div><h3>Install</h3><p>Open the DMG and click Install Tembro once. The device and local Ableton bridge go to the right place automatically.</p></article>
           ${activationStep}
           <article class="step"><div class="num">04</div><h3>Chat</h3><p>Drop Tembro onto a MIDI track, describe the result you want, and keep making music.</p></article>
         </div>
@@ -714,7 +714,7 @@ export function landingPage(options: LandingPageOptions = {}): string {
           <h2>Sweet on the outside. Guardrails underneath.</h2>
         </div>
         <div class="trust-grid">
-          <article class="card"><div class="card-icon">[01]</div><h3>Plans before actions</h3><p>The model can only request a defined set of operations. Tembro validates every plan before it reaches Live.</p></article>
+          <article class="card"><div class="card-icon">[01]</div><h3>Bounded tools</h3><p>The agent receives only an allowlisted set of Ableton tools. Arbitrary code and unsafe batch execution stay unavailable.</p></article>
           <article class="card"><div class="card-icon">[02]</div><h3>Local execution</h3><p>Changes happen through the local Ableton bridge. AI requests use Tembro’s server-side key, which customers never receive.</p></article>
           <article class="card"><div class="card-icon">[03]</div><h3>Verified results</h3><p>After each operation, Tembro reads the result back from Live and tells you what actually changed.</p></article>
         </div>

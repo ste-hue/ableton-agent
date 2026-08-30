@@ -21,6 +21,7 @@ class McpClient {
     this.queue = Promise.resolve(); // serializes requests: one in flight
     this.buffer = "";
     this.initialized = false;
+    this.tools = null;
   }
 
   start() {
@@ -39,6 +40,7 @@ class McpClient {
       this.pending.clear();
       this.proc = null;
       this.initialized = false;
+      this.tools = null;
     });
   }
 
@@ -134,6 +136,26 @@ class McpClient {
       return result;
     };
     // Chain regardless of previous outcome, but propagate this call's result.
+    const p = this.queue.then(run, run);
+    this.queue = p.then(
+      () => undefined,
+      () => undefined,
+    );
+    return p;
+  }
+
+  /** Return the MCP server's advertised tools and schemas (cached per process). */
+  listTools() {
+    const run = async () => {
+      await this._ensureInitialized();
+      if (this.tools) return this.tools;
+      const result = await this._request("tools/list", {}, 30_000);
+      if (!result || !Array.isArray(result.tools)) {
+        throw new Error("MCP server returned no tool list");
+      }
+      this.tools = result.tools;
+      return this.tools;
+    };
     const p = this.queue.then(run, run);
     this.queue = p.then(
       () => undefined,

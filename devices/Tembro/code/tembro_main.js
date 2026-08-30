@@ -2,8 +2,8 @@
 
 // Tembro node.script entry point (runs inside the Max for Live device).
 //
-// Wires: Max UI messages → backend chat → validated plan → local executor
-// over the MCP/LOM bridge → exact readback → UI status.
+// Wires: Max UI messages → server-side OpenAI agent → local MCP tools →
+// tool results back to the agent until it returns a verified final response.
 //
 // Configuration (no secrets, no provider keys — those live server-side):
 //   ~/.tembro/config.json   { "api_base": "...", "mcp_command": "..." }
@@ -18,7 +18,8 @@ const { TembroApi } = require("./api.js");
 const { McpClient } = require("./mcp_client.js");
 const { LomBridge } = require("./lom_bridge.js");
 const { buildLiveContext } = require("./context.js");
-const { executePlan } = require("./executor.js");
+const { runAgentTurn } = require("./agent_loop.js");
+const { spawn } = require("child_process");
 
 const maxApi = require("max-api");
 
@@ -46,6 +47,8 @@ const bridge = new LomBridge(client);
 
 let conversationId = null;
 let busy = false;
+let updateUrl = null;
+const DEVICE_VERSION = "0.1.1-beta";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 
@@ -55,10 +58,11 @@ function ui(state, status) {
 }
 
 function transcript(who, text) {
-  maxApi.outlet(["transcript", who + ": " + text]);
+  maxApi.outlet(["transcript", who, String(text)]);
 }
 
 function reportAuth() {
+  maxApi.outlet(["auth", api.signedIn ? "connected" : "disconnected"]);
   ui(
     "idle",
     api.signedIn ? "connected · access active" : "connect with email + access code",
@@ -71,6 +75,7 @@ maxApi.addHandler("license", async (email, licenseKey) => {
     ui("working", "connecting…");
     const result = await api.licenseSignin(String(email), String(licenseKey));
     reportAuth();
+    maxApi.outlet(["credits", result.credits]);
     transcript("tembro", "access active · credits: " + result.credits);
   } catch (err) {
     ui("error", "connection failed: " + err.message);
@@ -103,32 +108,38 @@ maxApi.addHandler("chat", async (...words) => {
     ui("working", "reading Live context…");
     const liveContext = await buildLiveContext(bridge);
 
-    // 2. Backend chat → validated plan.
-    ui("working", "thinking…");
-    const res = await api.chat(message, liveContext, conversationId);
+    const trackCount = (liveContext.tracks || []).length;
+    const tempo = liveContext.tempo ? liveContext.tempo + " BPM" : "tempo unknown";
+    maxApi.outlet(["context", tempo + " · " + trackCount + " tracks"]);
+
+    // 2. Server-side model ↔ local MCP loop. Tool calls execute one at a time
+    // and every result goes back to the model before it decides what to do next.
+    const res = await runAgentTurn({
+      api,
+      client,
+      message,
+      liveContext,
+      conversationId,
+      onStatus: (status) => ui("working", status),
+      onTool: (kind, call, result) => {
+        if (kind === "success") {
+          api.reportEvent("action.executed", {
+            tool: call.name,
+            arguments: call.arguments,
+          });
+        } else if (kind === "error") {
+          api.reportEvent("action.failed", {
+            tool: call.name,
+            arguments: call.arguments,
+            error: result && result.error,
+          });
+        }
+      },
+    });
     conversationId = res.conversation_id;
     transcript("tembro", res.reply);
-
-    // 3. Guarded local execution + exact readback.
-    const plan = res.actions || [];
-    if (plan.length === 0) {
-      ui("success", "done (no Live changes) · credits: " + res.credits_remaining);
-      return;
-    }
-    ui("working", "applying " + plan.length + " change(s) in Live…");
-    const outcome = await executePlan(plan, bridge, {
-      onEvent: (kind, payload) => api.reportEvent(kind, payload),
-    });
-    if (outcome.ok) {
-      ui("success", "done · verified in Live · credits: " + res.credits_remaining);
-    } else {
-      const e = outcome.error;
-      ui(
-        "error",
-        "stopped at step " + (e.index + 1) + " (" + e.op + ", " + e.stage + "): " + e.message,
-      );
-      transcript("tembro", "⚠ " + e.message);
-    }
+    maxApi.outlet(["credits", res.credits_remaining]);
+    ui("success", "done · verified in Live · credits: " + res.credits_remaining);
   } catch (err) {
     ui("error", err.message);
     api.reportEvent("client.error", { message: err.message });
@@ -138,6 +149,33 @@ maxApi.addHandler("chat", async (...words) => {
 });
 
 maxApi.addHandler("status", reportAuth);
+
+maxApi.addHandler("ui_ready", async () => {
+  reportAuth();
+  if (api.signedIn) {
+    try {
+      const balance = await api.credits();
+      if (balance !== null) maxApi.outlet(["credits", balance]);
+    } catch {
+      /* the normal status line already describes the session */
+    }
+  }
+  try {
+    const latest = await api.version();
+    if (latest && latest.version !== DEVICE_VERSION && latest.download_url) {
+      updateUrl = latest.download_url;
+      maxApi.outlet(["update", latest.version]);
+    }
+  } catch {
+    /* update checks never block music-making */
+  }
+});
+
+maxApi.addHandler("open_update", () => {
+  if (!updateUrl || !/^https:\/\//.test(updateUrl)) return;
+  const child = spawn("open", [updateUrl], { detached: true, stdio: "ignore" });
+  child.unref();
+});
 
 reportAuth();
 maxApi.post("Tembro ready · api=" + config.apiBase);

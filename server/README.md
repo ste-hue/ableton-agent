@@ -11,31 +11,29 @@ Worker landing page -> free GitHub download -> email + beta access code
                                           |
                                           v
 Ableton Live -> Max for Live chat -> Cloudflare Worker -> Cloudflare D1
-                                      |                    auth + credits
-                                      v
-                                  model API
-                                      |
-                                      v
-               validated action plan -> local LOM executor -> Ableton Live
+                   ^                  |                    auth + credits
+                   |                  v
+              local MCP tools <-> OpenAI Responses agent loop
 ```
 
-The backend never connects directly to Ableton. It returns a zod-validated
-action plan; execution and readback remain on the customer's machine.
+The backend never connects directly to Ableton. It returns allowlisted MCP tool
+calls; execution and readback remain on the customer's machine. Tool results go
+back to the same model response until the musical request is complete.
 
 ## Customer journey
 
 1. The user opens the public product URL and downloads the free beta.
-2. The user installs the bundle, drops Tembro into a Live Set, and enters an
+2. The user opens the DMG, runs the one-click installer, drops Tembro into a Live Set, and enters an
    email plus the shared beta access code once.
 3. `POST /v0/auth/license` verifies the access code, grants the configured beta
    credits once per email, and returns a 30-day bearer session.
 4. When payments are enabled, the same endpoint validates a Lemon Squeezy
    license instead; no device protocol change is required.
-5. Each chat request has a client-generated UUID. The API reserves one credit
-   before calling the model, never charges a retry twice, and refunds the credit
-   if the provider or response validation fails.
-6. The device shows the reply, executes the validated action plan locally, and
-   reports the verified Live readback or the exact failed step.
+5. Each user turn has a client-generated UUID. The API reserves one credit at
+   agent start, never charges the tool-result continuations, and refunds the
+   credit if the provider fails.
+6. The device executes tool calls serially through the local MCP bridge, returns
+   bounded results to the model, and shows the final verified reply in chat.
 
 ## Credit model for V0
 
@@ -46,8 +44,8 @@ model's input/output/total token counts are logged with each completed request,
 so the commercial allowance can be tuned from real usage without exposing the
 vendor API key or changing the customer protocol.
 
-V0 uses `gpt-5.6-luna` with low reasoning effort through OpenAI's Chat
-Completions endpoint. A sensible launch baseline is 500 turns/month, then
+V0.1.1 uses `gpt-5.6-luna` with medium reasoning effort through OpenAI's
+Responses endpoint. A sensible launch baseline is 500 turns/month, then
 review p50/p95 token usage before
 adding a higher-cost “deep” mode. The server currently caps model output at
 2,000 tokens and sends at most 30 stored messages.
@@ -67,13 +65,14 @@ when it is absent.
 | `POST /v0/auth/license` | no | activate a beta access code or Lemon Squeezy license |
 | `POST /v0/webhooks/lemonsqueezy` | HMAC | grant subscription credits exactly once per invoice |
 | `GET /v0/credits` | bearer | current balance |
-| `POST /v0/chat` | bearer | chat + Live context -> reply and validated LOM action plan |
+| `POST /v0/agent` | bearer | start/continue the distributed Responses ↔ local MCP loop |
+| `POST /v0/chat` | bearer | legacy v0.1.0 JSON planner compatibility |
 | `POST /v0/events` | bearer | client action/readback/error telemetry |
+| `GET /v0/version` | no | current app version, download URL, and update availability |
 
-Every client chat payload includes `protocol_version: "0.1"`. The action surface
-is defined in `src/types.ts`: `set_tempo`, `create_midi_track`, `load_device`,
-`create_clip`, `replace_notes`, `fire_clip`, `fire_scene`, `stop_all`, and
-`undo`. Invalid model output never reaches Live.
+The current agent protocol is `0.2`. The server filters every MCP schema against
+an explicit allowlist; arbitrary code, evaluation, batch execution, and
+self-modifying Max tools never reach the model.
 
 ## Local development
 
@@ -128,7 +127,7 @@ This is optional during the free beta and can be completed later without a
 client update.
 
 1. Create one subscription product and its paid variant.
-2. Enable license keys, choose an activation limit, and attach the `.amxd` as a
+2. Enable license keys, choose an activation limit, and attach the versioned `.dmg` as a
    downloadable file.
 3. Use the hosted checkout/product URL as the public buy link. A custom store
    domain can be added later without changing the API.
@@ -159,12 +158,10 @@ After deploy, verify `/v0/health` on `gettembro.com`. When payments are enabled,
 use `https://gettembro.com/v0/webhooks/lemonsqueezy` as the Lemon Squeezy
 webhook URL.
 
-## Still required for the sellable package
+## Still required after the beta release
 
-- Visual QA and polish for the Max for Live login/chat window, including a
-  multi-message transcript rather than the compact V0 last-message display.
-- Signed `.amxd`/zip release, install guide, privacy terms, refund policy, and
-  support contact.
+- Developer ID signing and Apple notarization for warning-free installation.
+- Privacy terms, refund policy, and public support contact.
 - Test-mode purchase, clean-Mac install, expired-key, zero-credit, offline, and
   model-timeout acceptance tests.
 

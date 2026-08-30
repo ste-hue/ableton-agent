@@ -3,7 +3,12 @@
 import { createServer } from "node:http";
 import { createApp } from "./app.js";
 import { MemoryStore } from "./store.js";
-import { HttpChatProvider, StubProvider } from "./llm.js";
+import {
+  HttpChatProvider,
+  HttpResponsesProvider,
+  StubAgentProvider,
+  StubProvider,
+} from "./llm.js";
 
 const store = new MemoryStore();
 const llm =
@@ -14,8 +19,22 @@ const llm =
         process.env.LLM_MODEL,
       )
     : new StubProvider();
+const agent =
+  process.env.LLM_API_KEY && process.env.LLM_RESPONSES_ENDPOINT && process.env.LLM_MODEL
+    ? new HttpResponsesProvider(
+        process.env.LLM_RESPONSES_ENDPOINT,
+        process.env.LLM_API_KEY,
+        process.env.LLM_MODEL,
+      )
+    : new StubAgentProvider();
 
-const app = createApp({ store, llm, allowDevSignin: true });
+const app = createApp({
+  store,
+  llm,
+  agent,
+  agentTokenSecret: process.env.AGENT_TOKEN_SECRET || "local-agent-token-secret",
+  allowDevSignin: true,
+});
 
 const port = Number(process.env.PORT ?? 8787);
 createServer(async (req, res) => {

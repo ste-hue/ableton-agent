@@ -2,7 +2,7 @@
   "name": "tembro-server",
   "version": "0.0.1",
   "private": true,
-  "description": "Tembro V0 backend: auth, chat, LOM action plans, credits, logging",
+  "description": "Tembro backend: auth, agentic MCP chat, credits, billing, and logging",
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
