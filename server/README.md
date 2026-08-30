@@ -80,5 +80,6 @@ production sign-in, streaming responses.
 - [ ] Postgres `Store` implementation + migration runner
 - [ ] Lemon Squeezy webhook → credit grants
 - [ ] Streaming chat responses
-- [ ] M4L device: chat UI (jweb) + local action executor over the MCP/LOM bridge
+- [x] M4L device: chat UI + local action executor over the MCP/LOM bridge
+      (`../devices/Tembro/` — run path in `../docs/tembro-v0-run.md`)
 - [ ] Deploy pipeline (Workers) + Cloud Logging/error reporting
