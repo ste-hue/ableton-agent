@@ -12,8 +12,9 @@ Tembro.amxd
   → the device reports success or a useful failure
 ```
 
-The UI is plain by design: a transcript line, a text input, a send button, a
-sign-in message, and a status line showing `⏳ working / ✓ success / ⚠ error`.
+The UI is intentionally compact: a transcript, chat input, send button,
+purchase-email and license-key fields, an activate button, and a status line
+showing `⏳ working / ✓ success / ⚠ error`.
 
 ## Layout
 
@@ -21,7 +22,7 @@ sign-in message, and a status line showing `⏳ working / ✓ success / ⚠ erro
 | --- | --- |
 | `Tembro.maxpat` | Device patch source. Open in Max (from a Max MIDI Effect on a MIDI track) and **save as `Tembro.amxd`** — see run doc. |
 | `code/tembro_main.js` | `node.script` entry: UI wiring, chat loop, state machine. |
-| `code/api.js` | Backend client (`/v0/auth/dev-signin`, `/v0/chat`, `/v0/events`). Session token persisted at `~/.tembro/session.json`. **No provider API key ever lives in the device.** |
+| `code/api.js` | Backend client (`/v0/auth/license`, `/v0/chat`, `/v0/events`). Session token and Lemon Squeezy instance ID persist at `~/.tembro/session.json`. **Neither the raw license key nor the provider API key is stored in the device.** |
 | `code/context.js` | Live context adapter — read-only, immediately before each request. |
 | `code/executor.js` | Local action executor: sequential, one call in flight, preflight, `expected_set_signature` guard, stop on first failure, outcomes → `/v0/events`. |
 | `code/readback.js` | Exact clip/note comparison (pitch, start, duration, velocity, mute, probability, velocity_deviation). |
@@ -43,7 +44,8 @@ Env overrides: `TEMBRO_API_BASE`, `TEMBRO_MCP_COMMAND`.
 
 ## Device messages
 
-- `signin <email>` — dev sign-in (server started with dev-signin enabled); token persisted locally.
+- `license <purchase-email> <license-key>` — activate or validate the Lemon Squeezy license; the session persists locally.
+- `signin <email>` — local development only (server started with dev-signin enabled).
 - `chat <text…>` — the loop above. The input box + send button emit this.
 - `status` — re-report connection/auth state.
 

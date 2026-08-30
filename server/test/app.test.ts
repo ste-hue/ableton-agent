@@ -4,7 +4,12 @@ import { createHmac } from "node:crypto";
 import { createApp } from "../src/app.js";
 import type { AppConfig } from "../src/app.js";
 import { MemoryStore } from "../src/store.js";
-import { StubProvider, parseLlmOutput } from "../src/llm.js";
+import {
+  HttpChatProvider,
+  StubProvider,
+  SYSTEM_PROMPT,
+  parseLlmOutput,
+} from "../src/llm.js";
 import type { LlmProvider } from "../src/llm.js";
 import type { LicenseProvider } from "../src/billing.js";
 import type { Message } from "../src/types.js";
@@ -124,6 +129,45 @@ test("invalid LLM action plans are rejected before reaching the client", () => {
     JSON.stringify({ reply: "ok", actions: [{ op: "stop_all" }] }),
   );
   assert.equal(ok.actions.length, 1);
+});
+
+test("system prompt converts non-quarter-note meters to Ableton beats", () => {
+  assert.match(SYSTEM_PROMPT, /N x numerator x\s*\(4 \/ denominator\)/);
+  assert.match(SYSTEM_PROMPT, /4 bars in 6\/8 = 12/);
+});
+
+test("OpenAI V0 provider uses Luna with bounded low-effort JSON output", async () => {
+  let requestBody: Record<string, unknown> = {};
+  const fakeFetch = (async (_input: unknown, init?: RequestInit) => {
+    requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return new Response(
+      JSON.stringify({
+        choices: [{ message: { content: '{"reply":"ok","actions":[]}' } }],
+        usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 },
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  }) as typeof fetch;
+  const provider = new HttpChatProvider(
+    "https://api.openai.com/v1/chat/completions",
+    "test-key",
+    "gpt-5.6-luna",
+    fakeFetch,
+  );
+  const result = await provider.complete([{ role: "user", content: "make a beat" }]);
+  assert.equal(result.reply, "ok");
+  assert.equal(requestBody.model, "gpt-5.6-luna");
+  assert.equal(requestBody.reasoning_effort, "low");
+  assert.equal(requestBody.max_completion_tokens, 2_000);
+  assert.deepEqual(requestBody.response_format, { type: "json_object" });
+});
+
+test("memory store rejects appending to an unknown conversation", async () => {
+  const store = new MemoryStore();
+  await assert.rejects(
+    store.appendMessage("missing", { role: "user", content: "hello" }),
+    /conversation_not_found/,
+  );
 });
 
 test("client events are logged with the user id", async () => {

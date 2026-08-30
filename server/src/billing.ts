@@ -89,8 +89,10 @@ export class LemonSqueezyLicenseProvider implements LicenseProvider {
 export function verifyLemonSignature(rawBody: string, signature: string, secret: string): boolean {
   if (!rawBody || !signature || !secret) return false;
   const expected = Buffer.from(createHmac("sha256", secret).update(rawBody).digest("hex"));
-  const received = Buffer.from(signature);
-  return expected.length === received.length && timingSafeEqual(expected, received);
+  const normalized = signature.padEnd(expected.length, "0").slice(0, expected.length);
+  const received = Buffer.from(normalized);
+  const same = timingSafeEqual(expected, received);
+  return same && signature.length === expected.length;
 }
 
 function integer(value: unknown): number | undefined {

@@ -104,3 +104,22 @@ test("extended note fields round-trip via the update pass", async () => {
   assert.equal(clip.notes[0].probability, 0.7);
   assert.equal(clip.notes[0].velocity_deviation, 10);
 });
+
+test("extended fields match duplicate notes by velocity without reusing note ids", async () => {
+  const notes = [
+    { pitch: 48, start: 0, duration: 1, velocity: 80, probability: 0.25 },
+    { pitch: 48, start: 0, duration: 1, velocity: 110, probability: 0.9 },
+  ];
+  const result = await executePlan(
+    [{ op: "replace_notes", track: 1, slot: 0, notes }],
+    bridge,
+    {},
+  );
+  assert.equal(result.ok, true, JSON.stringify(result.error));
+  const clip = await bridge.readClip(1, 0);
+  const quiet = clip.notes.find((note) => note.velocity === 80);
+  const loud = clip.notes.find((note) => note.velocity === 110);
+  assert.equal(quiet.probability, 0.25);
+  assert.equal(loud.probability, 0.9);
+  assert.notEqual(quiet.note_id, loud.note_id);
+});

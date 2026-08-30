@@ -59,9 +59,25 @@ function transcript(who, text) {
 }
 
 function reportAuth() {
-  ui("idle", api.signedIn ? "connected · signed in" : "not signed in — send: signin your@email");
+  ui(
+    "idle",
+    api.signedIn ? "connected · license active" : "activate with purchase email + license key",
+  );
 }
 
+maxApi.addHandler("license", async (email, licenseKey) => {
+  try {
+    if (!email || !licenseKey) throw new Error("enter purchase email and license key");
+    ui("working", "activating license…");
+    const result = await api.licenseSignin(String(email), String(licenseKey));
+    reportAuth();
+    transcript("tembro", "license active · credits: " + result.credits);
+  } catch (err) {
+    ui("error", "activation failed: " + err.message);
+  }
+});
+
+// Local development only. The production device uses the `license` handler.
 maxApi.addHandler("signin", async (email) => {
   try {
     ui("working", "signing in…");

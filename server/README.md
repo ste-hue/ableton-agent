@@ -34,8 +34,8 @@ action plan; execution and readback remain on the customer's machine.
 6. Each chat request has a client-generated UUID. The API reserves one credit
    before calling the model, never charges a retry twice, and refunds the credit
    if the provider or response validation fails.
-7. The device shows the reply and asks for confirmation before executing any
-   destructive or broad action locally.
+7. The device shows the reply, executes the validated action plan locally, and
+   reports the verified Live readback or the exact failed step.
 
 ## Credit model for V0
 
@@ -45,8 +45,9 @@ model's input/output/total token counts are logged with each completed request,
 so the commercial allowance can be tuned from real usage without exposing the
 vendor API key or changing the customer protocol.
 
-Start with one model and one subscription product. A sensible launch baseline is
-500 turns/month on a low-cost model, then review p50/p95 token usage before
+V0 uses `gpt-5.6-luna` with low reasoning effort through OpenAI's Chat
+Completions endpoint. A sensible launch baseline is 500 turns/month, then
+review p50/p95 token usage before
 adding a higher-cost “deep” mode. The server currently caps model output at
 2,000 tokens and sends at most 30 stored messages.
 
@@ -139,9 +140,8 @@ Cloudflare, and then paste that final webhook URL into Lemon Squeezy.
 
 ## Still required for the sellable package
 
-- Max for Live UI: native `textedit` input + `jweb` transcript/status view.
-- `maxurl` HTTPS client for license activation, credit balance, chat, and events.
-- Local action confirmation/execution/readback wired to the existing bridge.
+- Visual QA and polish for the Max for Live login/chat window, including a
+  multi-message transcript rather than the compact V0 last-message display.
 - Signed `.amxd`/zip release, install guide, privacy terms, refund policy, and
   support contact.
 - Test-mode purchase, clean-Mac install, expired-key, zero-credit, offline, and

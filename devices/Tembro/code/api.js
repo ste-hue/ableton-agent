@@ -7,6 +7,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const crypto = require("crypto");
 const http = require("http");
 const https = require("https");
 const { URL } = require("url");
@@ -14,18 +15,25 @@ const { URL } = require("url");
 const TOKEN_DIR = path.join(os.homedir(), ".tembro");
 const TOKEN_FILE = path.join(TOKEN_DIR, "session.json");
 
-function loadToken() {
+function loadSession(sessionFile = TOKEN_FILE) {
   try {
-    const data = JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
-    return typeof data.token === "string" ? data.token : null;
+    const data = JSON.parse(fs.readFileSync(sessionFile, "utf8"));
+    return {
+      token: typeof data.token === "string" ? data.token : null,
+      instanceId: typeof data.instance_id === "string" ? data.instance_id : null,
+    };
   } catch {
-    return null;
+    return { token: null, instanceId: null };
   }
 }
 
-function saveToken(token) {
-  fs.mkdirSync(TOKEN_DIR, { recursive: true, mode: 0o700 });
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify({ token }) + "\n", { mode: 0o600 });
+function saveSession(sessionFile, token, instanceId) {
+  fs.mkdirSync(path.dirname(sessionFile), { recursive: true, mode: 0o700 });
+  fs.writeFileSync(
+    sessionFile,
+    JSON.stringify({ token, instance_id: instanceId }) + "\n",
+    { mode: 0o600 },
+  );
 }
 
 function request(baseUrl, method, pathName, body, token) {
@@ -66,9 +74,31 @@ function request(baseUrl, method, pathName, body, token) {
 
 class TembroApi {
   /** @param {string} baseUrl e.g. https://api.tembro.ai or http://127.0.0.1:8787 (dev) */
-  constructor(baseUrl) {
+  constructor(baseUrl, sessionFile = TOKEN_FILE, requestImpl = request) {
     this.baseUrl = baseUrl;
-    this.token = loadToken();
+    this.sessionFile = sessionFile;
+    this.request = requestImpl;
+    const session = loadSession(sessionFile);
+    this.token = session.token;
+    this.instanceId = session.instanceId;
+  }
+
+  /** Activate or validate a Lemon Squeezy license and persist the session. */
+  async licenseSignin(email, licenseKey, instanceName = os.hostname()) {
+    const body = {
+      email,
+      license_key: licenseKey,
+      instance_name: instanceName || "Ableton workstation",
+    };
+    if (this.instanceId) body.instance_id = this.instanceId;
+    const res = await this.request(this.baseUrl, "POST", "/v0/auth/license", body);
+    if (res.status !== 200 || !res.json || !res.json.token || !res.json.instance_id) {
+      throw new Error("license activation failed (" + res.status + ")");
+    }
+    this.token = res.json.token;
+    this.instanceId = res.json.instance_id;
+    saveSession(this.sessionFile, this.token, this.instanceId);
+    return res.json;
   }
 
   get signedIn() {
@@ -77,22 +107,26 @@ class TembroApi {
 
   /** Dev sign-in (server must run with dev-signin enabled). Persists the token. */
   async devSignin(email) {
-    const res = await request(this.baseUrl, "POST", "/v0/auth/dev-signin", { email });
+    const res = await this.request(this.baseUrl, "POST", "/v0/auth/dev-signin", { email });
     if (res.status !== 200 || !res.json || !res.json.token) {
       throw new Error("sign-in failed (" + res.status + ")");
     }
     this.token = res.json.token;
-    saveToken(this.token);
+    saveSession(this.sessionFile, this.token, this.instanceId);
     return res.json;
   }
 
   /** POST /v0/chat → { conversation_id, reply, actions, credits_remaining } */
   async chat(message, liveContext, conversationId) {
     if (!this.token) throw new Error("not signed in");
-    const body = { message };
+    const body = {
+      protocol_version: "0.1",
+      request_id: crypto.randomUUID(),
+      message,
+    };
     if (liveContext) body.live_context = liveContext;
     if (conversationId) body.conversation_id = conversationId;
-    const res = await request(this.baseUrl, "POST", "/v0/chat", body, this.token);
+    const res = await this.request(this.baseUrl, "POST", "/v0/chat", body, this.token);
     if (res.status === 401) throw new Error("session expired — sign in again");
     if (res.status === 402) throw new Error("out of credits");
     if (res.status !== 200 || !res.json) {
@@ -105,11 +139,11 @@ class TembroApi {
   async reportEvent(kind, payload) {
     if (!this.token) return;
     try {
-      await request(this.baseUrl, "POST", "/v0/events", { kind, payload }, this.token);
+      await this.request(this.baseUrl, "POST", "/v0/events", { kind, payload }, this.token);
     } catch {
       // Telemetry must never break the user flow.
     }
   }
 }
 
-module.exports = { TembroApi, TOKEN_FILE };
+module.exports = { TembroApi, TOKEN_FILE, loadSession };

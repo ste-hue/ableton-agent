@@ -179,13 +179,15 @@ class LomBridge {
       ref: { path: clipPath },
       properties: ["name", "length", "is_midi_clip"],
     });
+    const isMidiClip = Boolean(prop(clipInfo, "is_midi_clip"));
     const result = {
       exists: true,
+      is_midi_clip: isMidiClip,
       name: prop(clipInfo, "name") !== undefined ? String(prop(clipInfo, "name")) : undefined,
       length_beats: Number(prop(clipInfo, "length")),
-      notes: [],
     };
-    if (prop(clipInfo, "is_midi_clip")) {
+    if (isMidiClip) {
+      result.notes = [];
       const rawNotes = await this.call("live_clip_notes", { ref: { path: clipPath } });
       const list = Array.isArray(rawNotes) ? rawNotes : findKey(rawNotes, "notes");
       if (Array.isArray(list)) result.notes = list.map(normalizeNote);
@@ -289,14 +291,18 @@ class LomBridge {
     if (extended.length === 0) return;
     const clip = await this.readClip(track, slot);
     const updates = [];
+    const unmatched = [...(clip.notes || [])];
     for (const n of extended) {
-      const match = (clip.notes || []).find(
+      const matchIndex = unmatched.findIndex(
         (a) =>
           a.note_id !== undefined &&
           a.pitch === n.pitch &&
           Math.abs(a.start - n.start) <= 1e-6 &&
-          Math.abs(a.duration - n.duration) <= 1e-6,
+          Math.abs(a.duration - n.duration) <= 1e-6 &&
+          a.velocity === n.velocity &&
+          (n.mute === undefined || a.mute === n.mute),
       );
+      const match = matchIndex >= 0 ? unmatched.splice(matchIndex, 1)[0] : undefined;
       if (!match) throw new Error("cannot locate written note for extended-field update");
       const u = { note_id: match.note_id };
       if (n.probability !== undefined) u.probability = n.probability;

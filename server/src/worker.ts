@@ -3,18 +3,6 @@ import { LemonSqueezyLicenseProvider } from "./billing.js";
 import { HttpChatProvider } from "./llm.js";
 import { PostgresStore } from "./postgres-store.js";
 
-export interface WorkerEnv {
-  DATABASE_URL: string;
-  LLM_ENDPOINT: string;
-  LLM_API_KEY: string;
-  LLM_MODEL: string;
-  LEMON_SQUEEZY_STORE_ID: string;
-  LEMON_SQUEEZY_PRODUCT_ID: string;
-  LEMON_SQUEEZY_WEBHOOK_SECRET: string;
-  SUBSCRIPTION_GRANT_CREDITS: string;
-  CHAT_COST_CREDITS: string;
-}
-
 function positiveInteger(value: string, name: string): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) throw new Error("invalid_env:" + name);
@@ -42,4 +30,6 @@ export default {
     });
     return app.fetch(request);
   },
+} satisfies {
+  fetch(request: Request, env: WorkerEnv): Promise<Response>;
 };

@@ -31,8 +31,9 @@ You receive the current Live Set context and the conversation. Respond with:
    fire_clip, fire_scene, stop_all, undo).
 Rules: new MIDI tracks are silent until a device is loaded — always load an
 instrument before adding notes to a new track. Notes use beats, pitches 0-127.
-Clip lengths are in beats: N bars = N x time-signature numerator beats when the
-denominator is 4 (e.g. 4 bars in 4/4 = 16 beats). When the context includes a
+Clip lengths use Ableton's quarter-note beat unit: N bars = N x numerator x
+(4 / denominator) beats (e.g. 4 bars in 4/4 = 16 beats; 4 bars in 6/8 = 12
+beats). When the context includes a
 selected clip (selection.clip with its notes), modification requests target
 that exact clip: emit replace_notes for selection.track/selection.slot and do
 NOT create a new track or clip. Preserve the clip's role and length unless
@@ -83,6 +84,7 @@ export class HttpChatProvider implements LlmProvider {
       body: JSON.stringify({
         model: this.model,
         max_completion_tokens: 2_000,
+        reasoning_effort: "low",
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },

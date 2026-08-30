@@ -32,7 +32,7 @@ async function buildLiveContext(bridge) {
 
     if (sel.track !== undefined && sel.slot !== undefined) {
       const clip = await bridge.readClip(sel.track, sel.slot);
-      if (clip && clip.exists !== false && Array.isArray(clip.notes)) {
+      if (clip && clip.exists !== false && clip.is_midi_clip === true && Array.isArray(clip.notes)) {
         selection.clip = {
           length_beats: clip.length_beats,
           notes: clip.notes,

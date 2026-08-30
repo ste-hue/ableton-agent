@@ -73,7 +73,7 @@ test("buildLiveContext includes the selected clip's notes losslessly", async () 
     async readClip(track, slot) {
       assert.equal(track, 0);
       assert.equal(slot, 0);
-      return { exists: true, name: "Bassline", length_beats: 16, notes };
+      return { exists: true, is_midi_clip: true, name: "Bassline", length_beats: 16, notes };
     },
   };
   const ctx = await buildLiveContext(bridge);
@@ -103,4 +103,26 @@ test("buildLiveContext omits selection.clip when the slot is empty", async () =>
   const ctx = await buildLiveContext(bridge);
   assert.equal(ctx.selection.clip, undefined);
   assert.equal(ctx.selection.track, 0);
+});
+
+test("buildLiveContext does not expose an audio clip as editable MIDI", async () => {
+  const bridge = {
+    async getSummary() {
+      return {
+        tempo: 120,
+        tracks: [{ index: 0, name: "Vocal", kind: "audio", devices: [] }],
+        selection: { track: 0, slot: 0 },
+      };
+    },
+    async readClip() {
+      return {
+        exists: true,
+        is_midi_clip: false,
+        name: "Vocal take",
+        length_beats: 8,
+      };
+    },
+  };
+  const ctx = await buildLiveContext(bridge);
+  assert.equal(ctx.selection.clip, undefined);
 });
