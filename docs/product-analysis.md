@@ -88,10 +88,17 @@ while Studio Pilot is closed inside its own device.
 
 ### Phase 3 — Only if Phases 1–2 get traction: subscription model
 
-- Proxy backend with vendor keys, per-user metering, billing (Stripe), usage
-  limits. A jump in complexity and responsibility (API costs, abuse, privacy of
-  musical data transiting the vendor's server) — only worth it with a real
-  demand signal.
+- Proxy backend with vendor keys, per-user metering, billing, usage limits. A
+  jump in complexity and responsibility (API costs, abuse, privacy of musical
+  data transiting the vendor's server) — only worth it with a real demand
+  signal.
+- **Billing platform: Lemon Squeezy** (decided 2026-08-30). Chosen over Stripe
+  because it acts as merchant of record: it handles EU/global VAT and sales tax,
+  invoicing, and compliance — a significant burden for a solo/indie seller that
+  Stripe leaves to the merchant. It supports subscriptions, usage-based billing,
+  and license keys (useful if the M4L device ever ships as a licensed product).
+  Trade-off: higher per-transaction fees than raw Stripe, acceptable at this
+  scale.
 
 ## Risks to watch
 
