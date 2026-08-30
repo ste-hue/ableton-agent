@@ -6,11 +6,14 @@ import type { AppConfig } from "../src/app.js";
 import { MemoryStore } from "../src/store.js";
 import {
   HttpChatProvider,
+  HttpResponsesProvider,
+  StubAgentProvider,
   StubProvider,
+  AGENT_SYSTEM_PROMPT,
   SYSTEM_PROMPT,
   parseLlmOutput,
 } from "../src/llm.js";
-import type { LlmProvider } from "../src/llm.js";
+import type { AgentProvider, LlmProvider } from "../src/llm.js";
 import type { LicenseProvider } from "../src/billing.js";
 import type { Message } from "../src/types.js";
 
@@ -19,12 +22,29 @@ function makeApp(llm?: LlmProvider, credits = 100, extra: Partial<AppConfig> = {
   const app = createApp({
     store,
     llm: llm ?? new StubProvider(),
+    agent: new StubAgentProvider(),
+    agentTokenSecret: "test-agent-token-secret",
     allowDevSignin: true,
     signupGrantCredits: credits,
     ...extra,
   });
   return { app, store };
 }
+
+const LIVE_SET_TOOL = {
+  name: "live_set",
+  description: "Set a Live property.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      ref: { type: "object" },
+      property: { type: "string" },
+      value: {},
+    },
+    required: ["ref", "property", "value"],
+    additionalProperties: false,
+  },
+};
 
 async function signin(app: ReturnType<typeof makeApp>["app"], email: string) {
   const res = await app.request("/v0/auth/dev-signin", {
@@ -99,6 +119,145 @@ test("chat requires auth", async () => {
     headers: { "content-type": "application/json" },
   });
   assert.equal(res.status, 401);
+});
+
+test("agent requires auth", async () => {
+  const { app } = makeApp();
+  const res = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "start",
+      protocol_version: "0.2",
+      message: "ciao",
+      tools: [LIVE_SET_TOOL],
+    }),
+    headers: { "content-type": "application/json" },
+  });
+  assert.equal(res.status, 401);
+});
+
+test("agent alternates model and local MCP results but charges only once", async () => {
+  let step = 0;
+  const agent: AgentProvider = {
+    async step(request) {
+      step += 1;
+      if (step === 1) {
+        assert.equal(request.tools.length, 1);
+        assert.equal(request.tools[0]?.name, "live_set");
+        return {
+          responseId: "resp-first",
+          reply: "",
+          toolCalls: [
+            {
+              call_id: "call-tempo",
+              name: "live_set",
+              arguments: { ref: { path: "live_set" }, property: "tempo", value: 126 },
+            },
+          ],
+        };
+      }
+      assert.equal(request.previousResponseId, "resp-first");
+      assert.deepEqual(request.toolOutputs, [
+        { call_id: "call-tempo", output: '{"ok":true,"tempo":126}' },
+      ]);
+      return {
+        responseId: "resp-final",
+        reply: "Tempo impostato a 126 BPM e verificato.",
+        toolCalls: [],
+      };
+    },
+  };
+  const { app } = makeApp(undefined, 2, { agent });
+  const { token } = await signin(app, "agent@example.com");
+  const started = await app.request(
+    "/v0/agent",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        kind: "start",
+        protocol_version: "0.2",
+        message: "porta il tempo a 126",
+        tools: [
+          LIVE_SET_TOOL,
+          {
+            name: "live_exec",
+            description: "must be filtered",
+            inputSchema: { type: "object", properties: {} },
+          },
+        ],
+      }),
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer " + token,
+      },
+    },
+  );
+  assert.equal(started.status, 200);
+  const first = (await started.json()) as {
+    kind: string;
+    conversation_id: string;
+    continuation_token: string;
+    credits_remaining: number;
+  };
+  assert.equal(first.kind, "tool_calls");
+  assert.equal(first.credits_remaining, 1);
+
+  const continued = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "continue",
+      protocol_version: "0.2",
+      conversation_id: first.conversation_id,
+      continuation_token: first.continuation_token,
+      tools: [LIVE_SET_TOOL],
+      tool_outputs: [{ call_id: "call-tempo", output: '{"ok":true,"tempo":126}' }],
+    }),
+    headers: {
+      "content-type": "application/json",
+      authorization: "Bearer " + token,
+    },
+  });
+  assert.equal(continued.status, 200);
+  const final = (await continued.json()) as {
+    kind: string;
+    reply: string;
+    credits_remaining: number;
+  };
+  assert.equal(final.kind, "final");
+  assert.match(final.reply, /126 BPM/);
+  assert.equal(final.credits_remaining, 1);
+});
+
+test("agent rejects a tampered continuation token", async () => {
+  const { app } = makeApp();
+  const { token } = await signin(app, "tamper@example.com");
+  const started = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "start",
+      protocol_version: "0.2",
+      message: "set tempo to 123",
+      tools: [LIVE_SET_TOOL],
+    }),
+    headers: { "content-type": "application/json", authorization: "Bearer " + token },
+  });
+  const first = (await started.json()) as {
+    conversation_id: string;
+    continuation_token: string;
+  };
+  const rejected = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "continue",
+      protocol_version: "0.2",
+      conversation_id: first.conversation_id,
+      continuation_token: first.continuation_token + "x",
+      tools: [LIVE_SET_TOOL],
+      tool_outputs: [{ call_id: "stub-call-1", output: "{}" }],
+    }),
+    headers: { "content-type": "application/json", authorization: "Bearer " + token },
+  });
+  assert.equal(rejected.status, 401);
 });
 
 test("chat charges credits and returns a plan", async () => {
@@ -198,6 +357,75 @@ test("OpenAI V0 provider uses Luna with bounded low-effort JSON output", async (
   assert.equal(requestBody.reasoning_effort, "low");
   assert.equal(requestBody.max_completion_tokens, 2_000);
   assert.deepEqual(requestBody.response_format, { type: "json_object" });
+});
+
+test("Responses provider emits MCP function calls and continues with tool output", async () => {
+  const bodies: Record<string, unknown>[] = [];
+  const fakeFetch = (async function (this: unknown, _input: unknown, init?: RequestInit) {
+    assert.equal(this, globalThis);
+    const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    bodies.push(body);
+    if (bodies.length === 1) {
+      return new Response(
+        JSON.stringify({
+          id: "resp-tool",
+          output: [
+            {
+              type: "function_call",
+              call_id: "call-1",
+              name: "live_set_summary",
+              arguments: "{}",
+            },
+          ],
+          usage: { input_tokens: 100, output_tokens: 20, total_tokens: 120 },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({
+        id: "resp-final",
+        output: [
+          {
+            type: "message",
+            content: [{ type: "output_text", text: "Fatto e verificato." }],
+          },
+        ],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  }) as typeof fetch;
+  const provider = new HttpResponsesProvider(
+    "https://api.openai.com/v1/responses",
+    "test-key",
+    "gpt-5.6-luna",
+    fakeFetch,
+  );
+  const summaryTool = {
+    name: "live_set_summary",
+    description: "Read Set summary.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  };
+  const first = await provider.step({
+    messages: [{ role: "user", content: "fammi una batteria" }],
+    tools: [summaryTool],
+  });
+  assert.equal(first.toolCalls[0]?.name, "live_set_summary");
+  assert.deepEqual(bodies[0]?.reasoning, { effort: "medium" });
+  assert.equal(bodies[0]?.parallel_tool_calls, false);
+  assert.match(String(bodies[0]?.instructions), /expert music-making agent/);
+  assert.match(AGENT_SYSTEM_PROMPT, /Drum Rack/);
+
+  const final = await provider.step({
+    previousResponseId: first.responseId,
+    toolOutputs: [{ call_id: "call-1", output: '{"tracks":[]}' }],
+    tools: [summaryTool],
+  });
+  assert.equal(final.reply, "Fatto e verificato.");
+  assert.equal(bodies[1]?.previous_response_id, "resp-tool");
+  assert.deepEqual(bodies[1]?.input, [
+    { type: "function_call_output", call_id: "call-1", output: '{"tracks":[]}' },
+  ]);
 });
 
 test("local stub supports a deterministic tempo smoke test", async () => {

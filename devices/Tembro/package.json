@@ -1,8 +1,8 @@
 {
   "name": "tembro-device",
-  "version": "0.1.0",
+  "version": "0.1.1-beta",
   "private": true,
-  "description": "Tembro Max for Live device: chat UI + local action executor over the MCP/LOM bridge",
+  "description": "Tembro Max for Live device: floating agent chat over the local MCP/LOM bridge",
   "scripts": {
     "test": "node --test test/*.test.js"
   }

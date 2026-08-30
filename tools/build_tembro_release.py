@@ -23,6 +23,10 @@ REPO = Path(__file__).resolve().parents[1]
 SOURCE_PATCH = REPO / "devices" / "Tembro" / "Tembro.maxpat"
 CODE_DIR = REPO / "devices" / "Tembro" / "code"
 INSTALL_GUIDE = REPO / "devices" / "Tembro" / "INSTALL.md"
+UI_ASSETS = [
+    REPO / "devices" / "Tembro" / "tembro_ui.html",
+    REPO / "devices" / "Tembro" / "tembro_window.js",
+]
 
 
 def release_patch() -> dict:
@@ -47,7 +51,21 @@ def release_patch() -> dict:
             "patcherrelativepath": ".",
             "type": "TEXT",
             "implicit": 1,
-        }
+        },
+        {
+            "name": "tembro_ui.html",
+            "bootpath": ".",
+            "patcherrelativepath": ".",
+            "type": "TEXT",
+            "implicit": 1,
+        },
+        {
+            "name": "tembro_window.js",
+            "bootpath": ".",
+            "patcherrelativepath": ".",
+            "type": "TEXT",
+            "implicit": 1,
+        },
     ]
     return patch
 
@@ -75,6 +93,8 @@ def build(output_dir: Path, zip_path: Path, api_url: str | None = None) -> None:
                 f'cfg.api_base || "{api_url}"',
             )
         (output_dir / source.name).write_text(content, encoding="utf-8")
+    for source in UI_ASSETS:
+        shutil.copy2(source, output_dir / source.name)
     guide = INSTALL_GUIDE.read_text(encoding="utf-8").replace(
         "{{TEMBRO_API_URL}}",
         api_url or "http://127.0.0.1:8787 (local development)",
@@ -91,6 +111,18 @@ def build(output_dir: Path, zip_path: Path, api_url: str | None = None) -> None:
     )
     if node_box.get("text") != "node.script tembro_main.js @autostart 0 @watch 0":
         raise RuntimeError("release AMXD contains an unexpected node.script path")
+    chat_box = next(
+        item["box"]
+        for item in embedded["patcher"]["boxes"]
+        if item["box"].get("id") == "obj-chat-patcher"
+    )
+    web_box = next(
+        item["box"]
+        for item in chat_box["patcher"]["boxes"]
+        if item["box"].get("id") == "chat-web"
+    )
+    if web_box.get("url") != "file://tembro_ui.html":
+        raise RuntimeError("release AMXD contains an unexpected chat UI path")
 
     zip_path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:

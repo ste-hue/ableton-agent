@@ -20,15 +20,24 @@
   ],
   "vars": {
     "LLM_ENDPOINT": "https://api.openai.com/v1/chat/completions",
+    "LLM_RESPONSES_ENDPOINT": "https://api.openai.com/v1/responses",
     "LLM_MODEL": "gpt-5.6-luna",
+    "APP_VERSION": "0.1.1-beta",
     "SUBSCRIPTION_GRANT_CREDITS": "500",
     "CHAT_COST_CREDITS": "1",
     "BETA_GRANT_CREDITS": "100",
     "CHECKOUT_URL": "",
-    "DOWNLOAD_URL": "https://github.com/ste-hue/ableton-agent/releases/download/v0.1.0-beta/Tembro-v0-mac.zip",
+    "DOWNLOAD_URL": "https://github.com/ste-hue/ableton-agent/releases/download/v0.1.1-beta/Tembro-0.1.1-beta.dmg",
     "SUPPORT_EMAIL": ""
   },
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "logs": {
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
   }
 }

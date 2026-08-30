@@ -1,7 +1,7 @@
 import { createApp } from "./app.js";
 import { LemonSqueezyLicenseProvider } from "./billing.js";
 import { D1Store } from "./d1-store.js";
-import { HttpChatProvider } from "./llm.js";
+import { HttpChatProvider, HttpResponsesProvider } from "./llm.js";
 import { PostgresStore } from "./postgres-store.js";
 
 function positiveInteger(value: string, name: string): number {
@@ -20,6 +20,12 @@ export default {
     const app = createApp({
       store,
       llm: new HttpChatProvider(env.LLM_ENDPOINT, env.LLM_API_KEY, env.LLM_MODEL),
+      agent: new HttpResponsesProvider(
+        env.LLM_RESPONSES_ENDPOINT,
+        env.LLM_API_KEY,
+        env.LLM_MODEL,
+      ),
+      agentTokenSecret: env.AGENT_TOKEN_SECRET || env.LLM_API_KEY,
       licenseProvider: new LemonSqueezyLicenseProvider(),
       lemonStoreId: optionalPositiveInteger(env.LEMON_SQUEEZY_STORE_ID, "LEMON_SQUEEZY_STORE_ID"),
       lemonProductId: optionalPositiveInteger(
@@ -37,6 +43,7 @@ export default {
       supportEmail: env.SUPPORT_EMAIL || undefined,
       betaAccessCode: env.BETA_ACCESS_CODE || undefined,
       betaGrantCredits: optionalPositiveInteger(env.BETA_GRANT_CREDITS, "BETA_GRANT_CREDITS"),
+      appVersion: env.APP_VERSION,
     });
     return app.fetch(request);
   },

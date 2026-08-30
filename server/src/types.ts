@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
-// LOM action surface (V0)
+// Legacy LOM action surface (v0.1.0 compatibility)
 //
-// The backend never talks to Ableton. It returns an *action plan*; the M4L
+// The backend never talks to Ableton. This older endpoint returns an action plan; the M4L
 // device executes each action locally through the MCP/LOM bridge, sequentially,
 // signature-guarded, with readback — then reports outcomes via /v0/events.
 // The surface mirrors verified capabilities in docs/lom-capability-map.md.
@@ -120,6 +120,70 @@ export interface ChatResponse {
   conversation_id: string;
   reply: string;
   actions: ActionPlan;
+  credits_remaining: number;
+}
+
+// ---------------------------------------------------------------------------
+// Agent protocol (V0.2)
+//
+// The model runs on Tembro's server, while MCP tools run on the customer's
+// machine next to Ableton. A turn therefore alternates between model steps and
+// local tool results until the model emits a final reply.
+// ---------------------------------------------------------------------------
+
+export const McpToolSchema = z.object({
+  name: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
+  description: z.string().max(2000).default(""),
+  inputSchema: z
+    .record(z.unknown())
+    .refine((value) => value.type === "object", "MCP inputSchema must be an object schema"),
+});
+export type McpTool = z.infer<typeof McpToolSchema>;
+
+export const AgentToolOutputSchema = z.object({
+  call_id: z.string().min(1).max(256),
+  output: z.string().max(100_000),
+});
+export type AgentToolOutput = z.infer<typeof AgentToolOutputSchema>;
+
+export const AgentStartRequestSchema = z.object({
+  kind: z.literal("start"),
+  protocol_version: z.literal("0.2"),
+  request_id: z.string().uuid().optional(),
+  conversation_id: z.string().uuid().optional(),
+  message: z.string().min(1).max(4000),
+  live_context: LiveContextSchema.optional(),
+  tools: z.array(McpToolSchema).min(1).max(40),
+});
+
+export const AgentContinueRequestSchema = z.object({
+  kind: z.literal("continue"),
+  protocol_version: z.literal("0.2"),
+  conversation_id: z.string().uuid(),
+  continuation_token: z.string().min(20).max(16_000),
+  tools: z.array(McpToolSchema).min(1).max(40),
+  tool_outputs: z.array(AgentToolOutputSchema).min(1).max(8),
+});
+
+export const AgentRequestSchema = z.discriminatedUnion("kind", [
+  AgentStartRequestSchema,
+  AgentContinueRequestSchema,
+]);
+export type AgentRequest = z.infer<typeof AgentRequestSchema>;
+
+export interface AgentToolCall {
+  call_id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface AgentStepResponse {
+  protocol_version: "0.2";
+  kind: "tool_calls" | "final";
+  conversation_id: string;
+  reply: string;
+  tool_calls: AgentToolCall[];
+  continuation_token?: string;
   credits_remaining: number;
 }
 

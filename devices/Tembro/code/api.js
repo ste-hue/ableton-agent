@@ -135,6 +135,73 @@ class TembroApi {
     return res.json;
   }
 
+  /** Start one V0.2 agent turn. The server charges exactly once here. */
+  async agentStart(message, liveContext, tools, conversationId) {
+    if (!this.token) throw new Error("not signed in");
+    const body = {
+      kind: "start",
+      protocol_version: "0.2",
+      request_id: crypto.randomUUID(),
+      message,
+      tools,
+    };
+    if (liveContext) body.live_context = liveContext;
+    if (conversationId) body.conversation_id = conversationId;
+    const res = await this.request(this.baseUrl, "POST", "/v0/agent", body, this.token);
+    return this._agentResponse(res);
+  }
+
+  /** Continue a charged turn after executing the requested MCP tools locally. */
+  async agentContinue(continuationToken, conversationId, tools, toolOutputs) {
+    if (!this.token) throw new Error("not signed in");
+    const res = await this.request(
+      this.baseUrl,
+      "POST",
+      "/v0/agent",
+      {
+        kind: "continue",
+        protocol_version: "0.2",
+        continuation_token: continuationToken,
+        conversation_id: conversationId,
+        tools,
+        tool_outputs: toolOutputs,
+      },
+      this.token,
+    );
+    return this._agentResponse(res);
+  }
+
+  _agentResponse(res) {
+    if (res.status === 401) throw new Error("session or agent continuation expired");
+    if (res.status === 402) throw new Error("out of credits");
+    if (res.status === 422 && res.json && res.json.error === "agent_step_limit") {
+      throw new Error("agent stopped after too many Live steps");
+    }
+    if (res.status !== 200 || !res.json) {
+      const detail = res.json && res.json.error ? ": " + res.json.error : "";
+      throw new Error("agent failed (" + res.status + ")" + detail);
+    }
+    return res.json;
+  }
+
+  async credits() {
+    if (!this.token) return null;
+    const res = await this.request(this.baseUrl, "GET", "/v0/credits", undefined, this.token);
+    if (res.status === 401) return null;
+    if (res.status !== 200 || !res.json || typeof res.json.credits !== "number") {
+      throw new Error("could not read credits");
+    }
+    return res.json.credits;
+  }
+
+  async version() {
+    const res = await this.request(this.baseUrl, "GET", "/v0/version");
+    if (res.status !== 200 || !res.json || typeof res.json.version !== "string") {
+      return null;
+    }
+    return res.json;
+  }
+
   /** POST /v0/events — executor outcomes / readback mismatches / client errors. */
   async reportEvent(kind, payload) {
     if (!this.token) return;

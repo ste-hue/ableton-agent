@@ -39,6 +39,38 @@ test("paid device activates once, persists its instance, and sends protocol-safe
         },
       };
     }
+    if (pathName === "/v0/agent") {
+      if (body.kind === "start") {
+        return {
+          status: 200,
+          json: {
+            protocol_version: "0.2",
+            kind: "tool_calls",
+            conversation_id: "416f659c-3b43-4d00-8fad-767c3e4551ba",
+            reply: "",
+            tool_calls: [
+              { call_id: "call-1", name: "live_set_summary", arguments: {} },
+            ],
+            continuation_token: "signed-continuation-token-for-test",
+            credits_remaining: 498,
+          },
+        };
+      }
+      return {
+        status: 200,
+        json: {
+          protocol_version: "0.2",
+          kind: "final",
+          conversation_id: body.conversation_id,
+          reply: "done",
+          tool_calls: [],
+          credits_remaining: 498,
+        },
+      };
+    }
+    if (pathName === "/v0/credits") {
+      return { status: 200, json: { credits: 498 } };
+    }
     return { status: 404, json: null };
   };
   const api = new TembroApi("https://api.tembro.test", sessionFile, requestImpl);
@@ -58,10 +90,30 @@ test("paid device activates once, persists its instance, and sends protocol-safe
   assert.match(requests[1].body.request_id, /^[0-9a-f-]{36}$/);
   assert.equal(requests[1].body.live_context.tempo, 120);
 
+  const tools = [
+    {
+      name: "live_set_summary",
+      description: "summary",
+      inputSchema: { type: "object", properties: {} },
+    },
+  ];
+  const first = await api.agentStart("make a beat", { tempo: 120, tracks: [] }, tools);
+  assert.equal(first.kind, "tool_calls");
+  assert.equal(requests[2].pathName, "/v0/agent");
+  assert.equal(requests[2].body.protocol_version, "0.2");
+  const final = await api.agentContinue(
+    first.continuation_token,
+    first.conversation_id,
+    tools,
+    [{ call_id: "call-1", output: '{"ok":true}' }],
+  );
+  assert.equal(final.kind, "final");
+  assert.equal(await api.credits(), 498);
+
   const reloaded = new TembroApi("https://api.tembro.test", sessionFile, requestImpl);
   await reloaded.licenseSignin("buyer@example.com", "license-key-123", "Studio Mac");
   assert.equal(
-    requests[2].body.instance_id,
+    requests[5].body.instance_id,
     "2d473749-2037-4817-aa15-e2b44882a67c",
   );
 });
