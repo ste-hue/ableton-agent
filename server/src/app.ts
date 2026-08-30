@@ -13,6 +13,7 @@ import {
   LicenseAuthRequestSchema,
 } from "./types.js";
 import type { ChatResponse } from "./types.js";
+import { landingPage } from "./site.js";
 
 // ---------------------------------------------------------------------------
 // Tembro V0 API — one Hono app, deployable to Cloudflare Workers or Node.
@@ -39,6 +40,8 @@ export interface AppConfig {
   signupGrantCredits?: number;
   chatCostCredits?: number;
   historyLimit?: number;
+  checkoutUrl?: string;
+  supportEmail?: string;
 }
 
 type Env = { Variables: { userId: string } };
@@ -58,6 +61,8 @@ export function createApp(config: AppConfig) {
     signupGrantCredits = 100,
     chatCostCredits = 1,
     historyLimit = 30,
+    checkoutUrl,
+    supportEmail,
   } = config;
 
   const app = new Hono<Env>();
@@ -68,6 +73,13 @@ export function createApp(config: AppConfig) {
       message: error instanceof Error ? error.message : String(error),
     });
     return c.json({ error: "internal_error" }, 500);
+  });
+
+  app.get("/", (c) => {
+    c.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
+    c.header("Referrer-Policy", "strict-origin-when-cross-origin");
+    c.header("X-Content-Type-Options", "nosniff");
+    return c.html(landingPage({ checkoutUrl, supportEmail }));
   });
 
   app.get("/v0/health", (c) => c.json({ ok: true, protocol_version: "0.1" }));

@@ -54,6 +54,32 @@ test("health endpoint", async () => {
   assert.equal(res.status, 200);
 });
 
+test("landing page explains the complete customer journey", async () => {
+  const { app } = makeApp(undefined, 100, {
+    checkoutUrl: "https://tembro.lemonsqueezy.com/buy/test-product",
+    supportEmail: "support@tembro.test",
+  });
+  const res = await app.request("/");
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get("content-type") ?? "", /text\/html/);
+  assert.match(res.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
+  const body = await res.text();
+  assert.match(body, /Big ideas\.<br>Tiny clicks\./);
+  assert.match(body, /Buy/);
+  assert.match(body, /Install/);
+  assert.match(body, /Activate/);
+  assert.match(body, /Chat/);
+  assert.match(body, /https:\/\/tembro\.lemonsqueezy\.com\/buy\/test-product/);
+  assert.match(body, /Tembro credits are product units, not OpenAI tokens/);
+});
+
+test("landing page rejects unsafe checkout URLs", async () => {
+  const { app } = makeApp(undefined, 100, { checkoutUrl: "javascript:alert(1)" });
+  const body = await (await app.request("/")).text();
+  assert.doesNotMatch(body, /javascript:/);
+  assert.match(body, /Early access soon/);
+});
+
 test("chat requires auth", async () => {
   const { app } = makeApp();
   const res = await app.request("/v0/chat", {

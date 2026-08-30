@@ -27,6 +27,8 @@ export default {
         "SUBSCRIPTION_GRANT_CREDITS",
       ),
       chatCostCredits: positiveInteger(env.CHAT_COST_CREDITS, "CHAT_COST_CREDITS"),
+      checkoutUrl: env.CHECKOUT_URL,
+      supportEmail: env.SUPPORT_EMAIL,
     });
     return app.fetch(request);
   },
