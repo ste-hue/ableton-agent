@@ -1,9 +1,24 @@
 # Liveworks — product vision and v1 architecture
 
-Status: direction adopted, 2026-08-30. Supersedes the open positioning question in
+Status: north star, 2026-08-30. Supersedes the open positioning question in
 `docs/product-analysis.md` (option (b), closed consumer product, is the chosen path —
-but with a specific thesis). The architectural contract that must be written before
-any code is `docs/musical-memory.md`.
+but with a specific thesis).
+
+**Decision 2026-08-30 — V0 → V1 sequence (ship first, remember later):**
+
+- **V0 = magic.** The first commercial version does one thing exceptionally well:
+  install the Max for Live device → sign in → chat inside Ableton → the agent
+  understands the Live Set → reliably creates/modifies music through MCP/LOM.
+  Build only what is necessary around that: installation/onboarding,
+  authentication, multi-user isolation, LLM backend, MCP/LOM action surface,
+  basic usage/credit accounting, billing, error handling + observability,
+  reliable readback/verification, a clean chat UX inside Live.
+- **V1 = retention.** The musical memory layer described in
+  `docs/musical-memory.md`: it remembers what users make, keep, and reject, and
+  develops continuity/taste. **Not implemented, frozen, or optimized before V0
+  has shipped** — designed from observed behavior of real paying users.
+
+The rest of this document describes the destination, not the launch scope.
 
 ## Thesis
 
@@ -152,12 +167,10 @@ One deployment pipeline.
 Scaling posture: at 300 users almost nothing changes; at 30,000 we separate
 services/retrieval/compute; at 300,000 we will have earned interesting problems.
 
-## Why data model comes before code
+## Where the data model fits (superseded by the V0 → V1 sequence above)
 
 Infrastructure can be changed. A wrong musical representation, after millions of
-objects exist, is far more painful. Therefore the next artifact is **not code**: it
-is `docs/musical-memory.md` — the Musical Object Model specification, the full
-lifecycle (Ableton → snapshot → objects → embeddings → retrieval → LLM →
-reconstruction), ownership/export, and the 18 acceptance queries the system must resolve.
-That document is the architectural contract, before choosing schema or embedding
-model.
+objects exist, is far more painful. `docs/musical-memory.md` — the Musical Object
+Model specification, lifecycle, ownership/export, and the 18 acceptance queries —
+remains the architectural contract **for V1**. It is not deepened, frozen, or
+implemented until V0 has shipped and real users show what they want to remember.

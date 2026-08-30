@@ -1,9 +1,11 @@
 # Musical memory — architectural contract
 
-Status: draft specification, 2026-08-30. This is the contract described in
-`docs/product-vision.md`: it must be agreed before any schema, embedding model, or
-backend code is written. Grounded in the verified LOM capabilities and limits in
-`docs/lom-capability-map.md`.
+Status: **north star — post-launch (V1) retention layer. Not a launch prerequisite.**
+Decision 2026-08-30: V0 ships the base product first (see `docs/product-vision.md`,
+"V0 → V1 sequence"); no ontology, lineage, or multi-embedding retrieval is
+implemented before V0 is in users' hands. Return to this document once real usage
+shows what users actually want to remember. Grounded in the verified LOM
+capabilities and limits in `docs/lom-capability-map.md`.
 
 Guiding principle: **JSON/MIDI is canonical data. Embeddings are a derived index.**
 All embeddings can be deleted tomorrow, regenerated with a better model, and nothing
