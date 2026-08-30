@@ -61,19 +61,19 @@ function transcript(who, text) {
 function reportAuth() {
   ui(
     "idle",
-    api.signedIn ? "connected · license active" : "activate with purchase email + license key",
+    api.signedIn ? "connected · access active" : "connect with email + access code",
   );
 }
 
 maxApi.addHandler("license", async (email, licenseKey) => {
   try {
-    if (!email || !licenseKey) throw new Error("enter purchase email and license key");
-    ui("working", "activating license…");
+    if (!email || !licenseKey) throw new Error("enter email and access code");
+    ui("working", "connecting…");
     const result = await api.licenseSignin(String(email), String(licenseKey));
     reportAuth();
-    transcript("tembro", "license active · credits: " + result.credits);
+    transcript("tembro", "access active · credits: " + result.credits);
   } catch (err) {
-    ui("error", "activation failed: " + err.message);
+    ui("error", "connection failed: " + err.message);
   }
 });
 

@@ -8,4 +8,7 @@ LEMON_SQUEEZY_WEBHOOK_SECRET=replace-with-random-secret
 SUBSCRIPTION_GRANT_CREDITS=500
 CHAT_COST_CREDITS=1
 CHECKOUT_URL=https://your-store.lemonsqueezy.com/buy/replace-me
+DOWNLOAD_URL=https://github.com/ste-hue/ableton-agent/releases/download/v0.1.0-beta/Tembro-v0-mac.zip
 SUPPORT_EMAIL=support@example.com
+BETA_ACCESS_CODE=replace-with-a-long-random-code
+BETA_GRANT_CREDITS=100

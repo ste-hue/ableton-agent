@@ -41,7 +41,10 @@ export interface AppConfig {
   chatCostCredits?: number;
   historyLimit?: number;
   checkoutUrl?: string;
+  downloadUrl?: string;
   supportEmail?: string;
+  betaAccessCode?: string;
+  betaGrantCredits?: number;
 }
 
 type Env = { Variables: { userId: string } };
@@ -62,7 +65,10 @@ export function createApp(config: AppConfig) {
     chatCostCredits = 1,
     historyLimit = 30,
     checkoutUrl,
+    downloadUrl,
     supportEmail,
+    betaAccessCode,
+    betaGrantCredits = 100,
   } = config;
 
   const app = new Hono<Env>();
@@ -79,19 +85,46 @@ export function createApp(config: AppConfig) {
     c.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
     c.header("Referrer-Policy", "strict-origin-when-cross-origin");
     c.header("X-Content-Type-Options", "nosniff");
-    return c.html(landingPage({ checkoutUrl, supportEmail }));
+    return c.html(landingPage({ checkoutUrl, downloadUrl, supportEmail }));
   });
 
   app.get("/v0/health", (c) => c.json({ ok: true, protocol_version: "0.1" }));
 
-  if (licenseProvider && lemonStoreId && lemonProductId) {
+  const paidLicense =
+    licenseProvider && lemonStoreId && lemonProductId
+      ? { provider: licenseProvider, storeId: lemonStoreId, productId: lemonProductId }
+      : null;
+
+  if (paidLicense || betaAccessCode) {
     app.post("/v0/auth/license", async (c) => {
       const parsed = LicenseAuthRequestSchema.safeParse(await c.req.json().catch(() => null));
       if (!parsed.success) return c.json({ error: "invalid_request" }, 400);
       const request = parsed.data;
+
+      if (
+        betaAccessCode &&
+        hashToken(request.license_key) === hashToken(betaAccessCode)
+      ) {
+        let user = await store.getUserByEmail(request.email);
+        user ??= await store.createUser(request.email);
+        await store.addCredits(user.id, betaGrantCredits, "grant:free_beta", user.id);
+        const token = randomBytes(32).toString("hex");
+        const instanceId = request.instance_id ?? randomUUID();
+        await store.createSession(user.id, hashToken(token), new Date(Date.now() + SESSION_TTL_MS));
+        return c.json({
+          token,
+          user_id: user.id,
+          instance_id: instanceId,
+          credits: await store.creditBalance(user.id),
+          protocol_version: "0.1",
+          access_mode: "free_beta",
+        });
+      }
+
+      if (!paidLicense) return c.json({ error: "license_invalid" }, 401);
       let activation;
       try {
-        activation = await licenseProvider.activateOrValidate({
+        activation = await paidLicense.provider.activateOrValidate({
           licenseKey: request.license_key,
           instanceName: request.instance_name,
           instanceId: request.instance_id,
@@ -100,8 +133,8 @@ export function createApp(config: AppConfig) {
         return c.json({ error: "license_invalid" }, 401);
       }
       if (
-        activation.storeId !== lemonStoreId ||
-        activation.productId !== lemonProductId ||
+        activation.storeId !== paidLicense.storeId ||
+        activation.productId !== paidLicense.productId ||
         activation.customerEmail !== request.email
       ) {
         return c.json({ error: "license_product_or_email_mismatch" }, 403);

@@ -111,7 +111,7 @@
                     "patching_rect": [ 0.0, 0.0, 150.0, 20.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 8.0, 146.0, 180.0, 20.0 ],
-                    "text": "Purchase email"
+                    "text": "Email"
                 }
             },
             {
@@ -137,7 +137,7 @@
                     "patching_rect": [ 0.0, 0.0, 150.0, 20.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 196.0, 146.0, 260.0, 20.0 ],
-                    "text": "License key"
+                    "text": "License or beta access code"
                 }
             },
             {
@@ -176,7 +176,7 @@
                     "patching_rect": [ 0.0, 0.0, 150.0, 20.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 500.0, 168.0, 100.0, 20.0 ],
-                    "text": "activate"
+                    "text": "connect"
                 }
             },
             {
