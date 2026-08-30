@@ -6,7 +6,7 @@ Cloudflare Worker; the Worker validates the license, owns the AI key, and keeps
 the user's credit balance in Neon Postgres.
 
 ```text
-product page -> Lemon Squeezy checkout -> receipt + download + license key
+Worker landing page -> Lemon Squeezy checkout -> receipt + download + license key
                                                     |
                                                     v
 Ableton Live -> Max for Live chat -> Cloudflare Worker -> Neon Postgres
@@ -61,6 +61,7 @@ when it is absent.
 
 | Endpoint | Auth | Purpose |
 | --- | --- | --- |
+| `GET /` | no | public Tembro product page and Lemon Squeezy buy link |
 | `GET /v0/health` | no | liveness and protocol version |
 | `POST /v0/auth/license` | no | activate/validate Lemon Squeezy license and create session |
 | `POST /v0/webhooks/lemonsqueezy` | HMAC | grant subscription credits exactly once per invoice |
@@ -90,6 +91,19 @@ npm run dev:worker
 `.dev.vars` is ignored and must never be committed. `npm run dev` still starts
 the in-memory development server with `/v0/auth/dev-signin`; the Worker entry
 point never enables that route.
+
+## Public product page
+
+The same Hono Worker serves the public Tembro page at `/`, so V0 needs only one
+Cloudflare deployment and one custom domain. Set `CHECKOUT_URL` to the hosted
+Lemon Squeezy checkout URL and `SUPPORT_EMAIL` to the public support address.
+Until a valid HTTPS checkout URL is configured, every buy button displays
+`[ ACCESS_PENDING ]` and cannot navigate anywhere.
+
+The page deliberately uses no third-party JavaScript, fonts, tracking pixels,
+or client-side API keys. Its content-security policy blocks framing and limits
+assets to the same origin. Keep the Lemon Squeezy and OpenAI credentials in the
+Worker environment; they never belong in the HTML or Max for Live bundle.
 
 ## Neon setup
 
@@ -132,6 +146,8 @@ npx wrangler secret put LEMON_SQUEEZY_PRODUCT_ID
 npx wrangler secret put LEMON_SQUEEZY_WEBHOOK_SECRET
 npx wrangler secret put SUBSCRIPTION_GRANT_CREDITS
 npx wrangler secret put CHAT_COST_CREDITS
+npx wrangler secret put CHECKOUT_URL
+npx wrangler secret put SUPPORT_EMAIL
 npm run deploy
 ```
 

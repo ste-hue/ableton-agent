@@ -7,3 +7,5 @@ LEMON_SQUEEZY_PRODUCT_ID=12345
 LEMON_SQUEEZY_WEBHOOK_SECRET=replace-with-random-secret
 SUBSCRIPTION_GRANT_CREDITS=500
 CHAT_COST_CREDITS=1
+CHECKOUT_URL=https://your-store.lemonsqueezy.com/buy/replace-me
+SUPPORT_EMAIL=support@example.com
