@@ -350,6 +350,28 @@
             },
             {
                 "box": {
+                    "id": "obj-node-thisdevice",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "bang" ],
+                    "patching_rect": [ 370.0, 170.0, 100.0, 22.0 ],
+                    "text": "live.thisdevice"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-node-delay2",
+                    "maxclass": "newobj",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "outlettype": [ "bang" ],
+                    "patching_rect": [ 505.0, 170.0, 70.0, 22.0 ],
+                    "text": "delay 700"
+                }
+            },
+            {
+                "box": {
                     "id": "obj-node-delay",
                     "maxclass": "newobj",
                     "numinlets": 2,
@@ -606,7 +628,7 @@
                                     "numinlets": 1,
                                     "numoutlets": 0,
                                     "patching_rect": [ 545.0, 50.0, 140.0, 22.0 ],
-                                    "text": "v8 tembro_window.js"
+                                    "text": "js tembro_window.js"
                                 }
                             }
                         ],
@@ -617,6 +639,7 @@
                             { "patchline": { "source": [ "chat-route", 0 ], "destination": [ "chat-prepend-chat", 0 ] } },
                             { "patchline": { "source": [ "chat-route", 1 ], "destination": [ "chat-prepend-license", 0 ] } },
                             { "patchline": { "source": [ "chat-route", 2 ], "destination": [ "chat-ui-ready", 0 ] } },
+                            { "patchline": { "source": [ "chat-ui-ready", 0 ], "destination": [ "chat-resize-js", 0 ] } },
                             { "patchline": { "source": [ "chat-route", 3 ], "destination": [ "chat-status", 0 ] } },
                             { "patchline": { "source": [ "chat-route", 4 ], "destination": [ "chat-open-update", 0 ] } },
                             { "patchline": { "source": [ "chat-prepend-chat", 0 ], "destination": [ "chat-out", 0 ] } },
@@ -772,6 +795,18 @@
                 "patchline": {
                     "destination": [ "obj-node-delay", 0 ],
                     "source": [ "obj-node-loadbang", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-node-delay2", 0 ],
+                    "source": [ "obj-node-thisdevice", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-node-start", 0 ],
+                    "source": [ "obj-node-delay2", 0 ]
                 }
             },
             {

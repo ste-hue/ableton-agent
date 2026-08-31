@@ -285,7 +285,7 @@
           </div>
         </div>
         <div class="composer-wrap">
-          <div class="working" id="working"><span class="dots"><i></i><i></i><i></i></span><span id="workingText">thinking…</span></div>
+          <div class="working" id="working"><span class="dots"><i></i><i></i><i></i></span><span id="workingText">thinking…</span><button id="stop" title="Stop this request" style="margin-left:10px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:2px 12px;font:inherit;font-size:11px;cursor:pointer">stop</button></div>
           <div class="composer">
             <textarea id="prompt" rows="1" placeholder="Ask Tembro about this Set…"></textarea>
             <button class="send" id="send" title="Send">↑</button>
@@ -302,7 +302,7 @@
         auth: $("authView"), chat: $("chatView"), email: $("email"), access: $("access"),
         connect: $("connect"), prompt: $("prompt"), send: $("send"), messages: $("messages"),
         empty: $("empty"), status: $("status"), context: $("context"), credits: $("credits"),
-        connection: $("connection"), working: $("working"), workingText: $("workingText"), settings: $("settings"), update: $("update")
+        connection: $("connection"), working: $("working"), workingText: $("workingText"), settings: $("settings"), update: $("update"), stop: $("stop")
       };
       let connected = false;
       let busy = false;
@@ -379,6 +379,7 @@
       });
       ui.settings.addEventListener("click", () => showConnected(false));
       ui.update.addEventListener("click", () => outlet("open_update"));
+      ui.stop.addEventListener("click", () => outlet("chat", "/stop"));
 
       bind("auth", (...args) => {
         const value = args.join(" ").trim() === "connected";

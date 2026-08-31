@@ -48,7 +48,7 @@ const bridge = new LomBridge(client);
 let conversationId = null;
 let busy = false;
 let updateUrl = null;
-const DEVICE_VERSION = "0.1.1-beta";
+const DEVICE_VERSION = "0.1.2-beta";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 
@@ -94,14 +94,32 @@ maxApi.addHandler("signin", async (email) => {
   }
 });
 
+// A turn must never leave the device stuck: the user can stop it, and a
+// watchdog abandons it on its own. Soft stop aborts between steps; the hard
+// race frees the UI even if a single await hangs past every other timeout.
+let stopRequested = false;
+const TURN_SOFT_TIMEOUT_MS = 180000;
+const TURN_HARD_TIMEOUT_MS = 240000;
+
 maxApi.addHandler("chat", async (...words) => {
   const message = words.join(" ").trim();
   if (!message) return;
+  if (message === "/stop") {
+    if (busy) {
+      stopRequested = true;
+      ui("working", "stopping…");
+    }
+    return;
+  }
   if (busy) {
-    ui("working", "one request at a time — still working");
+    ui("working", "one request at a time — still working (send /stop to abort)");
     return;
   }
   busy = true;
+  stopRequested = false;
+  const watchdog = setTimeout(() => {
+    stopRequested = true;
+  }, TURN_SOFT_TIMEOUT_MS);
   transcript("you", message);
   try {
     // 1. Live context (read-only), immediately before the request.
@@ -114,12 +132,13 @@ maxApi.addHandler("chat", async (...words) => {
 
     // 2. Server-side model ↔ local MCP loop. Tool calls execute one at a time
     // and every result goes back to the model before it decides what to do next.
-    const res = await runAgentTurn({
+    const turn = runAgentTurn({
       api,
       client,
       message,
       liveContext,
       conversationId,
+      shouldStop: () => stopRequested,
       onStatus: (status) => ui("working", status),
       onTool: (kind, call, result) => {
         if (kind === "success") {
@@ -136,21 +155,86 @@ maxApi.addHandler("chat", async (...words) => {
         }
       },
     });
+    const res = await Promise.race([
+      turn,
+      new Promise((_, reject) =>
+        setTimeout(() => {
+          const err = new Error("turn abandoned after " + TURN_HARD_TIMEOUT_MS / 1000 + "s");
+          err.stopped = true;
+          reject(err);
+        }, TURN_HARD_TIMEOUT_MS),
+      ),
+    ]);
     conversationId = res.conversation_id;
     transcript("tembro", res.reply);
     maxApi.outlet(["credits", res.credits_remaining]);
-    ui("success", "done · verified in Live · credits: " + res.credits_remaining);
+    ui("success", "done · credits: " + res.credits_remaining);
   } catch (err) {
-    ui("error", err.message);
-    api.reportEvent("client.error", { message: err.message });
+    if (err && err.stopped) {
+      transcript("tembro", "stopped — ready for the next message");
+      ui("idle", "stopped · ready");
+    } else {
+      ui("error", err.message);
+      api.reportEvent("client.error", { message: err.message });
+    }
   } finally {
+    clearTimeout(watchdog);
     busy = false;
   }
 });
 
 maxApi.addHandler("status", reportAuth);
 
+// The bundled Max 9 runtime does not reliably deliver the chat subpatcher's
+// loadmess to jweb (the same defect that forced the explicit loadbang → delay
+// → script start chain for this node.script), which leaves the chat window
+// blank. Node's outlet feeds the jweb inlet directly, so re-send readfile
+// with an absolute path until the page reports ui_ready. Flattened customer
+// bundles keep tembro_ui.html next to this file; the dev tree keeps it one
+// level up.
+const UI_PAGE = [
+  path.join(__dirname, "tembro_ui.html"),
+  path.join(__dirname, "..", "tembro_ui.html"),
+].find((candidate) => fs.existsSync(candidate));
+// jweb's internal file server 404s on absolute paths, so lead with the bare
+// filename (resolved through Max's search path, which includes the device
+// folder) and keep file:// and absolute forms as fallbacks.
+const UI_LOAD_KICKS = [
+  ["readfile", "tembro_ui.html"],
+  UI_PAGE ? ["url", "file://" + UI_PAGE] : null,
+  UI_PAGE ? ["readfile", UI_PAGE] : null,
+].filter(Boolean);
+const UI_LOAD_RETRY_MS = 1500;
+const UI_LOAD_MAX_TRIES = 40;
+
+let uiLoadTimer = null;
+let uiLoadTries = 0;
+
+function stopUiLoad() {
+  if (uiLoadTimer) {
+    clearInterval(uiLoadTimer);
+    uiLoadTimer = null;
+  }
+}
+
+function startUiLoad() {
+  if (!UI_PAGE) {
+    maxApi.post("Tembro: tembro_ui.html not found next to the device");
+  }
+  const send = () => {
+    if (uiLoadTries >= UI_LOAD_MAX_TRIES) {
+      stopUiLoad();
+      return;
+    }
+    maxApi.outlet(UI_LOAD_KICKS[uiLoadTries % UI_LOAD_KICKS.length]);
+    uiLoadTries += 1;
+  };
+  uiLoadTimer = setInterval(send, UI_LOAD_RETRY_MS);
+  send();
+}
+
 maxApi.addHandler("ui_ready", async () => {
+  stopUiLoad();
   reportAuth();
   if (api.signedIn) {
     try {
@@ -178,4 +262,5 @@ maxApi.addHandler("open_update", () => {
 });
 
 reportAuth();
+startUiLoad();
 maxApi.post("Tembro ready · api=" + config.apiBase);
