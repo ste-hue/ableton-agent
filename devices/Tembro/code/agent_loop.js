@@ -82,7 +82,15 @@ async function runAgentTurn(options) {
     conversationId,
     onStatus = () => {},
     onTool = () => {},
+    shouldStop = () => false,
   } = options;
+  const ensureNotStopped = () => {
+    if (shouldStop()) {
+      const err = new Error("stopped by user");
+      err.stopped = true;
+      throw err;
+    }
+  };
   onStatus("discovering Live tools…");
   const tools = safeTools(await client.listTools());
   if (tools.length === 0) throw new Error("no safe Ableton MCP tools available");
@@ -91,11 +99,13 @@ async function runAgentTurn(options) {
   let step = await api.agentStart(message, liveContext, tools, conversationId);
   let iterations = 0;
   while (step.kind === "tool_calls") {
+    ensureNotStopped();
     iterations += 1;
     if (iterations > 24) throw new Error("agent exceeded the local step limit");
     if (!step.continuation_token) throw new Error("agent response missing continuation");
     const outputs = [];
     for (const call of step.tool_calls || []) {
+      ensureNotStopped();
       const allowed = SAFE_TOOL_NAMES.has(call.name) && tools.some((tool) => tool.name === call.name);
       if (!allowed) {
         outputs.push({

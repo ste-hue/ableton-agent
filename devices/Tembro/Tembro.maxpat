@@ -628,7 +628,7 @@
                                     "numinlets": 1,
                                     "numoutlets": 0,
                                     "patching_rect": [ 545.0, 50.0, 140.0, 22.0 ],
-                                    "text": "v8 tembro_window.js"
+                                    "text": "js tembro_window.js"
                                 }
                             }
                         ],
@@ -639,6 +639,7 @@
                             { "patchline": { "source": [ "chat-route", 0 ], "destination": [ "chat-prepend-chat", 0 ] } },
                             { "patchline": { "source": [ "chat-route", 1 ], "destination": [ "chat-prepend-license", 0 ] } },
                             { "patchline": { "source": [ "chat-route", 2 ], "destination": [ "chat-ui-ready", 0 ] } },
+                            { "patchline": { "source": [ "chat-ui-ready", 0 ], "destination": [ "chat-resize-js", 0 ] } },
                             { "patchline": { "source": [ "chat-route", 3 ], "destination": [ "chat-status", 0 ] } },
                             { "patchline": { "source": [ "chat-route", 4 ], "destination": [ "chat-open-update", 0 ] } },
                             { "patchline": { "source": [ "chat-prepend-chat", 0 ], "destination": [ "chat-out", 0 ] } },
