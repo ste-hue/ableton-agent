@@ -18,7 +18,7 @@ const { TembroApi } = require("./api.js");
 const { McpClient } = require("./mcp_client.js");
 const { LomBridge } = require("./lom_bridge.js");
 const { buildLiveContext } = require("./context.js");
-const { runAgentTurn } = require("./agent_loop.js");
+const { completionReply, runAgentTurn } = require("./agent_loop.js");
 const { spawn } = require("child_process");
 
 const maxApi = require("max-api");
@@ -48,7 +48,7 @@ const bridge = new LomBridge(client);
 let conversationId = null;
 let busy = false;
 let updateUrl = null;
-const DEVICE_VERSION = "0.1.2-beta";
+const DEVICE_VERSION = "0.1.3-beta";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 
@@ -98,8 +98,8 @@ maxApi.addHandler("signin", async (email) => {
 // watchdog abandons it on its own. Soft stop aborts between steps; the hard
 // race frees the UI even if a single await hangs past every other timeout.
 let stopRequested = false;
-const TURN_SOFT_TIMEOUT_MS = 420000;
-const TURN_HARD_TIMEOUT_MS = 480000;
+const TURN_SOFT_TIMEOUT_MS = 840000;
+const TURN_HARD_TIMEOUT_MS = 900000;
 
 maxApi.addHandler("chat", async (...words) => {
   const message = words.join(" ").trim();
@@ -140,7 +140,11 @@ maxApi.addHandler("chat", async (...words) => {
       conversationId,
       shouldStop: () => stopRequested,
       onStatus: (status) => ui("working", status),
+      onStep: (current, maximum) => {
+        maxApi.outlet(["progress", current, maximum]);
+      },
       onTool: (kind, call, result) => {
+        maxApi.outlet(["step", kind, call.call_id || "", call.name]);
         if (kind === "success") {
           api.reportEvent("action.executed", {
             tool: call.name,
@@ -166,9 +170,10 @@ maxApi.addHandler("chat", async (...words) => {
       ),
     ]);
     conversationId = res.conversation_id;
-    transcript("tembro", res.reply);
+    const finalReply = completionReply(res.reply);
+    transcript("tembro", finalReply);
     maxApi.outlet(["credits", res.credits_remaining]);
-    ui("success", "done · credits: " + res.credits_remaining);
+    ui("success", "Ho finito · credits: " + res.credits_remaining);
   } catch (err) {
     if (err && err.stopped) {
       transcript("tembro", "stopped — ready for the next message");

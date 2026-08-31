@@ -183,6 +183,20 @@
     }
     .you .bubble { border-radius: 16px 16px 5px 16px; background: #ffeaf3; }
     .who { display: block; margin-bottom: 4px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .tool-step {
+      width: min(82%, 620px);
+      margin: 0 0 8px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,.62);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .tool-step summary { cursor: pointer; color: var(--ink); }
+    .tool-step .step-detail { padding: 6px 0 1px 20px; line-height: 1.4; }
+    .tool-step.success summary { color: #397b5e; }
+    .tool-step.error summary { color: #a24c61; }
     .composer-wrap { padding: 10px clamp(12px, 3vw, 22px) 15px; }
     .working {
       display: none;
@@ -321,6 +335,7 @@
       };
       let connected = false;
       let busy = false;
+      const toolRows = new Map();
 
       // localStorage may be unavailable inside the webview; every access goes
       // through these two helpers. Credentials are remembered only after a
@@ -427,6 +442,41 @@
         ui.messages.appendChild(row);
         ui.messages.scrollTop = ui.messages.scrollHeight;
       }
+      function toolTitle(name) {
+        return String(name || "Live action")
+          .replace(/^live_/, "")
+          .replace(/^tembro_/, "")
+          .replace(/_/g, " ");
+      }
+      function updateToolStep(kind, id, name) {
+        const key = String(id || name || toolRows.size);
+        let details = toolRows.get(key);
+        if (!details) {
+          ui.empty.classList.add("hidden");
+          details = document.createElement("details");
+          details.className = "tool-step";
+          const summary = document.createElement("summary");
+          summary.textContent = "⏳ " + toolTitle(name);
+          const detail = document.createElement("div");
+          detail.className = "step-detail";
+          detail.textContent = "Tembro sta lavorando in Live…";
+          details.append(summary, detail);
+          ui.messages.appendChild(details);
+          toolRows.set(key, details);
+        }
+        const summary = details.querySelector("summary");
+        const detail = details.querySelector(".step-detail");
+        if (kind === "success") {
+          details.classList.add("success");
+          summary.textContent = "✓ " + toolTitle(name);
+          detail.textContent = "Operazione completata e restituita all’agente.";
+        } else if (kind === "error") {
+          details.classList.add("error");
+          summary.textContent = "⚠ " + toolTitle(name);
+          detail.textContent = "Operazione non riuscita; l’agente sta valutando il risultato.";
+        }
+        ui.messages.scrollTop = ui.messages.scrollHeight;
+      }
       function submit() {
         const text = ui.prompt.value.trim();
         if (!text || busy || !connected) return;
@@ -482,6 +532,17 @@
         ui.credits.textContent = value + (value === "1" ? " credit" : " credits");
       });
       bind("context", (...args) => { ui.context.textContent = args.join(" "); });
+      bind("progress", (...args) => {
+        const current = args[0] || "?";
+        const maximum = args[1] || "?";
+        setBusy(true, "passaggio " + current + "/" + maximum + " · lavoro in corso");
+      });
+      bind("step", (...args) => {
+        const kind = args.shift() || "start";
+        const id = args.shift() || "";
+        const name = args.shift() || "Live action";
+        updateToolStep(kind, id, name);
+      });
       bind("update", (...args) => {
         ui.update.textContent = "update " + args.join(" ");
         ui.update.classList.remove("hidden");
@@ -503,6 +564,8 @@
       });
       bind("reset", () => {
         ui.messages.querySelectorAll(".message").forEach((node) => node.remove());
+        ui.messages.querySelectorAll(".tool-step").forEach((node) => node.remove());
+        toolRows.clear();
         ui.empty.classList.remove("hidden");
       });
 
