@@ -116,11 +116,12 @@ test("distributed loop executes requested MCP calls sequentially and returns fin
     },
   };
   const api = {
-    async agentStart(message, context, tools, conversationId) {
+    async agentStart(message, context, tools, conversationId, skill) {
       assert.equal(message, "fammi una batteria");
       assert.equal(context.tempo, 120);
       assert.equal(tools.length, 1);
       assert.equal(conversationId, null);
+      assert.equal(skill, "beat_making");
       return {
         kind: "tool_calls",
         conversation_id: "conversation-1",
@@ -148,6 +149,7 @@ test("distributed loop executes requested MCP calls sequentially and returns fin
     api,
     client,
     message: "fammi una batteria",
+    skill: "beat_making",
     liveContext: { tempo: 120 },
     conversationId: null,
     onStatus: (status) => statuses.push(status),

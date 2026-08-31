@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { TEMBRO_SKILL_IDS } from "./skills.js";
+import type { TembroSkillId } from "./skills.js";
 
 // ---------------------------------------------------------------------------
 // Legacy LOM action surface (v0.1.0 compatibility)
@@ -110,6 +112,7 @@ export const ChatRequestSchema = z.object({
   protocol_version: z.literal("0.1"),
   conversation_id: z.string().uuid().optional(),
   message: z.string().min(1).max(4000),
+  skill: z.enum(TEMBRO_SKILL_IDS).optional(),
   live_context: LiveContextSchema.optional(),
 });
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
@@ -121,6 +124,8 @@ export interface ChatResponse {
   reply: string;
   actions: ActionPlan;
   credits_remaining: number;
+  credits_charged: number;
+  skill: TembroSkillId | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -152,6 +157,7 @@ export const AgentStartRequestSchema = z.object({
   request_id: z.string().uuid().optional(),
   conversation_id: z.string().uuid().optional(),
   message: z.string().min(1).max(4000),
+  skill: z.enum(TEMBRO_SKILL_IDS).optional(),
   live_context: LiveContextSchema.optional(),
   tools: z.array(McpToolSchema).min(1).max(40),
 });
@@ -185,6 +191,8 @@ export interface AgentStepResponse {
   tool_calls: AgentToolCall[];
   continuation_token?: string;
   credits_remaining: number;
+  credits_charged: number;
+  skill: TembroSkillId | null;
 }
 
 export const LicenseAuthRequestSchema = z.object({

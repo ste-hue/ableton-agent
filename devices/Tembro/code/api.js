@@ -128,13 +128,14 @@ class TembroApi {
   }
 
   /** POST /v0/chat → { conversation_id, reply, actions, credits_remaining } */
-  async chat(message, liveContext, conversationId) {
+  async chat(message, liveContext, conversationId, skill) {
     if (!this.token) throw new Error("not signed in");
     const body = {
       protocol_version: "0.1",
       request_id: crypto.randomUUID(),
       message,
     };
+    if (skill) body.skill = skill;
     if (liveContext) body.live_context = liveContext;
     if (conversationId) body.conversation_id = conversationId;
     const res = await this.request(this.baseUrl, "POST", "/v0/chat", body, this.token);
@@ -142,7 +143,10 @@ class TembroApi {
       this.clearSession();
       throw new Error("session expired — sign in again");
     }
-    if (res.status === 402) throw new Error("out of credits");
+    if (res.status === 402) {
+      const required = res.json && res.json.credits_required;
+      throw new Error(required ? "this needs " + required + " credits" : "out of credits");
+    }
     if (res.status !== 200 || !res.json) {
       throw new Error("chat failed (" + res.status + ")");
     }
@@ -150,7 +154,7 @@ class TembroApi {
   }
 
   /** Start one V0.2 agent turn. The server charges exactly once here. */
-  async agentStart(message, liveContext, tools, conversationId) {
+  async agentStart(message, liveContext, tools, conversationId, skill) {
     if (!this.token) throw new Error("not signed in");
     const body = {
       kind: "start",
@@ -159,6 +163,7 @@ class TembroApi {
       message,
       tools,
     };
+    if (skill) body.skill = skill;
     if (liveContext) body.live_context = liveContext;
     if (conversationId) body.conversation_id = conversationId;
     const res = await this.request(this.baseUrl, "POST", "/v0/agent", body, this.token);
@@ -190,7 +195,10 @@ class TembroApi {
       this.clearSession();
       throw new Error("session or agent continuation expired");
     }
-    if (res.status === 402) throw new Error("out of credits");
+    if (res.status === 402) {
+      const required = res.json && res.json.credits_required;
+      throw new Error(required ? "this needs " + required + " credits" : "out of credits");
+    }
     if (res.status === 422 && res.json && res.json.error === "agent_step_limit") {
       throw new Error("agent stopped after too many Live steps");
     }
@@ -212,6 +220,14 @@ class TembroApi {
       throw new Error("could not read credits");
     }
     return res.json.credits;
+  }
+
+  async skills() {
+    const res = await this.request(this.baseUrl, "GET", "/v0/skills");
+    if (res.status !== 200 || !res.json || !Array.isArray(res.json.skills)) {
+      return null;
+    }
+    return res.json.skills;
   }
 
   async version() {

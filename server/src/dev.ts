@@ -34,6 +34,9 @@ const app = createApp({
   agent,
   agentTokenSecret: process.env.AGENT_TOKEN_SECRET || "local-agent-token-secret",
   allowDevSignin: true,
+  checkoutUrl: process.env.CHECKOUT_URL,
+  downloadUrl: process.env.DOWNLOAD_URL,
+  supportEmail: process.env.SUPPORT_EMAIL,
 });
 
 const port = Number(process.env.PORT ?? 8787);

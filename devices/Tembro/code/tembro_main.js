@@ -61,6 +61,26 @@ function transcript(who, text) {
   maxApi.outlet(["transcript", who, String(text)]);
 }
 
+function compactToolArgs(args) {
+  const compact = {};
+  for (const [key, value] of Object.entries(args || {})) {
+    if (Array.isArray(value)) {
+      compact[key] = value.length > 6 ? `[${value.length} items]` : value;
+    } else if (value && typeof value === "object") {
+      const encoded = JSON.stringify(value);
+      compact[key] = encoded.length > 180 ? encoded.slice(0, 177) + "…" : value;
+    } else if (typeof value === "string" && value.length > 160) {
+      compact[key] = value.slice(0, 157) + "…";
+    } else {
+      compact[key] = value;
+    }
+  }
+  const encoded = JSON.stringify(compact);
+  return encoded.length > 700
+    ? JSON.stringify({ preview: encoded.slice(0, 660) + "…" })
+    : encoded;
+}
+
 function reportAuth() {
   maxApi.outlet(["auth", api.signedIn ? "connected" : "disconnected"]);
   ui(
@@ -101,8 +121,8 @@ let stopRequested = false;
 const TURN_SOFT_TIMEOUT_MS = 840000;
 const TURN_HARD_TIMEOUT_MS = 900000;
 
-maxApi.addHandler("chat", async (...words) => {
-  const message = words.join(" ").trim();
+async function handleChat(message, skill = null) {
+  message = String(message || "").trim();
   if (!message) return;
   if (message === "/stop") {
     if (busy) {
@@ -136,6 +156,7 @@ maxApi.addHandler("chat", async (...words) => {
       api,
       client,
       message,
+      skill,
       liveContext,
       conversationId,
       shouldStop: () => stopRequested,
@@ -144,7 +165,13 @@ maxApi.addHandler("chat", async (...words) => {
         maxApi.outlet(["progress", current, maximum]);
       },
       onTool: (kind, call, result) => {
-        maxApi.outlet(["step", kind, call.call_id || "", call.name]);
+        maxApi.outlet([
+          "step",
+          kind,
+          call.call_id || "",
+          call.name,
+          compactToolArgs(call.arguments),
+        ]);
         if (kind === "success") {
           api.reportEvent("action.executed", {
             tool: call.name,
@@ -173,7 +200,11 @@ maxApi.addHandler("chat", async (...words) => {
     const finalReply = completionReply(res.reply);
     transcript("tembro", finalReply);
     maxApi.outlet(["credits", res.credits_remaining]);
-    ui("success", "Ho finito · credits: " + res.credits_remaining);
+    maxApi.outlet(["charge", res.credits_charged || 1]);
+    ui(
+      "success",
+      "Ho finito · " + (res.credits_charged || 1) + " credits · " + res.credits_remaining + " left",
+    );
   } catch (err) {
     if (err && err.stopped) {
       transcript("tembro", "stopped — ready for the next message");
@@ -189,6 +220,14 @@ maxApi.addHandler("chat", async (...words) => {
     clearTimeout(watchdog);
     busy = false;
   }
+}
+
+maxApi.addHandler("chat", async (...words) => {
+  await handleChat(words.join(" "));
+});
+
+maxApi.addHandler("chat_skill", async (skill, ...words) => {
+  await handleChat(words.join(" "), String(skill || "") || null);
 });
 
 maxApi.addHandler("status", reportAuth);
@@ -253,6 +292,12 @@ maxApi.addHandler("ui_ready", async () => {
     }
   }
   try {
+    const skills = await api.skills();
+    if (skills) maxApi.outlet(["skills", JSON.stringify(skills)]);
+  } catch {
+    /* bundled skill buttons remain available if the server cannot be reached */
+  }
+  try {
     const latest = await api.version();
     if (latest && latest.version !== DEVICE_VERSION && latest.download_url) {
       updateUrl = latest.download_url;
@@ -267,6 +312,19 @@ maxApi.addHandler("open_update", () => {
   if (!updateUrl || !/^https:\/\//.test(updateUrl)) return;
   const child = spawn("open", [updateUrl], { detached: true, stdio: "ignore" });
   child.unref();
+});
+
+const DOC_HOSTS = new Set(["docs.cycling74.com", "www.ableton.com"]);
+
+maxApi.addHandler("open_doc", (rawUrl) => {
+  try {
+    const url = new URL(String(rawUrl || ""));
+    if (url.protocol !== "https:" || !DOC_HOSTS.has(url.hostname)) return;
+    const child = spawn("open", [url.toString()], { detached: true, stdio: "ignore" });
+    child.unref();
+  } catch {
+    /* only fixed official documentation URLs are accepted */
+  }
 });
 
 reportAuth();

@@ -29,10 +29,10 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func buildWindow() {
-        let ink = NSColor(calibratedRed: 0.188, green: 0.169, blue: 0.224, alpha: 1)
-        let muted = NSColor(calibratedRed: 0.506, green: 0.467, blue: 0.561, alpha: 1)
-        let lavender = NSColor(calibratedRed: 0.624, green: 0.557, blue: 0.910, alpha: 1)
-        let cream = NSColor(calibratedRed: 1.0, green: 0.98, blue: 0.945, alpha: 1)
+        let ink = NSColor(calibratedRed: 0.106, green: 0.090, blue: 0.125, alpha: 1)
+        let muted = NSColor(calibratedRed: 0.345, green: 0.318, blue: 0.373, alpha: 1)
+        let rust = NSColor(calibratedRed: 0.647, green: 0.396, blue: 0.329, alpha: 1)
+        let mauve = NSColor(calibratedRed: 0.604, green: 0.565, blue: 0.620, alpha: 1)
 
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 520, height: 390),
@@ -43,7 +43,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
         window.title = "Install Tembro"
         window.center()
         window.isReleasedWhenClosed = false
-        window.backgroundColor = cream
+        window.backgroundColor = mauve
 
         let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
@@ -58,18 +58,18 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
         title.translatesAutoresizingMaskIntoConstraints = false
 
         let subtitle = label(
-            "Your AI copilot inside Ableton Live",
+            "A small hand inside Ableton Live.",
             size: 14,
             weight: .medium,
             color: muted
         )
         subtitle.translatesAutoresizingMaskIntoConstraints = false
 
-        statusLabel = label("Ready to install", size: 15, weight: .semibold, color: ink)
+        statusLabel = label("Whenever you’re ready.", size: 15, weight: .semibold, color: ink)
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
         detailLabel = label(
-            "One click installs the device and its private local bridge. Updates replace the same copy — no duplicate files.",
+            "One click puts the device and its local bridge in the right places. Updates use the same copy. No clutter.",
             size: 12,
             weight: .regular,
             color: muted
@@ -85,7 +85,10 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
         installButton = NSButton(title: "Install Tembro", target: self, action: #selector(startInstall))
         installButton.bezelStyle = .rounded
         installButton.keyEquivalent = "\r"
-        installButton.contentTintColor = lavender
+        installButton.contentTintColor = ink
+        installButton.wantsLayer = true
+        installButton.layer?.backgroundColor = rust.cgColor
+        installButton.layer?.cornerRadius = 8
         installButton.translatesAutoresizingMaskIntoConstraints = false
 
         container.addSubview(icon)
@@ -139,8 +142,8 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
 
         installButton.isEnabled = false
         installButton.title = "Installing…"
-        statusLabel.stringValue = "Installing Tembro…"
-        detailLabel.stringValue = "This can take a minute the first time. Keep Ableton Live closed."
+        statusLabel.stringValue = "Putting Tembro in the right places…"
+        detailLabel.stringValue = "Ableton can stay closed for a minute. Tembro is not going anywhere."
         spinner.startAnimation(nil)
 
         let output = Pipe()
@@ -169,7 +172,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
                 if finished.terminationStatus == 0 {
                     self?.finish(
                         success: true,
-                        message: "Open Ableton Live, select Ableton_Live_MCP as a Control Surface, then add Tembro from your User Library."
+                        message: "Open Ableton Live, choose Ableton_Live_MCP as a Control Surface, then find Tembro in your User Library."
                     )
                 } else {
                     self?.finish(
@@ -190,7 +193,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
 
     private func finish(success: Bool, message: String) {
         spinner.stopAnimation(nil)
-        statusLabel.stringValue = success ? "✓ Tembro is installed" : "Couldn’t install Tembro"
+        statusLabel.stringValue = success ? "✓ Tembro is in." : "Tembro did not make it in."
         detailLabel.stringValue = message
         installButton.isEnabled = true
         installButton.title = success ? "Done" : "Try Again"
