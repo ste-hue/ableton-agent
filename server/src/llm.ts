@@ -7,6 +7,7 @@ import type {
   Message,
 } from "./types.js";
 import { ActionPlanSchema } from "./types.js";
+import { MUSICAL_KNOWLEDGE } from "./knowledge.js";
 
 // ---------------------------------------------------------------------------
 // LLM gateway — the product is not tied to one model. The current agent uses
@@ -105,7 +106,9 @@ Musical rules:
 - Respect the current tempo, meter, selection, and existing arrangement unless the user asks to change them.
 - Ask one concise clarification only when a required musical choice cannot reasonably be inferred.
 
-Keep the final answer concise and state exactly what changed and what was verified.`;
+Keep the final answer concise and state exactly what changed and what was verified.
+
+${MUSICAL_KNOWLEDGE}`;
 
 /**
  * Parse the model's raw JSON output into a validated LlmResult.
