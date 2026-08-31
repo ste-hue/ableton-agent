@@ -16,7 +16,7 @@ from PIL import Image
 from build_tembro_release import REPO, build as build_release
 
 
-VERSION = "0.1.2-beta"
+VERSION = "0.1.3-beta"
 DIST = REPO / "dist"
 DEVICE_DIR = DIST / "Tembro"
 ZIP_PATH = DIST / "Tembro-v0-mac.zip"
@@ -102,7 +102,7 @@ def compile_installer(app_path: Path, temp: Path) -> None:
         "CFBundleName": "Install Tembro",
         "CFBundlePackageType": "APPL",
         "CFBundleShortVersionString": VERSION.removesuffix("-beta"),
-        "CFBundleVersion": "2",
+        "CFBundleVersion": "3",
         "LSMinimumSystemVersion": "11.0",
         "NSHighResolutionCapable": True,
         "NSHumanReadableCopyright": "Copyright © 2026 Tembro",

@@ -9,7 +9,7 @@ var pageReady = false;
 var loadTicks = 0;
 var loadSends = 0;
 
-post("tembro_window 0.1.2 active\n");
+post("tembro_window 0.1.3 active\n");
 
 // The chat page reports ui_ready through the patch router, which also feeds
 // this script; once it arrives we never touch the page again.

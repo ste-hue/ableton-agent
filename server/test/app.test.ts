@@ -418,9 +418,12 @@ test("Responses provider emits MCP function calls and continues with tool output
   assert.match(AGENT_SYSTEM_PROMPT, /Drum Rack/);
   assert.match(AGENT_SYSTEM_PROMPT, /at most 128 notes/);
   assert.match(AGENT_SYSTEM_PROMPT, /live_clip_duplicate_to_arrangement/);
+  assert.match(AGENT_SYSTEM_PROMPT, /tembro_arrange_clip/);
+  assert.match(AGENT_SYSTEM_PROMPT, /at most 88 model\/tool rounds/);
   assert.match(AGENT_SYSTEM_PROMPT, /kick and snare must not run mechanically through all 128 bars/);
   assert.match(AGENT_SYSTEM_PROMPT, /complete Arrangement from first bar to last/);
   assert.match(AGENT_SYSTEM_PROMPT, /final half-bar or bar before a meaningful section boundary/);
+  assert.match(AGENT_SYSTEM_PROMPT, /final answer must begin exactly with "Ho finito — "/);
 
   const final = await provider.step({
     previousResponseId: first.responseId,

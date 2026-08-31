@@ -61,7 +61,7 @@ type Env = { Variables: { userId: string } };
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const AGENT_TOKEN_TTL_MS = 30 * 60 * 1000;
-const MAX_AGENT_STEPS = 44;
+const MAX_AGENT_STEPS = 88;
 
 const SAFE_MCP_TOOLS = new Set([
   "live_ping",
@@ -92,6 +92,7 @@ const SAFE_MCP_TOOLS = new Set([
   "find_similar_sounds",
   "live_observe",
   "live_events",
+  "tembro_arrange_clip",
 ]);
 
 interface AgentTokenPayload {
