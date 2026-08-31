@@ -176,6 +176,9 @@ maxApi.addHandler("chat", async (...words) => {
     } else {
       ui("error", err.message);
       api.reportEvent("client.error", { message: err.message });
+      // A 401 cleared the stored session; tell the page so it returns to the
+      // (prefilled) sign-in view instead of a chat that can never work.
+      if (!api.signedIn) reportAuth();
     }
   } finally {
     clearTimeout(watchdog);

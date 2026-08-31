@@ -226,6 +226,18 @@
     }
     .send:hover { transform: translateY(-1px); background: #cfc3fb; }
     .send:disabled { opacity: .45; cursor: default; transform: none; }
+    .chip {
+      border: 1px solid currentColor;
+      background: transparent;
+      color: inherit;
+      border-radius: 999px;
+      padding: 3px 11px;
+      font: inherit;
+      font-size: 11px;
+      cursor: pointer;
+      opacity: .7;
+    }
+    .chip:hover, .chip:focus { opacity: 1; }
     .hidden { display: none !important; }
     @keyframes in { from { opacity: 0; transform: translateY(5px); } }
     @keyframes pulse { 0%, 70%, 100% { opacity: .3; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-2px); } }
@@ -268,9 +280,10 @@
             <label>License or beta access code
               <input id="access" type="password" autocomplete="off" placeholder="paste your code">
             </label>
+            <button type="button" id="pasteAccess" class="chip">paste code from clipboard</button>
             <button class="primary" id="connect">Connect Tembro</button>
           </div>
-          <div class="fineprint">Your access code is sent once and never stored in this window.</div>
+          <div class="fineprint">Your code goes only to Tembro's server. After a successful connect it is remembered on this computer so you don't have to retype it.</div>
         </div>
       </div>
 
@@ -285,9 +298,10 @@
           </div>
         </div>
         <div class="composer-wrap">
-          <div class="working" id="working"><span class="dots"><i></i><i></i><i></i></span><span id="workingText">thinking…</span><button id="stop" title="Stop this request" style="margin-left:10px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:2px 12px;font:inherit;font-size:11px;cursor:pointer">stop</button></div>
+          <div class="working" id="working"><span class="dots"><i></i><i></i><i></i></span><span id="workingText">thinking…</span><button id="stop" class="chip" title="Stop this request" style="margin-left:10px">stop</button></div>
           <div class="composer">
             <textarea id="prompt" rows="1" placeholder="Ask Tembro about this Set…"></textarea>
+            <button type="button" id="pastePrompt" class="chip" title="Paste from clipboard">paste</button>
             <button class="send" id="send" title="Send">↑</button>
           </div>
         </div>
@@ -302,12 +316,25 @@
         auth: $("authView"), chat: $("chatView"), email: $("email"), access: $("access"),
         connect: $("connect"), prompt: $("prompt"), send: $("send"), messages: $("messages"),
         empty: $("empty"), status: $("status"), context: $("context"), credits: $("credits"),
-        connection: $("connection"), working: $("working"), workingText: $("workingText"), settings: $("settings"), update: $("update"), stop: $("stop")
+        connection: $("connection"), working: $("working"), workingText: $("workingText"), settings: $("settings"), update: $("update"), stop: $("stop"),
+        pasteAccess: $("pasteAccess"), pastePrompt: $("pastePrompt")
       };
       let connected = false;
       let busy = false;
 
-      try { ui.email.value = localStorage.getItem("tembro_email") || ""; } catch (_) {}
+      // localStorage may be unavailable inside the webview; every access goes
+      // through these two helpers. Credentials are remembered only after a
+      // successful connect (see the auth handler) so a login is one click.
+      function loadLocal(key) {
+        try { return localStorage.getItem(key) || ""; } catch (_) { return ""; }
+      }
+      function saveLocal(key, value) {
+        try { localStorage.setItem(key, value); } catch (_) {}
+      }
+      let pendingEmail = "";
+      let pendingAccess = "";
+      ui.email.value = loadLocal("tembro_email");
+      ui.access.value = loadLocal("tembro_access");
 
       function outlet(selector, ...args) {
         if (window.max && typeof window.max.outlet === "function") window.max.outlet(selector, ...args);
@@ -330,6 +357,52 @@
         ui.working.classList.toggle("visible", value);
         if (label) ui.workingText.textContent = label.replace(/^[·⏳✓⚠]\s*/, "");
       }
+      // Clipboard shortcuts (⌘C/⌘V) never reach the embedded webview inside
+      // Live, so copying and pasting go through explicit buttons instead.
+      function copyText(text, button) {
+        const done = (ok) => {
+          button.textContent = ok ? "copied" : "copy failed";
+          setTimeout(() => { button.textContent = "copy"; }, 1500);
+        };
+        const fallback = () => {
+          const scratch = document.createElement("textarea");
+          scratch.value = text;
+          document.body.appendChild(scratch);
+          scratch.select();
+          let ok = false;
+          try { ok = document.execCommand("copy"); } catch (_) {}
+          scratch.remove();
+          done(ok);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => done(true), fallback);
+        } else {
+          fallback();
+        }
+      }
+      async function pasteInto(field, button, replace) {
+        const label = button.textContent;
+        const fail = () => {
+          button.textContent = "paste blocked — type it";
+          setTimeout(() => { button.textContent = label; }, 2200);
+          field.focus();
+        };
+        try {
+          const text = await navigator.clipboard.readText();
+          if (!text) return fail();
+          if (replace) {
+            field.value = text.trim();
+          } else {
+            const start = field.selectionStart ?? field.value.length;
+            const end = field.selectionEnd ?? start;
+            field.value = field.value.slice(0, start) + text + field.value.slice(end);
+          }
+          field.dispatchEvent(new Event("input"));
+          field.focus();
+        } catch (_) {
+          fail();
+        }
+      }
       function addMessage(who, text) {
         if (!text) return;
         ui.empty.classList.add("hidden");
@@ -341,6 +414,15 @@
         label.className = "who";
         label.textContent = who === "you" ? "You" : "Tembro";
         bubble.append(label, document.createTextNode(text));
+        if (who !== "you") {
+          const copyBtn = document.createElement("button");
+          copyBtn.textContent = "copy";
+          copyBtn.className = "chip";
+          copyBtn.style.display = "block";
+          copyBtn.style.marginTop = "6px";
+          copyBtn.addEventListener("click", () => copyText(text, copyBtn));
+          bubble.appendChild(copyBtn);
+        }
         row.appendChild(bubble);
         ui.messages.appendChild(row);
         ui.messages.scrollTop = ui.messages.scrollHeight;
@@ -361,7 +443,8 @@
           ui.status.textContent = "enter email and access code";
           return;
         }
-        try { localStorage.setItem("tembro_email", email); } catch (_) {}
+        pendingEmail = email;
+        pendingAccess = code;
         ui.connect.disabled = true;
         ui.status.textContent = "connecting…";
         outlet("license", email, code);
@@ -380,11 +463,19 @@
       ui.settings.addEventListener("click", () => showConnected(false));
       ui.update.addEventListener("click", () => outlet("open_update"));
       ui.stop.addEventListener("click", () => outlet("chat", "/stop"));
+      ui.pasteAccess.addEventListener("click", () => pasteInto(ui.access, ui.pasteAccess, true));
+      ui.pastePrompt.addEventListener("click", () => pasteInto(ui.prompt, ui.pastePrompt, false));
 
       bind("auth", (...args) => {
         const value = args.join(" ").trim() === "connected";
         ui.connect.disabled = false;
         showConnected(value);
+        if (value && pendingEmail) {
+          saveLocal("tembro_email", pendingEmail);
+          saveLocal("tembro_access", pendingAccess);
+          pendingEmail = "";
+          pendingAccess = "";
+        }
       });
       bind("credits", (...args) => {
         const value = args.join(" ").trim();
@@ -416,6 +507,9 @@
       });
 
       if (window.max && typeof window.max.outlet === "function") {
+        // The view is driven exclusively by node's auth messages: ui_ready
+        // triggers reportAuth, which flips to the chat view only when node
+        // really holds a live session. The page never guesses on its own.
         outlet("ui_ready");
       } else {
         // Standalone browser preview for design QA; never used inside Live.
