@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "sources": [
+    {
+      "file": "book1.pdf",
+      "title": "An Introduction to Contemporary Music Theory and Complex Systems Entropy, Density, Cadences",
+      "author": "Luca Danieli",
+      "pages": 200,
+      "pages_with_text": 193,
+      "extracted_characters": 380521,
+      "sha256": "0fe53954d3621e75524dd65dd2c8e8e3f0cffabb62412068f1bf73ce3519d7ab"
+    },
+    {
+      "file": "book2.pdf",
+      "title": "Dance Music Manual; Fifth Edition",
+      "author": "Rick Snoman",
+      "pages": 515,
+      "pages_with_text": 487,
+      "extracted_characters": 977475,
+      "sha256": "c52d060369515b67219194fd404ae6f56d4d28719ef6fdbfd88f309a60c9c4b2"
+    },
+    {
+      "file": "book3.pdf",
+      "title": "The 28 Steps to Electronic Dance Music Production",
+      "author": "Melhem Maroun",
+      "pages": 55,
+      "pages_with_text": 54,
+      "extracted_characters": 72164,
+      "sha256": "2293e44d7be9739b201defbcb88d6dfea0a608d4acc2ced790f7c62fb62330f1"
+    },
+    {
+      "file": "book4.pdf",
+      "title": "260 Drum Machine Patterns",
+      "author": "René-Pierre Bardet",
+      "pages": 100,
+      "pages_with_text": 100,
+      "extracted_characters": 119541,
+      "sha256": "9beafa6ccc4838d76710c94999e81537b85eeeca657b641a39b9c87550e4df89",
+      "ocr": {
+        "engine": "Tesseract.js 7 / Tesseract OCR",
+        "language": "eng",
+        "pages": 100,
+        "average_confidence": 41.32
+      }
+    }
+  ]
+}
