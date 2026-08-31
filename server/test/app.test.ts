@@ -412,9 +412,15 @@ test("Responses provider emits MCP function calls and continues with tool output
   });
   assert.equal(first.toolCalls[0]?.name, "live_set_summary");
   assert.deepEqual(bodies[0]?.reasoning, { effort: "medium" });
+  assert.equal(bodies[0]?.max_output_tokens, 32_000);
   assert.equal(bodies[0]?.parallel_tool_calls, false);
   assert.match(String(bodies[0]?.instructions), /expert music-making agent/);
   assert.match(AGENT_SYSTEM_PROMPT, /Drum Rack/);
+  assert.match(AGENT_SYSTEM_PROMPT, /at most 128 notes/);
+  assert.match(AGENT_SYSTEM_PROMPT, /live_clip_duplicate_to_arrangement/);
+  assert.match(AGENT_SYSTEM_PROMPT, /kick and snare must not run mechanically through all 128 bars/);
+  assert.match(AGENT_SYSTEM_PROMPT, /complete Arrangement from first bar to last/);
+  assert.match(AGENT_SYSTEM_PROMPT, /final half-bar or bar before a meaningful section boundary/);
 
   const final = await provider.step({
     previousResponseId: first.responseId,
@@ -426,6 +432,101 @@ test("Responses provider emits MCP function calls and continues with tool output
   assert.deepEqual(bodies[1]?.input, [
     { type: "function_call_output", call_id: "call-1", output: '{"tracks":[]}' },
   ]);
+});
+
+test("Responses provider retries an output truncated by the token budget", async () => {
+  const bodies: Record<string, unknown>[] = [];
+  const fakeFetch = (async (_input: unknown, init?: RequestInit) => {
+    bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+    if (bodies.length === 1) {
+      return new Response(
+        JSON.stringify({
+          id: "resp-incomplete",
+          status: "incomplete",
+          incomplete_details: { reason: "max_output_tokens" },
+          output: [],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
+    return new Response(
+      JSON.stringify({
+        id: "resp-recovered",
+        status: "completed",
+        output: [
+          {
+            type: "function_call",
+            call_id: "call-recovered",
+            name: "live_clip_add_notes",
+            arguments: '{"notes":[]}',
+          },
+        ],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  }) as typeof fetch;
+  const provider = new HttpResponsesProvider(
+    "https://api.openai.com/v1/responses",
+    "test-key",
+    "gpt-5.6-terra",
+    fakeFetch,
+  );
+  const result = await provider.step({
+    messages: [{ role: "user", content: "arrange 128 bars" }],
+    tools: [
+      {
+        name: "live_clip_add_notes",
+        description: "Add MIDI notes.",
+        inputSchema: { type: "object", properties: { notes: { type: "array" } } },
+      },
+    ],
+  });
+  assert.equal(result.toolCalls[0]?.name, "live_clip_add_notes");
+  assert.equal(bodies.length, 2);
+  assert.equal(bodies[0]?.max_output_tokens, 32_000);
+  assert.equal(bodies[1]?.max_output_tokens, 64_000);
+  assert.match(String(bodies[1]?.instructions), /Output recovery rules/);
+  assert.match(String(bodies[1]?.instructions), /Never emit more than 128 MIDI notes/);
+});
+
+test("Responses provider retries malformed function arguments", async () => {
+  let attempts = 0;
+  const fakeFetch = (async () => {
+    attempts += 1;
+    return new Response(
+      JSON.stringify({
+        id: `resp-${attempts}`,
+        status: "completed",
+        output: [
+          {
+            type: "function_call",
+            call_id: `call-${attempts}`,
+            name: "live_clip_add_notes",
+            arguments: attempts === 1 ? '{"notes":[' : '{"notes":[]}',
+          },
+        ],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  }) as typeof fetch;
+  const provider = new HttpResponsesProvider(
+    "https://api.openai.com/v1/responses",
+    "test-key",
+    "gpt-5.6-terra",
+    fakeFetch,
+  );
+  const result = await provider.step({
+    messages: [{ role: "user", content: "make a long arrangement" }],
+    tools: [
+      {
+        name: "live_clip_add_notes",
+        description: "Add MIDI notes.",
+        inputSchema: { type: "object", properties: { notes: { type: "array" } } },
+      },
+    ],
+  });
+  assert.equal(attempts, 2);
+  assert.deepEqual(result.toolCalls[0]?.arguments, { notes: [] });
 });
 
 test("local stub supports a deterministic tempo smoke test", async () => {

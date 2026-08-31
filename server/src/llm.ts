@@ -54,6 +54,15 @@ export interface AgentProvider {
   step(request: AgentStepRequest): Promise<AgentStepResult>;
 }
 
+const AGENT_OUTPUT_TOKEN_BUDGET = 32_000;
+const AGENT_RECOVERY_OUTPUT_TOKEN_BUDGET = 64_000;
+
+const AGENT_OUTPUT_RECOVERY_INSTRUCTIONS = `Output recovery rules:
+- The previous model output was incomplete or contained malformed function arguments.
+- Return exactly one compact, valid function call or a short final reply.
+- Never emit more than 128 MIDI notes in one live_clip_add_notes call. Split larger note sets across later calls.
+- Never encode a long arrangement as one giant note array. Build short reusable clips and place them with live_clip_duplicate_to_arrangement.`;
+
 export const SYSTEM_PROMPT = `You are Tembro, a music agent operating Ableton Live for a musician.
 You receive the current Live Set context and the conversation. Respond with:
 1. "reply": one short sentence in the user's language describing what you are doing.
@@ -88,7 +97,7 @@ Safety and execution rules:
 - Prefer creating a variation over destroying existing musical work.
 
 Step budget — this matters:
-- You have at most 40 tool calls per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
+- You have at most 44 tool calls per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
 - If a property read fails, the property does not exist on that object. Do not retry it elsewhere blind — consult the facts below.
 
 Live Object Model facts (these prevent wasted, failing calls):
@@ -102,6 +111,13 @@ Musical rules:
 - Translate ordinary musical language into concrete Live operations.
 - A new MIDI track is silent until an instrument or Drum Rack is loaded. Search/load a suitable stock Live device or preset and verify it appears before adding notes.
 - For drums, use a Drum Rack or an appropriate stock drum preset, write a playable MIDI pattern, verify the notes, and launch it only when the user asked to hear it.
+- Keep note payloads compact: live_clip_add_notes must contain at most 128 notes. If a clip needs more, add the notes in multiple sequential calls and verify each chunk.
+- Build long arrangements from reusable 4- or 8-bar source clips. For a 128-bar song, place short source clips with live_clip_duplicate_to_arrangement and create only the variations or fills that actually differ. Never generate 128 bars as one giant MIDI-note array.
+- Before placing a long arrangement, form a concise bar-by-bar section map appropriate to the brief: intro, entries, main groove, breakdowns, rebuilds, peaks, and outro are functions, not a mandatory template.
+- Repetition must preserve musical logic. Reuse a clip when its role is unchanged; create a variation when the section changes energy, density, register, harmony, or rhythmic emphasis.
+- Arrange with deliberate entrances and exits. The kick and snare must not run mechanically through all 128 bars: bring each in when its role should become audible, remove or thin it when the arrangement needs suspension, and make its return structurally clear. Kick and snare suspensions may differ, but both must support the section's energy and transition grammar. Apply the same judgment to bass, hats, percussion, harmony, and lead parts.
+- Put fills where they announce or complete a transition, usually in the final half-bar or bar before a meaningful section boundary. Do not add fills at arbitrary fixed intervals, and do not overwrite the main groove when a dedicated fill variation can be placed only where needed.
+- After arranging, inspect the complete Arrangement from first bar to last. Verify every requested section is covered, all positions and lengths are correct, no unintended gaps remain, and intentional silences, fills, plus major kick/snare entrances and exits landed at the requested bars.
 - When the user asks to hear the result ("play it", "fammi sentire"), fire the relevant clips or the scene and verify is_playing — do not only start the transport.
 - Respect the current tempo, meter, selection, and existing arrangement unless the user asks to change them.
 - Ask one concise clarification only when a required musical choice cannot reasonably be inferred.
@@ -218,6 +234,20 @@ export class HttpResponsesProvider implements AgentProvider {
     this.fetchImpl = fetchImpl.bind(globalThis);
   }
 
+  private async createResponse(body: Record<string, unknown>): Promise<ResponsesApiData> {
+    const res = await this.fetchImpl(this.endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer " + this.apiKey,
+      },
+      signal: AbortSignal.timeout(this.timeoutMs),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`LLM provider error: ${res.status}`);
+    return (await res.json()) as ResponsesApiData;
+  }
+
   async step(request: AgentStepRequest): Promise<AgentStepResult> {
     const instructions = request.liveContext
       ? `${AGENT_SYSTEM_PROMPT}\n\nCurrent Live context supplied by the device:\n${JSON.stringify(request.liveContext)}`
@@ -247,83 +277,115 @@ export class HttpResponsesProvider implements AgentProvider {
       tool_choice: "auto",
       parallel_tool_calls: false,
       reasoning: { effort: "medium" },
-      max_output_tokens: 4_000,
+      max_output_tokens: AGENT_OUTPUT_TOKEN_BUDGET,
       store: true,
     };
     if (request.previousResponseId) body.previous_response_id = request.previousResponseId;
 
-    const res = await this.fetchImpl(this.endpoint, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: "Bearer " + this.apiKey,
-      },
-      signal: AbortSignal.timeout(this.timeoutMs),
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`LLM provider error: ${res.status}`);
-    const data = (await res.json()) as {
-      id?: string;
-      output?: Array<
-        | {
-            type: "function_call";
-            call_id?: string;
-            name?: string;
-            arguments?: string;
-          }
-        | {
-            type: "message";
-            content?: Array<{ type?: string; text?: string }>;
-          }
-      >;
-      output_text?: string;
-      usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number };
-    };
-    if (!data.id) throw new Error("LLM provider returned no response id");
+    const data = await this.createResponse(body);
+    try {
+      return parseAgentResponse(data, this.model);
+    } catch (error) {
+      if (!(error instanceof RetryableAgentOutputError)) throw error;
+    }
 
-    const toolCalls: AgentToolCall[] = [];
-    const text: string[] = [];
-    for (const item of data.output ?? []) {
-      if (item.type === "function_call") {
-        if (!item.call_id || !item.name) throw new Error("LLM returned an invalid tool call");
-        let args: unknown;
-        try {
-          args = JSON.parse(item.arguments || "{}");
-        } catch {
-          throw new Error(`LLM returned invalid arguments for ${item.name}`);
-        }
-        if (!args || typeof args !== "object" || Array.isArray(args)) {
-          throw new Error(`LLM returned non-object arguments for ${item.name}`);
-        }
-        toolCalls.push({
-          call_id: item.call_id,
-          name: item.name,
-          arguments: args as Record<string, unknown>,
-        });
-      } else if (item.type === "message") {
-        for (const content of item.content ?? []) {
-          if (content.type === "output_text" && content.text) text.push(content.text);
-        }
+    const recovered = await this.createResponse({
+      ...body,
+      instructions: `${instructions}\n\n${AGENT_OUTPUT_RECOVERY_INSTRUCTIONS}`,
+      max_output_tokens: AGENT_RECOVERY_OUTPUT_TOKEN_BUDGET,
+    });
+    try {
+      return parseAgentResponse(recovered, this.model);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`LLM output recovery failed: ${message}`);
+    }
+  }
+}
+
+interface ResponsesApiData {
+  id?: string;
+  status?: "completed" | "failed" | "in_progress" | "cancelled" | "queued" | "incomplete";
+  incomplete_details?: { reason?: string } | null;
+  error?: { message?: string } | null;
+  output?: Array<
+    | {
+        type: "function_call";
+        call_id?: string;
+        name?: string;
+        arguments?: string;
+      }
+    | {
+        type: "message";
+        content?: Array<{ type?: string; text?: string }>;
+      }
+  >;
+  output_text?: string;
+  usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number };
+}
+
+class RetryableAgentOutputError extends Error {}
+
+function parseAgentResponse(data: ResponsesApiData, model: string): AgentStepResult {
+  if (data.status && data.status !== "completed") {
+    const reason = data.incomplete_details?.reason ?? data.error?.message ?? data.status;
+    if (data.status === "incomplete" && reason === "max_output_tokens") {
+      throw new RetryableAgentOutputError(`LLM response incomplete: ${reason}`);
+    }
+    throw new Error(`LLM response ${data.status}: ${reason}`);
+  }
+  if (!data.id) throw new Error("LLM provider returned no response id");
+
+  const toolCalls: AgentToolCall[] = [];
+  const text: string[] = [];
+  for (const item of data.output ?? []) {
+    if (item.type === "function_call") {
+      if (!item.call_id || !item.name) {
+        throw new RetryableAgentOutputError("LLM returned an invalid tool call");
+      }
+      let args: unknown;
+      try {
+        args = JSON.parse(item.arguments || "{}");
+      } catch {
+        throw new RetryableAgentOutputError(
+          `LLM returned invalid arguments for ${item.name}`,
+        );
+      }
+      if (!args || typeof args !== "object" || Array.isArray(args)) {
+        throw new RetryableAgentOutputError(
+          `LLM returned non-object arguments for ${item.name}`,
+        );
+      }
+      toolCalls.push({
+        call_id: item.call_id,
+        name: item.name,
+        arguments: args as Record<string, unknown>,
+      });
+    } else if (item.type === "message") {
+      for (const content of item.content ?? []) {
+        if (content.type === "output_text" && content.text) text.push(content.text);
       }
     }
-    const reply = text.join("\n").trim() || data.output_text?.trim() || "";
-    if (toolCalls.length === 0 && !reply) throw new Error("LLM provider returned no output");
-    return {
-      responseId: data.id,
-      reply,
-      toolCalls,
-      ...(data.usage
-        ? {
-            usage: {
-              inputTokens: data.usage.input_tokens ?? 0,
-              outputTokens: data.usage.output_tokens ?? 0,
-              totalTokens: data.usage.total_tokens ?? 0,
-              model: this.model,
-            },
-          }
-        : {}),
-    };
   }
+  const reply = text.join("\n").trim() || data.output_text?.trim() || "";
+  if (toolCalls.length === 0 && !reply) {
+    throw new RetryableAgentOutputError("LLM provider returned no output");
+  }
+  return {
+    responseId: data.id,
+    reply,
+    toolCalls,
+    ...(data.usage
+      ? {
+          usage: {
+            inputTokens: data.usage.input_tokens ?? 0,
+            outputTokens: data.usage.output_tokens ?? 0,
+            totalTokens: data.usage.total_tokens ?? 0,
+            model,
+          },
+        }
+      : {}),
+  };
 }
 
 /** Deterministic provider for tests and local development without API keys. */
