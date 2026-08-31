@@ -1,7 +1,7 @@
 # Install the Tembro free beta on macOS
 
 1. Quit Ableton Live.
-2. Open `Tembro-0.1.1-beta.dmg`, then double-click **Install Tembro**. If the
+2. Open `Tembro-0.1.2-beta.dmg`, then double-click **Install Tembro**. If the
    unsigned beta is blocked, control-click the app and choose **Open**.
 3. The installer places the Max for Live device, pinned `Ableton_Live_MCP`
    Remote Script, and private local bridge in the correct locations. No Xcode,
