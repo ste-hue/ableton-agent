@@ -105,6 +105,17 @@ class TembroApi {
     return Boolean(this.token);
   }
 
+  /** A 401 means the server no longer honors this token: forget it, so the
+   * UI returns to the (prefilled) sign-in view instead of a stranded chat. */
+  clearSession() {
+    this.token = null;
+    try {
+      fs.unlinkSync(this.sessionFile);
+    } catch {
+      /* already gone */
+    }
+  }
+
   /** Dev sign-in (server must run with dev-signin enabled). Persists the token. */
   async devSignin(email) {
     const res = await this.request(this.baseUrl, "POST", "/v0/auth/dev-signin", { email });
@@ -127,7 +138,10 @@ class TembroApi {
     if (liveContext) body.live_context = liveContext;
     if (conversationId) body.conversation_id = conversationId;
     const res = await this.request(this.baseUrl, "POST", "/v0/chat", body, this.token);
-    if (res.status === 401) throw new Error("session expired — sign in again");
+    if (res.status === 401) {
+      this.clearSession();
+      throw new Error("session expired — sign in again");
+    }
     if (res.status === 402) throw new Error("out of credits");
     if (res.status !== 200 || !res.json) {
       throw new Error("chat failed (" + res.status + ")");
@@ -172,7 +186,10 @@ class TembroApi {
   }
 
   _agentResponse(res) {
-    if (res.status === 401) throw new Error("session or agent continuation expired");
+    if (res.status === 401) {
+      this.clearSession();
+      throw new Error("session or agent continuation expired");
+    }
     if (res.status === 402) throw new Error("out of credits");
     if (res.status === 422 && res.json && res.json.error === "agent_step_limit") {
       throw new Error("agent stopped after too many Live steps");
@@ -187,7 +204,10 @@ class TembroApi {
   async credits() {
     if (!this.token) return null;
     const res = await this.request(this.baseUrl, "GET", "/v0/credits", undefined, this.token);
-    if (res.status === 401) return null;
+    if (res.status === 401) {
+      this.clearSession();
+      return null;
+    }
     if (res.status !== 200 || !res.json || typeof res.json.credits !== "number") {
       throw new Error("could not read credits");
     }
