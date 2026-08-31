@@ -79,3 +79,9 @@ gira in locale: il bridge è solo su `127.0.0.1` e non va mai esposto in rete.
 | `.mcp.json.example`, `.claude/settings.json` | Config Claude Code (`.mcp.json` è generato da `setup.sh`, non versionato) |
 | `.codex/config.toml.example` | Config Codex (`.codex/config.toml` è generato da `setup.sh`, non versionato) |
 | `.venv/` | Server MCP `ableton-live-mcp` pinnato (non toccare) |
+
+## License
+
+Il codice è rilasciato sotto licenza [MIT](LICENSE) — libero anche per uso
+commerciale. La licenza copre solo il codice: il nome **Tembro**, il logo e il
+branding sono esclusi e regolati da [TRADEMARKS.md](TRADEMARKS.md).
