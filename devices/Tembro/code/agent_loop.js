@@ -274,6 +274,7 @@ async function runAgentTurn(options) {
     api,
     client,
     message,
+    skill,
     liveContext,
     conversationId,
     onStatus = () => {},
@@ -293,7 +294,7 @@ async function runAgentTurn(options) {
   if (tools.length === 0) throw new Error("no safe Ableton MCP tools available");
 
   onStatus("thinking with " + tools.length + " Live tools…");
-  let step = await api.agentStart(message, liveContext, tools, conversationId);
+  let step = await api.agentStart(message, liveContext, tools, conversationId, skill);
   let iterations = 0;
   while (step.kind === "tool_calls") {
     ensureNotStopped();

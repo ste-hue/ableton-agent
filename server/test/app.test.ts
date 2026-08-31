@@ -16,6 +16,7 @@ import {
 import type { AgentProvider, LlmProvider } from "../src/llm.js";
 import type { LicenseProvider } from "../src/billing.js";
 import type { Message } from "../src/types.js";
+import { estimateCreditCost } from "../src/skills.js";
 
 function makeApp(llm?: LlmProvider, credits = 100, extra: Partial<AppConfig> = {}) {
   const store = new MemoryStore();
@@ -74,6 +75,30 @@ test("health endpoint", async () => {
   assert.equal(res.status, 200);
 });
 
+test("skills endpoint exposes the server-side credit menu", async () => {
+  const { app } = makeApp();
+  const res = await app.request("/v0/skills");
+  assert.equal(res.status, 200);
+  const data = (await res.json()) as {
+    skills: { id: string; estimated_credits: number }[];
+  };
+  assert.deepEqual(
+    data.skills.map((skill) => [skill.id, skill.estimated_credits]),
+    [
+      ["clip_edit", 1],
+      ["beat_making", 2],
+      ["harmony_melody", 2],
+      ["song_from_scratch", 4],
+    ],
+  );
+});
+
+test("credit estimates rise with musical scope and cannot be lowered by a cheap skill", () => {
+  assert.equal(estimateCreditCost(1, "set tempo to 126"), 1);
+  assert.equal(estimateCreditCost(1, "make a house beat"), 2);
+  assert.equal(estimateCreditCost(1, "arrange a full 128-bar track", "clip_edit"), 4);
+});
+
 test("landing page explains the complete customer journey", async () => {
   const { app } = makeApp(undefined, 100, {
     checkoutUrl: "https://tembro.lemonsqueezy.com/buy/test-product",
@@ -84,13 +109,15 @@ test("landing page explains the complete customer journey", async () => {
   assert.match(res.headers.get("content-type") ?? "", /text\/html/);
   assert.match(res.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
   const body = await res.text();
-  assert.match(body, /Big ideas\.<br>Tiny clicks\./);
+  assert.match(body, /Tell Tembro where the track should go\./);
   assert.match(body, /Buy/);
   assert.match(body, /Install/);
   assert.match(body, /Activate/);
   assert.match(body, /Chat/);
   assert.match(body, /https:\/\/tembro\.lemonsqueezy\.com\/buy\/test-product/);
-  assert.match(body, /Tembro credits are product units, not OpenAI tokens/);
+  assert.match(body, /They are Tembro credits, not OpenAI tokens/);
+  assert.match(body, /Liveworks/);
+  assert.match(body, /docs\.cycling74\.com\/apiref\/lom\/song/);
 });
 
 test("landing page rejects unsafe checkout URLs", async () => {
@@ -106,7 +133,7 @@ test("landing page switches to a free beta download without payment copy", async
   });
   const body = await (await app.request("/")).text();
   assert.match(body, /Download free beta/);
-  assert.match(body, /No card, checkout, or subscription required/);
+  assert.match(body, /No card, checkout, or little subscription surprise/);
   assert.match(body, /Free beta access code activation/);
   assert.doesNotMatch(body, /Secure checkout and license delivery/);
 });
@@ -198,9 +225,13 @@ test("agent alternates model and local MCP results but charges only once", async
     conversation_id: string;
     continuation_token: string;
     credits_remaining: number;
+    credits_charged: number;
+    skill: string | null;
   };
   assert.equal(first.kind, "tool_calls");
   assert.equal(first.credits_remaining, 1);
+  assert.equal(first.credits_charged, 1);
+  assert.equal(first.skill, null);
 
   const continued = await app.request("/v0/agent", {
     method: "POST",
@@ -222,10 +253,12 @@ test("agent alternates model and local MCP results but charges only once", async
     kind: string;
     reply: string;
     credits_remaining: number;
+    credits_charged: number;
   };
   assert.equal(final.kind, "final");
   assert.match(final.reply, /126 BPM/);
   assert.equal(final.credits_remaining, 1);
+  assert.equal(final.credits_charged, 1);
 });
 
 test("agent rejects a tampered continuation token", async () => {
@@ -282,9 +315,11 @@ test("chat charges credits and returns a plan", async () => {
     actions: unknown[];
     credits_remaining: number;
     conversation_id: string;
+    credits_charged: number;
   };
   assert.equal(data.actions.length, 2);
-  assert.equal(data.credits_remaining, 9);
+  assert.equal(data.credits_remaining, 8);
+  assert.equal(data.credits_charged, 2);
 
   // follow-up in the same conversation works
   const res2 = await app.request(

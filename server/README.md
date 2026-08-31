@@ -29,18 +29,21 @@ back to the same model response until the musical request is complete.
    credits once per email, and returns a 30-day bearer session.
 4. When payments are enabled, the same endpoint validates a Lemon Squeezy
    license instead; no device protocol change is required.
-5. Each user turn has a client-generated UUID. The API reserves one credit at
-   agent start, never charges the tool-result continuations, and refunds the
-   credit if the provider fails.
+5. Each user turn has a client-generated UUID. The API estimates the musical
+   scope, reserves that many credits at agent start, never charges tool-result
+   continuations, and refunds the reservation if the provider fails.
 6. The device executes tool calls serially through the local MCP bridge, returns
    bounded results to the model, and shows the final verified reply in chat.
 
 ## Credit model for V0
 
-`1 credit = 1 successful chat turn`. `BETA_GRANT_CREDITS` controls the one-time
-free-beta allowance, `SUBSCRIPTION_GRANT_CREDITS` controls the future monthly
-allowance, and `CHAT_COST_CREDITS` controls the per-turn charge. The
-model's input/output/total token counts are logged with each completed request,
+Credits are product units, not raw model tokens. A focused clip edit costs the
+`CHAT_COST_CREDITS` base amount; beat making and harmony/melody use 2×; a full
+arrangement uses 4×. The server infers at least the same tier from the message,
+so choosing a cheaper UI skill cannot underprice a large request.
+`BETA_GRANT_CREDITS` controls the one-time free-beta allowance and
+`SUBSCRIPTION_GRANT_CREDITS` controls the future monthly allowance. The model's
+input/output/total token counts are logged with each completed request,
 so the commercial allowance can be tuned from real usage without exposing the
 vendor API key or changing the customer protocol.
 
@@ -65,6 +68,7 @@ when it is absent.
 | `POST /v0/auth/license` | no | activate a beta access code or Lemon Squeezy license |
 | `POST /v0/webhooks/lemonsqueezy` | HMAC | grant subscription credits exactly once per invoice |
 | `GET /v0/credits` | bearer | current balance |
+| `GET /v0/skills` | no | public skill menu and server-authoritative credit estimates |
 | `POST /v0/agent` | bearer | start/continue the distributed Responses ↔ local MCP loop |
 | `POST /v0/chat` | bearer | legacy v0.1.0 JSON planner compatibility |
 | `POST /v0/events` | bearer | client action/readback/error telemetry |

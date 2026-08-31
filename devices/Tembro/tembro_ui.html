@@ -6,28 +6,24 @@
   <title>Tembro</title>
   <style>
     :root {
-      color-scheme: light;
-      --ink: #302b39;
-      --muted: #81778f;
-      --cream: #fffaf1;
-      --paper: #fffefa;
-      --lavender: #ddd4ff;
-      --lavender-strong: #9f8ee8;
-      --pink: #ffcfe4;
-      --mint: #bfe8d5;
-      --line: rgba(75, 62, 91, .13);
-      --shadow: 0 18px 45px rgba(73, 58, 94, .12);
-      font-family: -apple-system, BlinkMacSystemFont, "Avenir Next", "Segoe UI", sans-serif;
+      color-scheme: dark;
+      --black: #18151d;
+      --white: #ded8c7;
+      --paper: #24212b;
+      --soft: #302c38;
+      --line: #504859;
+      --mid: #aaa2b2;
+      --quiet: #7f7587;
+      --sun: #a89b5c;
+      --rust: #a56554;
+      --sage: #7f927c;
+      --blue: #718c99;
+      --mauve: #806f84;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
-    body {
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 88% 7%, rgba(255, 207, 228, .58), transparent 27%),
-        radial-gradient(circle at 7% 92%, rgba(221, 212, 255, .65), transparent 29%),
-        var(--cream);
-    }
+    body { color: var(--white); background: var(--black); }
     button, input, textarea { font: inherit; color: inherit; }
     button { border: 0; cursor: pointer; }
     .app {
@@ -35,242 +31,349 @@
       min-height: 420px;
       display: grid;
       grid-template-rows: auto 1fr;
-      padding: 14px;
-      gap: 12px;
+      gap: 10px;
+      padding: 12px;
     }
     .topbar {
       min-height: 54px;
       display: flex;
       align-items: center;
-      gap: 11px;
-      padding: 9px 12px;
-      background: rgba(255, 254, 250, .84);
+      gap: 10px;
+      padding: 8px 10px;
       border: 1px solid var(--line);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(16px);
+      border-radius: 12px;
+      background: var(--paper);
     }
     .mascot {
-      width: 34px;
+      width: 37px;
       height: 34px;
       flex: 0 0 auto;
-      border-radius: 12px 12px 15px 15px;
-      display: grid;
-      place-items: center;
-      background: var(--lavender);
-      box-shadow: inset 0 -3px 0 rgba(109, 89, 153, .09);
-      font-size: 17px;
+      color: var(--sun);
     }
+    .mascot circle, .auth-art circle, .empty-bubble circle, .wait-eclipse circle { fill: var(--rust); }
+    .mascot svg, .auth-art svg { width: 100%; height: 100%; display: block; }
     .brand { min-width: 0; }
-    .brand strong { display: block; font-size: 15px; letter-spacing: -.02em; }
-    .status { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pills { margin-left: auto; display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .brand strong { display: block; font-size: 14px; letter-spacing: -.025em; }
+    .status {
+      max-width: 280px;
+      overflow: hidden;
+      color: var(--mid);
+      font: 10px/1.4 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .pills { min-width: 0; margin-left: auto; display: flex; align-items: center; gap: 6px; }
     .pill {
       max-width: 190px;
-      padding: 6px 9px;
+      min-height: 28px;
+      padding: 6px 8px;
+      overflow: hidden;
       border: 1px solid var(--line);
       border-radius: 999px;
-      color: var(--muted);
-      background: rgba(255, 255, 255, .7);
-      font-size: 10px;
-      white-space: nowrap;
-      overflow: hidden;
+      color: var(--mid);
+      background: var(--paper);
+      font: 9px/1.25 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .035em;
       text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
+    button.pill:hover { color: var(--black); border-color: var(--white); background: var(--white); }
     .connection::before {
       content: "";
+      width: 6px;
+      height: 6px;
       display: inline-block;
-      width: 7px;
-      height: 7px;
-      margin-right: 5px;
-      border-radius: 50%;
-      background: #c6bdcf;
+      margin-right: 6px;
+      background: var(--line);
     }
-    .connection.connected::before { background: #6fc09a; box-shadow: 0 0 0 3px rgba(111,192,154,.14); }
+    .connection.connected { color: var(--white); border-color: var(--sage); }
+    .connection.connected::before { background: var(--sage); }
     .icon-button {
       width: 30px;
       height: 30px;
       flex: 0 0 auto;
-      border-radius: 10px;
+      color: var(--mid);
       background: transparent;
-      color: var(--muted);
-      font-size: 17px;
+      font-size: 16px;
     }
-    .icon-button:hover { background: rgba(221, 212, 255, .42); color: var(--ink); }
+    .icon-button:hover { color: var(--black); background: var(--white); }
     .stage { min-height: 0; }
-    .card {
-      height: 100%;
-      background: rgba(255, 254, 250, .9);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .auth {
-      height: 100%;
-      display: grid;
-      place-items: center;
-      padding: clamp(20px, 7vw, 60px);
-    }
-    .auth-box { width: min(430px, 100%); text-align: center; }
+    .card { height: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+    .auth { display: grid; place-items: center; padding: clamp(22px, 7vw, 60px); }
+    .auth-box { width: min(420px, 100%); }
     .auth-art {
-      width: 76px;
-      height: 76px;
-      margin: 0 auto 18px;
-      border-radius: 27px 27px 34px 34px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(145deg, var(--pink), var(--lavender));
-      font-size: 32px;
-      transform: rotate(-2deg);
+      width: 86px;
+      height: 78px;
+      margin-bottom: 24px;
+      color: var(--sun);
     }
-    h1 { margin: 0 0 8px; font-size: clamp(25px, 4vw, 34px); letter-spacing: -.045em; }
-    .lede { margin: 0 auto 25px; max-width: 340px; color: var(--muted); font-size: 13px; line-height: 1.55; }
-    .fields { display: grid; gap: 10px; text-align: left; }
-    label { font-size: 11px; color: var(--muted); padding-left: 4px; }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 38px); font-weight: 610; line-height: 1; letter-spacing: -.06em; }
+    .lede { max-width: 360px; margin: 0 0 28px; color: var(--mid); font-size: 13px; line-height: 1.55; }
+    .fields { display: grid; gap: 12px; }
+    label {
+      color: var(--mid);
+      font: 9px/1.3 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
     input {
       width: 100%;
       height: 44px;
-      margin-top: 5px;
-      padding: 0 13px;
+      margin-top: 6px;
+      padding: 0 11px;
       border: 1px solid var(--line);
-      border-radius: 13px;
+      border-radius: 9px;
       outline: none;
-      background: white;
+      background: var(--paper);
+      font-size: 13px;
     }
-    input:focus, textarea:focus { border-color: var(--lavender-strong); box-shadow: 0 0 0 3px rgba(159, 142, 232, .13); }
+    input:focus, textarea:focus { border-color: var(--white); outline: 1px solid var(--white); outline-offset: -2px; }
     .primary {
       height: 44px;
-      margin-top: 4px;
-      border-radius: 14px;
-      background: var(--ink);
-      color: white;
-      font-weight: 650;
-      box-shadow: 0 8px 20px rgba(48,43,57,.18);
+      margin-top: 2px;
+      color: var(--white);
+      background: var(--rust);
+      font-size: 12px;
+      font-weight: 680;
     }
-    .primary:hover { transform: translateY(-1px); }
-    .fineprint { margin-top: 13px; color: var(--muted); font-size: 10px; }
-    .chat { height: 100%; display: grid; grid-template-rows: 1fr auto; min-height: 0; }
+    .primary:hover { color: var(--white); outline: 1px solid var(--white); background: var(--black); }
+    .primary:disabled { opacity: .45; cursor: default; }
+    .fineprint { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--soft); color: var(--quiet); font-size: 10px; line-height: 1.5; }
+    .chat { min-height: 0; display: grid; grid-template-rows: 1fr auto; }
     .messages {
       min-height: 0;
       overflow-y: auto;
-      padding: 22px clamp(15px, 4vw, 34px) 12px;
+      padding: 24px clamp(14px, 4vw, 34px) 14px;
       scroll-behavior: smooth;
+      scrollbar-color: var(--black) var(--soft);
+      scrollbar-width: thin;
     }
-    .empty {
-      min-height: 100%;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      color: var(--muted);
-      padding: 28px;
+    .empty { min-height: 100%; display: grid; place-items: center; padding: 28px; text-align: center; }
+    .empty-bubble {
+      width: 72px;
+      height: 65px;
+      margin: 0 auto 16px;
+      color: var(--sun);
     }
-    .empty-bubble { font-size: 30px; margin-bottom: 8px; }
-    .empty strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 6px; }
-    .empty span { font-size: 12px; line-height: 1.55; }
-    .message { display: flex; margin: 0 0 13px; animation: in .22s ease-out; }
+    .empty-bubble svg { width: 100%; height: 100%; display: block; }
+    .empty strong { display: block; margin-bottom: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.035em; }
+    .empty span { color: var(--mid); font-size: 12px; line-height: 1.55; }
+    .message { display: flex; margin: 0 0 14px; animation: in .18s ease-out; }
     .message.you { justify-content: flex-end; }
     .bubble {
-      max-width: min(82%, 620px);
+      max-width: min(84%, 650px);
       padding: 11px 13px;
-      border-radius: 16px 16px 16px 5px;
-      background: #f3efff;
-      border: 1px solid rgba(117, 96, 165, .09);
-      font-size: 13px;
-      line-height: 1.48;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-    .you .bubble { border-radius: 16px 16px 5px 16px; background: #ffeaf3; }
-    .who { display: block; margin-bottom: 4px; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-    .tool-step {
-      width: min(82%, 620px);
-      margin: 0 0 8px;
-      padding: 8px 11px;
       border: 1px solid var(--line);
-      border-radius: 13px;
-      background: rgba(255,255,255,.62);
-      color: var(--muted);
-      font-size: 11px;
+      border-radius: 8px;
+      background: #2c2834;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
     }
-    .tool-step summary { cursor: pointer; color: var(--ink); }
-    .tool-step .step-detail { padding: 6px 0 1px 20px; line-height: 1.4; }
-    .tool-step.success summary { color: #397b5e; }
-    .tool-step.error summary { color: #a24c61; }
-    .composer-wrap { padding: 10px clamp(12px, 3vw, 22px) 15px; }
-    .working {
-      display: none;
-      margin: 0 4px 8px;
-      color: var(--muted);
+    .you .bubble { color: var(--white); border-color: var(--rust); background: var(--rust); }
+    .who {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--mid);
+      font: 8px/1 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .you .who { color: #e0c1b8; }
+    .trace-terminal {
+      margin: 0 0 9px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #1d1a23;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    }
+    .trace-terminal > summary {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      color: var(--quiet);
+      cursor: pointer;
+      font-size: 8px;
+      letter-spacing: .06em;
+      list-style: none;
+      text-transform: uppercase;
+    }
+    .trace-terminal > summary::-webkit-details-marker { display: none; }
+    .trace-title { color: var(--sage); font-weight: 750; letter-spacing: .13em; }
+    .trace-state { margin-left: auto; color: var(--mid); }
+    .trace-count { min-width: 20px; padding: 2px 5px; border-radius: 999px; color: var(--white); background: var(--soft); text-align: center; }
+    .trace-body { display: grid; grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--soft); }
+    .trace-log { max-height: 116px; overflow-y: auto; padding: 4px 7px; scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
+    .trace-placeholder { padding: 10px 4px; color: var(--quiet); font-size: 9px; }
+    .trace-row {
+      width: 100%;
+      min-height: 27px;
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 7px;
+      padding: 4px;
+      border-bottom: 1px dotted var(--soft);
+      color: var(--mid);
+      background: transparent;
+      text-align: left;
+      font-size: 9px;
+    }
+    .trace-row:hover, .trace-row:focus { color: var(--white); background: var(--soft); outline: none; }
+    .trace-seq { color: var(--quiet); }
+    .trace-call { overflow: hidden; color: var(--white); text-overflow: ellipsis; white-space: nowrap; }
+    .trace-object { color: var(--blue); }
+    .trace-result { min-width: 44px; color: var(--sun); text-align: right; text-transform: uppercase; }
+    .trace-row.success .trace-result { color: var(--sage); }
+    .trace-row.error .trace-result { color: var(--rust); }
+    .trace-row.mutation .trace-call::before { content: "write "; color: var(--rust); }
+    .trace-row.read .trace-call::before { content: "read "; color: var(--blue); }
+    .trace-inspector { padding: 10px; border-top: 1px solid var(--soft); background: #25212c; }
+    .trace-inspector-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; color: var(--blue); font-size: 9px; text-transform: uppercase; }
+    .trace-close { margin-left: auto; color: var(--quiet); background: transparent; font-size: 14px; }
+    .trace-inspector strong { display: block; margin-bottom: 5px; color: var(--white); font-size: 11px; }
+    .trace-inspector p { margin: 0 0 7px; color: var(--mid); font: 10px/1.45 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .trace-inspector code { display: block; margin-bottom: 7px; color: var(--sage); font-size: 9px; }
+    .trace-args { max-height: 70px; margin: 0 0 8px; overflow: auto; color: var(--quiet); font: 8px/1.45 ui-monospace, "SFMono-Regular", Menlo, monospace; white-space: pre-wrap; }
+    .trace-doc { min-height: 28px; padding: 5px 8px; border: 1px solid var(--blue); border-radius: 6px; color: var(--white); background: var(--blue); font-size: 9px; }
+    .trace-doc:hover { border-color: var(--white); }
+    .tool-step {
+      width: min(84%, 650px);
+      margin: 0 0 8px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--mid);
       font-size: 10px;
     }
-    .working.visible { display: flex; align-items: center; gap: 7px; }
+    .tool-step summary { cursor: pointer; color: var(--white); font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+    .tool-step .step-detail { padding: 7px 0 1px 18px; line-height: 1.45; }
+    .tool-step.success { border-color: var(--sage); background: var(--paper); }
+    .tool-step.error { border: 2px solid var(--rust); }
+    .composer-wrap { padding: 10px clamp(10px, 3vw, 20px) 14px; border-top: 1px solid var(--soft); }
+    .skill-rail { display: flex; gap: 6px; margin-bottom: 9px; overflow-x: auto; scrollbar-width: none; }
+    .skill-rail::-webkit-scrollbar { display: none; }
+    .skill-rail.disabled { opacity: .42; pointer-events: none; }
+    .skill-button {
+      min-width: max-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--mid);
+      background: transparent;
+      font-size: 10px;
+    }
+    .skill-button:hover { color: var(--white); border-color: var(--white); }
+    .skill-button:nth-child(1).active { color: var(--white); border-color: var(--sage); background: var(--sage); }
+    .skill-button:nth-child(2).active { color: var(--white); border-color: var(--rust); background: var(--rust); }
+    .skill-button:nth-child(3).active { color: var(--white); border-color: var(--blue); background: var(--blue); }
+    .skill-button:nth-child(4).active { color: var(--white); border-color: var(--mauve); background: var(--mauve); }
+    .skill-cost { font: 8px/1 ui-monospace, "SFMono-Regular", Menlo, monospace; opacity: .75; }
+    .working {
+      display: none;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 11px;
+      margin: 0 0 9px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--mid);
+      border-color: var(--mauve);
+      background: #2c2834;
+    }
+    .working.visible { display: grid; }
+    .wait-eclipse { width: 46px; height: 42px; color: var(--sun); animation: breathe 2.8s ease-in-out infinite; }
+    .wait-eclipse svg { width: 100%; height: 100%; display: block; }
+    .wait-copy { min-width: 0; display: grid; gap: 4px; }
+    .wait-copy span { overflow: hidden; font: 8px/1.2 ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .04em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    .wait-copy strong { color: var(--white); font-size: 11px; font-weight: 520; line-height: 1.35; }
+    .cost-line { display: flex; justify-content: space-between; gap: 18px; margin: 0 3px 7px; color: var(--quiet); font: 8px/1.2 ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .04em; text-transform: uppercase; }
     .dots { display: inline-flex; gap: 3px; }
-    .dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--lavender-strong); animation: pulse 1s infinite; }
+    .dots i { width: 4px; height: 4px; background: var(--white); animation: pulse 1s infinite; }
     .dots i:nth-child(2) { animation-delay: .15s; }
     .dots i:nth-child(3) { animation-delay: .3s; }
     .composer {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 9px;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       align-items: end;
-      padding: 7px;
-      background: white;
+      gap: 6px;
+      padding: 6px;
       border: 1px solid var(--line);
-      border-radius: 17px;
-      box-shadow: 0 9px 28px rgba(73,58,94,.08);
+      border-radius: 12px;
+      background: #2c2834;
     }
     textarea {
       min-height: 40px;
       max-height: 130px;
       resize: none;
+      padding: 10px 8px 8px;
       border: 0;
       outline: 0;
-      padding: 10px 9px 8px;
       background: transparent;
+      font-size: 13px;
       line-height: 1.38;
     }
+    textarea:focus { outline: 0; }
     .send {
       width: 40px;
       height: 40px;
-      border-radius: 13px;
-      background: var(--lavender);
-      font-size: 17px;
-      transition: transform .15s, background .15s;
+      color: var(--white);
+      background: var(--blue);
+      font-size: 16px;
     }
-    .send:hover { transform: translateY(-1px); background: #cfc3fb; }
-    .send:disabled { opacity: .45; cursor: default; transform: none; }
+    .send:hover { color: var(--white); outline: 1px solid var(--white); background: var(--black); }
+    .send:disabled { opacity: .35; cursor: default; }
     .chip {
-      border: 1px solid currentColor;
-      background: transparent;
-      color: inherit;
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 3px 11px;
-      font: inherit;
-      font-size: 11px;
-      cursor: pointer;
-      opacity: .7;
+      color: var(--mid);
+      background: transparent;
+      font: 9px/1 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .025em;
+      text-transform: uppercase;
     }
-    .chip:hover, .chip:focus { opacity: 1; }
+    .chip:hover, .chip:focus { color: var(--black); border-color: var(--white); background: var(--white); }
+    .you .chip { color: var(--black); border-color: #8b8880; }
+    .you .chip:hover { color: var(--white); background: var(--black); }
     .hidden { display: none !important; }
-    @keyframes in { from { opacity: 0; transform: translateY(5px); } }
-    @keyframes pulse { 0%, 70%, 100% { opacity: .3; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-2px); } }
+    @keyframes in { from { opacity: 0; transform: translateY(4px); } }
+    @keyframes pulse { 0%, 70%, 100% { opacity: .2; } 35% { opacity: 1; } }
+    @keyframes breathe { 0%, 100% { opacity: .58; transform: scale(.94); } 50% { opacity: 1; transform: scale(1); } }
     @media (max-width: 560px) {
-      .app { padding: 9px; gap: 8px; }
-      .topbar { border-radius: 15px; }
+      .app { padding: 8px; gap: 7px; }
       .context-pill { display: none; }
-      .card { border-radius: 18px; }
-      .bubble { max-width: 92%; }
+      .status { max-width: 120px; }
+      .bubble, .tool-step { max-width: 94%; }
+      .composer-wrap { padding-inline: 8px; }
+      .working { grid-template-columns: 40px minmax(0, 1fr) auto; }
+      .wait-eclipse { width: 40px; height: 36px; }
+      .pill { max-width: 100px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .message { animation: none; }
+      .dots i { animation: none; opacity: 1; }
+      .messages { scroll-behavior: auto; }
     }
   </style>
 </head>
 <body>
   <main class="app">
     <header class="topbar">
-      <div class="mascot">⌁</div>
+      <div class="mascot" aria-hidden="true"><svg viewBox="0 0 64 58" focusable="false"><path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/><circle cx="51" cy="29" r="8" fill="currentColor"/></svg></div>
       <div class="brand">
         <strong>Tembro</strong>
-        <div class="status" id="status">starting…</div>
+        <div class="status" id="status">starting</div>
       </div>
       <div class="pills">
         <span class="pill context-pill" id="context">waiting for Live</span>
@@ -284,20 +387,25 @@
     <section class="stage">
       <div class="card auth" id="authView">
         <div class="auth-box">
-          <div class="auth-art">♪</div>
-          <h1>Let’s make something.</h1>
-          <p class="lede">Connect once, then talk to your Ableton Set in plain language. Your AI key stays safely on Tembro’s server.</p>
+          <div class="auth-art" aria-hidden="true">
+            <svg viewBox="0 0 64 58" focusable="false">
+              <path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/>
+              <circle cx="51" cy="29" r="8" fill="currentColor"/>
+            </svg>
+          </div>
+          <h1>Let’s get you into the Set.</h1>
+          <p class="lede">One sign-in. Then Tembro sits in Live and waits until you need a hand.</p>
           <div class="fields">
-            <label>Purchase email
+            <label>Email
               <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
             </label>
-            <label>License or beta access code
-              <input id="access" type="password" autocomplete="off" placeholder="paste your code">
+            <label>Access code
+              <input id="access" type="password" autocomplete="off" placeholder="License or beta code">
             </label>
-            <button type="button" id="pasteAccess" class="chip">paste code from clipboard</button>
-            <button class="primary" id="connect">Connect Tembro</button>
+            <button type="button" id="pasteAccess" class="chip">Paste code</button>
+            <button class="primary" id="connect">Connect</button>
           </div>
-          <div class="fineprint">Your code goes only to Tembro's server. After a successful connect it is remembered on this computer so you don't have to retype it.</div>
+          <div class="fineprint">Your sign-in goes only to Tembro and stays remembered on this Mac. As it should.</div>
         </div>
       </div>
 
@@ -305,17 +413,37 @@
         <div class="messages" id="messages">
           <div class="empty" id="empty">
             <div>
-              <div class="empty-bubble">♫</div>
-              <strong>What are we making?</strong>
-              <span>Try “make a warm house drum loop” or<br>“make the selected bassline more syncopated”.</span>
+              <div class="empty-bubble" aria-hidden="true"><svg viewBox="0 0 64 58" focusable="false"><path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/><circle cx="51" cy="29" r="8" fill="currentColor"/></svg></div>
+              <strong>What does the track need?</strong>
+              <span>Try “give me 128 bars of dark trap”<br>or “this bassline could move a little more.”</span>
             </div>
           </div>
         </div>
         <div class="composer-wrap">
-          <div class="working" id="working"><span class="dots"><i></i><i></i><i></i></span><span id="workingText">thinking…</span><button id="stop" class="chip" title="Stop this request" style="margin-left:10px">stop</button></div>
+          <details class="trace-terminal" id="traceTerminal" open>
+            <summary><span class="trace-title">Liveworks</span><span>agent calls</span><span class="trace-state" id="traceState">idle</span><span class="trace-count" id="traceCount">0</span></summary>
+            <div class="trace-body">
+              <div class="trace-log" id="traceLog"><div class="trace-placeholder" id="tracePlaceholder">Agent calls will appear here as they happen.</div></div>
+              <aside class="trace-inspector hidden" id="traceInspector">
+                <div class="trace-inspector-head"><span id="traceObject">Live Object Model</span><button type="button" class="trace-close" id="traceClose" title="Close explanation">×</button></div>
+                <strong id="traceTool">Tool</strong>
+                <p id="traceDescription"></p>
+                <code id="tracePath"></code>
+                <pre class="trace-args" id="traceArgs"></pre>
+                <button type="button" class="trace-doc" id="traceDoc">Open official documentation ↗</button>
+              </aside>
+            </div>
+          </details>
+          <div class="skill-rail" id="skillRail" aria-label="Tembro skills"></div>
+          <div class="working" id="working">
+            <div class="wait-eclipse" aria-hidden="true"><svg viewBox="0 0 64 58" focusable="false"><path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/><circle cx="51" cy="29" r="8" fill="currentColor"/></svg></div>
+            <div class="wait-copy"><span id="workingText">working</span><strong id="studioThought">Silence is part of the drum pattern.</strong></div>
+            <button id="stop" class="chip" title="Stop this request">Stop</button>
+          </div>
+          <div class="cost-line"><span id="skillName">Custom request</span><span id="costHint">≈ 1 credit</span></div>
           <div class="composer">
-            <textarea id="prompt" rows="1" placeholder="Ask Tembro about this Set…"></textarea>
-            <button type="button" id="pastePrompt" class="chip" title="Paste from clipboard">paste</button>
+            <textarea id="prompt" rows="1" placeholder="Describe the result you want…"></textarea>
+            <button type="button" id="pastePrompt" class="chip" title="Paste from clipboard">Paste</button>
             <button class="send" id="send" title="Send">↑</button>
           </div>
         </div>
@@ -325,21 +453,105 @@
 
   <script>
     (() => {
+      const DEFAULT_SKILLS = [
+        { id: "clip_edit", label: "Tweak this clip", shortLabel: "Clip tweak", prompt: "Make the selected clip breathe a little more. Keep its role and length.", estimated_credits: 1 },
+        { id: "beat_making", label: "Build a beat", shortLabel: "Beat making", prompt: "Build an eight-bar beat with a clear pocket and one variation.", estimated_credits: 2 },
+        { id: "harmony_melody", label: "Harmony + melody", shortLabel: "Harmony / melody", prompt: "Write an eight-bar chord progression and a melody that leaves room.", estimated_credits: 2 },
+        { id: "song_from_scratch", label: "Arrange the whole thing", shortLabel: "Full arrangement", prompt: "Build a full 128-bar arrangement with proper drum suspensions and fills only where they earn it.", estimated_credits: 4 }
+      ];
+      const STUDIO_THOUGHTS = [
+        "Silence is part of the drum pattern.",
+        "A fill works better after a little space.",
+        "The hook does not need every sound at once.",
+        "Tembro says done only after reading Live again.",
+        "Repetition is fine. Copy-paste energy is not.",
+        "A kick leaving can hit as hard as a kick arriving."
+      ];
+      const LIVE_DOCS = {
+        lom: {
+          object: "Live Object Model",
+          path: "live_set / live_app",
+          description: "The map Tembro uses to reach Live objects, read their properties, call functions, and verify changes.",
+          url: "https://docs.cycling74.com/apiref/lom/"
+        },
+        song: {
+          object: "Song",
+          path: "live_set",
+          description: "The whole Live Set: tempo, time signature, transport, tracks, scenes, and Arrangement state.",
+          url: "https://docs.cycling74.com/apiref/lom/song/"
+        },
+        track: {
+          object: "Track",
+          path: "live_set tracks N",
+          description: "An audio, MIDI, return, or master track, including its clip slots, Arrangement clips, devices, and mixer.",
+          url: "https://docs.cycling74.com/apiref/lom/track/"
+        },
+        clip: {
+          object: "Clip",
+          path: "live_set tracks N clip_slots M clip",
+          description: "A MIDI or audio clip. Tembro can inspect notes, timing, loop state, envelopes, velocity, and Arrangement position.",
+          url: "https://docs.cycling74.com/apiref/lom/clip/"
+        },
+        clipSlot: {
+          object: "ClipSlot",
+          path: "live_set tracks N clip_slots M",
+          description: "One cell in Session View. It can contain a clip and is also the bridge for moving material into the Arrangement.",
+          url: "https://docs.cycling74.com/apiref/lom/clipslot/"
+        },
+        device: {
+          object: "Device",
+          path: "live_set tracks N devices M",
+          description: "A Live instrument or effect. Its automatable controls are exposed as DeviceParameter objects.",
+          url: "https://docs.cycling74.com/apiref/lom/device/"
+        },
+        parameter: {
+          object: "DeviceParameter",
+          path: "live_set tracks N devices M parameters L",
+          description: "One automatable device control. Tembro reads its range and state before setting its value.",
+          url: "https://docs.cycling74.com/apiref/lom/deviceparameter/"
+        },
+        mixer: {
+          object: "MixerDevice",
+          path: "live_set tracks N mixer_device",
+          description: "The track mixer: volume, panning, activator, crossfade assignment, and sends.",
+          url: "https://docs.cycling74.com/apiref/lom/mixerdevice/"
+        },
+        browser: {
+          object: "Live Browser",
+          path: "Browser / Library / Places",
+          description: "Live's library of instruments, effects, presets, samples, Packs, and user folders. Tembro searches it before loading anything.",
+          url: "https://www.ableton.com/en/live-manual/12/working-with-the-browser/"
+        }
+      };
+      const MUTATING_TOOLS = new Set([
+        "live_set", "live_call", "live_parameter_set", "live_clip_update_notes",
+        "live_clip_add_notes", "live_clip_duplicate_to_arrangement", "live_clip_envelope",
+        "live_clip_velocity_envelope", "live_clip_warp_markers", "live_track_create_audio_clip",
+        "live_track_insert_device", "live_transport", "live_browser_load", "live_load_device",
+        "tembro_arrange_clip"
+      ]);
       const $ = (id) => document.getElementById(id);
       const ui = {
         auth: $("authView"), chat: $("chatView"), email: $("email"), access: $("access"),
         connect: $("connect"), prompt: $("prompt"), send: $("send"), messages: $("messages"),
         empty: $("empty"), status: $("status"), context: $("context"), credits: $("credits"),
-        connection: $("connection"), working: $("working"), workingText: $("workingText"), settings: $("settings"), update: $("update"), stop: $("stop"),
+        connection: $("connection"), working: $("working"), workingText: $("workingText"), studioThought: $("studioThought"), settings: $("settings"), update: $("update"), stop: $("stop"),
+        skillRail: $("skillRail"), skillName: $("skillName"), costHint: $("costHint"),
+        traceTerminal: $("traceTerminal"), traceState: $("traceState"), traceCount: $("traceCount"),
+        traceLog: $("traceLog"), tracePlaceholder: $("tracePlaceholder"), traceInspector: $("traceInspector"),
+        traceObject: $("traceObject"), traceTool: $("traceTool"), traceDescription: $("traceDescription"),
+        tracePath: $("tracePath"), traceArgs: $("traceArgs"), traceDoc: $("traceDoc"), traceClose: $("traceClose"),
         pasteAccess: $("pasteAccess"), pastePrompt: $("pastePrompt")
       };
       let connected = false;
       let busy = false;
+      let selectedSkill = null;
+      let skillProfiles = DEFAULT_SKILLS;
+      let thoughtIndex = 0;
+      let thoughtTimer = null;
       const toolRows = new Map();
+      let currentDocUrl = LIVE_DOCS.lom.url;
 
-      // localStorage may be unavailable inside the webview; every access goes
-      // through these two helpers. Credentials are remembered only after a
-      // successful connect (see the auth handler) so a login is one click.
       function loadLocal(key) {
         try { return localStorage.getItem(key) || ""; } catch (_) { return ""; }
       }
@@ -366,18 +578,77 @@
         ui.settings.classList.toggle("hidden", !value);
         if (value) setTimeout(() => ui.prompt.focus(), 80);
       }
+      function estimateCost(text, skillId) {
+        const requested = skillProfiles.find((profile) => profile.id === skillId);
+        const base = skillProfiles.find((profile) => profile.id === "clip_edit")?.estimated_credits || 1;
+        const lower = String(text || "").trim().toLowerCase();
+        let inferred = base;
+        if (/\b(full|complete|whole)\s+(track|song|arrangement)\b|\b(song|track)\s+from\s+scratch\b|\b(arrangiamento|brano)\s+(completo|intero)\b|\b(?:64|96|128|160|192|256)\s*[-–—]?\s*(?:bars?|barre|battute)\b/.test(lower)) {
+          inferred = base * 4;
+        } else if (/\b(chords?|harmony|harmonies|melod(?:y|ies|ia|ie)|accordi?|armonia|beat|drums?|groove|batteria|ritmo|808)\b/.test(lower)) {
+          inferred = base * 2;
+        }
+        return Math.max(inferred, requested?.estimated_credits || base);
+      }
+      function updateCostHint() {
+        const profile = skillProfiles.find((item) => item.id === selectedSkill);
+        const cost = estimateCost(ui.prompt.value, selectedSkill);
+        ui.skillName.textContent = profile?.shortLabel || "Custom request";
+        ui.costHint.textContent = "≈ " + cost + (cost === 1 ? " credit" : " credits");
+      }
+      function renderSkills(profiles) {
+        if (!Array.isArray(profiles) || !profiles.length) return;
+        skillProfiles = profiles;
+        ui.skillRail.replaceChildren();
+        profiles.forEach((profile) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "skill-button";
+          button.dataset.skill = profile.id;
+          const label = document.createElement("span");
+          label.textContent = profile.label;
+          const cost = document.createElement("span");
+          cost.className = "skill-cost";
+          cost.textContent = profile.estimated_credits + "c";
+          button.append(label, cost);
+          button.addEventListener("click", () => {
+            selectedSkill = profile.id;
+            ui.prompt.value = profile.prompt;
+            ui.prompt.dispatchEvent(new Event("input"));
+            ui.skillRail.querySelectorAll(".skill-button").forEach((item) => item.classList.toggle("active", item === button));
+            updateCostHint();
+            ui.prompt.focus();
+          });
+          ui.skillRail.appendChild(button);
+        });
+        updateCostHint();
+      }
+      function startThoughts() {
+        if (thoughtTimer) return;
+        ui.studioThought.textContent = STUDIO_THOUGHTS[thoughtIndex % STUDIO_THOUGHTS.length];
+        thoughtTimer = setInterval(() => {
+          thoughtIndex = (thoughtIndex + 1) % STUDIO_THOUGHTS.length;
+          ui.studioThought.textContent = STUDIO_THOUGHTS[thoughtIndex];
+        }, 3600);
+      }
+      function stopThoughts() {
+        if (thoughtTimer) clearInterval(thoughtTimer);
+        thoughtTimer = null;
+      }
       function setBusy(value, label) {
+        const wasBusy = busy;
         busy = value;
         ui.send.disabled = value;
         ui.working.classList.toggle("visible", value);
+        ui.skillRail.classList.toggle("disabled", value);
+        if (value && !wasBusy) startThoughts();
+        if (!value && wasBusy) stopThoughts();
         if (label) ui.workingText.textContent = label.replace(/^[·⏳✓⚠]\s*/, "");
       }
-      // Clipboard shortcuts (⌘C/⌘V) never reach the embedded webview inside
-      // Live, so copying and pasting go through explicit buttons instead.
       function copyText(text, button) {
         const done = (ok) => {
-          button.textContent = ok ? "copied" : "copy failed";
-          setTimeout(() => { button.textContent = "copy"; }, 1500);
+          button.textContent = ok ? "Copied" : "Copy failed";
+          setTimeout(() => { button.textContent = "Copy"; }, 1500);
         };
         const fallback = () => {
           const scratch = document.createElement("textarea");
@@ -398,7 +669,7 @@
       async function pasteInto(field, button, replace) {
         const label = button.textContent;
         const fail = () => {
-          button.textContent = "paste blocked — type it";
+          button.textContent = "Paste blocked";
           setTimeout(() => { button.textContent = label; }, 2200);
           field.focus();
         };
@@ -431,10 +702,10 @@
         bubble.append(label, document.createTextNode(text));
         if (who !== "you") {
           const copyBtn = document.createElement("button");
-          copyBtn.textContent = "copy";
+          copyBtn.textContent = "Copy";
           copyBtn.className = "chip";
           copyBtn.style.display = "block";
-          copyBtn.style.marginTop = "6px";
+          copyBtn.style.marginTop = "8px";
           copyBtn.addEventListener("click", () => copyText(text, copyBtn));
           bubble.appendChild(copyBtn);
         }
@@ -448,42 +719,109 @@
           .replace(/^tembro_/, "")
           .replace(/_/g, " ");
       }
-      function updateToolStep(kind, id, name) {
+      function docForTool(name, args) {
+        const tool = String(name || "").toLowerCase();
+        const context = JSON.stringify(args || {}).toLowerCase();
+        if (tool.includes("browser") || tool === "find_similar_sounds") return LIVE_DOCS.browser;
+        if (tool.includes("parameter")) return LIVE_DOCS.parameter;
+        if (tool.includes("duplicate_to_arrangement") || tool === "tembro_arrange_clip") return LIVE_DOCS.clipSlot;
+        if (tool.includes("clip")) return LIVE_DOCS.clip;
+        if (tool.includes("device")) return LIVE_DOCS.device;
+        if (tool.includes("track")) return LIVE_DOCS.track;
+        if (tool.includes("transport") || tool === "live_set_summary") return LIVE_DOCS.song;
+        if (context.includes("mixer_device")) return LIVE_DOCS.mixer;
+        if (context.includes("parameters")) return LIVE_DOCS.parameter;
+        if (context.includes("clip_slots")) return LIVE_DOCS.clipSlot;
+        if (context.includes("arrangement_clips") || context.includes(" clip")) return LIVE_DOCS.clip;
+        if (context.includes("devices")) return LIVE_DOCS.device;
+        if (context.includes("tracks")) return LIVE_DOCS.track;
+        if (context.includes("live_set")) return LIVE_DOCS.song;
+        return LIVE_DOCS.lom;
+      }
+      function readableArgs(args) {
+        const keys = Object.keys(args || {});
+        return keys.length ? JSON.stringify(args, null, 2) : "No arguments — this call reads the current Live state.";
+      }
+      function showToolDoc(name, args) {
+        const doc = docForTool(name, args);
+        currentDocUrl = doc.url;
+        ui.traceObject.textContent = doc.object;
+        ui.traceTool.textContent = name;
+        ui.traceDescription.textContent = doc.description;
+        ui.tracePath.textContent = doc.path;
+        ui.traceArgs.textContent = readableArgs(args);
+        ui.traceInspector.classList.remove("hidden");
+        ui.traceTerminal.open = true;
+      }
+      function updateTraceState() {
+        const rows = [...toolRows.values()];
+        ui.traceCount.textContent = String(rows.length);
+        ui.traceState.textContent = rows.some((row) => row.classList.contains("running"))
+          ? "working"
+          : rows.length
+            ? "idle"
+            : "ready";
+      }
+      function resetTrace() {
+        toolRows.clear();
+        ui.traceLog.replaceChildren(ui.tracePlaceholder);
+        ui.tracePlaceholder.classList.remove("hidden");
+        ui.traceInspector.classList.add("hidden");
+        updateTraceState();
+      }
+      function updateToolStep(kind, id, name, argsText) {
         const key = String(id || name || toolRows.size);
-        let details = toolRows.get(key);
-        if (!details) {
-          ui.empty.classList.add("hidden");
-          details = document.createElement("details");
-          details.className = "tool-step";
-          const summary = document.createElement("summary");
-          summary.textContent = "⏳ " + toolTitle(name);
-          const detail = document.createElement("div");
-          detail.className = "step-detail";
-          detail.textContent = "Tembro sta lavorando in Live…";
-          details.append(summary, detail);
-          ui.messages.appendChild(details);
-          toolRows.set(key, details);
+        let args = {};
+        try { args = argsText ? JSON.parse(argsText) : {}; } catch (_) { args = { preview: argsText }; }
+        let row = toolRows.get(key);
+        if (!row) {
+          ui.tracePlaceholder.classList.add("hidden");
+          row = document.createElement("button");
+          row.type = "button";
+          row.className = "trace-row " + (MUTATING_TOOLS.has(name) ? "mutation" : "read");
+          const seq = document.createElement("span");
+          seq.className = "trace-seq";
+          seq.textContent = String(toolRows.size + 1).padStart(2, "0");
+          const call = document.createElement("span");
+          call.className = "trace-call";
+          call.textContent = toolTitle(name);
+          const object = document.createElement("span");
+          object.className = "trace-object";
+          object.textContent = docForTool(name, args).object;
+          const result = document.createElement("span");
+          result.className = "trace-result";
+          result.textContent = "running";
+          row.append(seq, call, object, result);
+          row.addEventListener("click", () => showToolDoc(name, args));
+          ui.traceLog.appendChild(row);
+          toolRows.set(key, row);
         }
-        const summary = details.querySelector("summary");
-        const detail = details.querySelector(".step-detail");
+        row.classList.remove("running", "success", "error");
+        const result = row.querySelector(".trace-result");
         if (kind === "success") {
-          details.classList.add("success");
-          summary.textContent = "✓ " + toolTitle(name);
-          detail.textContent = "Operazione completata e restituita all’agente.";
+          row.classList.add("success");
+          result.textContent = "done";
         } else if (kind === "error") {
-          details.classList.add("error");
-          summary.textContent = "⚠ " + toolTitle(name);
-          detail.textContent = "Operazione non riuscita; l’agente sta valutando il risultato.";
+          row.classList.add("error");
+          result.textContent = "error";
+        } else {
+          row.classList.add("running");
+          result.textContent = "running";
         }
-        ui.messages.scrollTop = ui.messages.scrollHeight;
+        updateTraceState();
+        ui.traceLog.scrollTop = ui.traceLog.scrollHeight;
       }
       function submit() {
         const text = ui.prompt.value.trim();
         if (!text || busy || !connected) return;
-        outlet("chat", text);
+        if (selectedSkill) {
+          outlet("chat_skill", selectedSkill, text);
+        } else {
+          outlet("chat", text);
+        }
         ui.prompt.value = "";
         ui.prompt.style.height = "auto";
-        setBusy(true, "reading Live…");
+        setBusy(true, "reading Live");
       }
 
       ui.connect.addEventListener("click", () => {
@@ -496,7 +834,7 @@
         pendingEmail = email;
         pendingAccess = code;
         ui.connect.disabled = true;
-        ui.status.textContent = "connecting…";
+        ui.status.textContent = "connecting";
         outlet("license", email, code);
       });
       ui.send.addEventListener("click", submit);
@@ -509,12 +847,15 @@
       ui.prompt.addEventListener("input", () => {
         ui.prompt.style.height = "auto";
         ui.prompt.style.height = Math.min(ui.prompt.scrollHeight, 130) + "px";
+        updateCostHint();
       });
       ui.settings.addEventListener("click", () => showConnected(false));
       ui.update.addEventListener("click", () => outlet("open_update"));
       ui.stop.addEventListener("click", () => outlet("chat", "/stop"));
       ui.pasteAccess.addEventListener("click", () => pasteInto(ui.access, ui.pasteAccess, true));
       ui.pastePrompt.addEventListener("click", () => pasteInto(ui.prompt, ui.pastePrompt, false));
+      ui.traceClose.addEventListener("click", () => ui.traceInspector.classList.add("hidden"));
+      ui.traceDoc.addEventListener("click", () => outlet("open_doc", currentDocUrl));
 
       bind("auth", (...args) => {
         const value = args.join(" ").trim() === "connected";
@@ -531,17 +872,29 @@
         const value = args.join(" ").trim();
         ui.credits.textContent = value + (value === "1" ? " credit" : " credits");
       });
+      bind("skills", (...args) => {
+        try {
+          const profiles = JSON.parse(args.join(" "));
+          renderSkills(profiles);
+        } catch (_) {
+          renderSkills(DEFAULT_SKILLS);
+        }
+      });
+      bind("charge", (...args) => {
+        const value = Number(args[0]) || 1;
+        ui.costHint.textContent = value + (value === 1 ? " credit used" : " credits used");
+      });
       bind("context", (...args) => { ui.context.textContent = args.join(" "); });
       bind("progress", (...args) => {
         const current = args[0] || "?";
         const maximum = args[1] || "?";
-        setBusy(true, "passaggio " + current + "/" + maximum + " · lavoro in corso");
+        setBusy(true, "step " + current + "/" + maximum + " · working in Live");
       });
       bind("step", (...args) => {
         const kind = args.shift() || "start";
         const id = args.shift() || "";
         const name = args.shift() || "Live action";
-        updateToolStep(kind, id, name);
+        updateToolStep(kind, id, name, args.join(" "));
       });
       bind("update", (...args) => {
         ui.update.textContent = "update " + args.join(" ");
@@ -565,20 +918,19 @@
       bind("reset", () => {
         ui.messages.querySelectorAll(".message").forEach((node) => node.remove());
         ui.messages.querySelectorAll(".tool-step").forEach((node) => node.remove());
-        toolRows.clear();
+        resetTrace();
         ui.empty.classList.remove("hidden");
       });
 
+      renderSkills(DEFAULT_SKILLS);
+      updateTraceState();
+
       if (window.max && typeof window.max.outlet === "function") {
-        // The view is driven exclusively by node's auth messages: ui_ready
-        // triggers reportAuth, which flips to the chat view only when node
-        // really holds a live session. The page never guesses on its own.
         outlet("ui_ready");
       } else {
-        // Standalone browser preview for design QA; never used inside Live.
         showConnected(true);
         ui.status.textContent = "preview · connected";
-        ui.context.textContent = "120 BPM · 4 tracks";
+        ui.context.textContent = "142 BPM · 6 tracks";
         ui.credits.textContent = "100 credits";
       }
     })();

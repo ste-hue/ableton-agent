@@ -21,6 +21,12 @@ import {
 } from "./types.js";
 import type { AgentStepResponse, ChatResponse, McpTool } from "./types.js";
 import { landingPage } from "./site.js";
+import {
+  estimateCreditCost,
+  isTembroSkill,
+  publicSkillProfiles,
+} from "./skills.js";
+import type { TembroSkillId } from "./skills.js";
 
 // ---------------------------------------------------------------------------
 // Tembro V0 API — one Hono app, deployable to Cloudflare Workers or Node.
@@ -28,12 +34,12 @@ import { landingPage } from "./site.js";
 // Client (M4L device) flow:
 //   sign in → POST /v0/agent with message + live context + local MCP schemas →
 //   receive tool calls → execute them locally → return tool outputs → repeat
-//   until the agent replies. Credits are charged once per user turn.
+//   until the agent replies. Credits are charged once per user turn, with the
+//   amount chosen server-side from the musical scope of the request.
 //
 // Credit invariant: the credit policy is server-side and
 // replaceable — the client only ever sees a balance. Credits are not chats
-// and are not provider tokens; the flat per-chat charge below is a stand-in
-// that can change without any client update. /v0/chat remains for v0.1.0.
+// and are not provider tokens. /v0/chat remains for v0.1.0.
 // ---------------------------------------------------------------------------
 export interface AppConfig {
   store: Store;
@@ -102,6 +108,8 @@ interface AgentTokenPayload {
   responseId: string;
   toolHash: string;
   step: number;
+  creditCost: number;
+  skill: TembroSkillId | null;
   expiresAt: number;
 }
 
@@ -140,7 +148,14 @@ function verifyAgentToken(secret: string, token: string): AgentTokenPayload | nu
   if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return null;
   try {
     const payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as AgentTokenPayload;
-    if (!payload || typeof payload !== "object" || payload.expiresAt < Date.now()) return null;
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      payload.expiresAt < Date.now() ||
+      !Number.isInteger(payload.creditCost) ||
+      payload.creditCost <= 0 ||
+      (payload.skill !== null && !isTembroSkill(payload.skill))
+    ) return null;
     return payload;
   } catch {
     return null;
@@ -184,10 +199,25 @@ export function createApp(config: AppConfig) {
     c.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
     c.header("Referrer-Policy", "strict-origin-when-cross-origin");
     c.header("X-Content-Type-Options", "nosniff");
-    return c.html(landingPage({ checkoutUrl, downloadUrl, supportEmail }));
+    return c.html(
+      landingPage({
+        checkoutUrl,
+        downloadUrl,
+        supportEmail,
+        baseCreditCost: chatCostCredits,
+      }),
+    );
   });
 
   app.get("/v0/health", (c) => c.json({ ok: true, protocol_version: "0.1" }));
+
+  app.get("/v0/skills", (c) =>
+    c.json({
+      protocol_version: "0.2",
+      base_credit_cost: chatCostCredits,
+      skills: publicSkillProfiles(chatCostCredits),
+    }),
+  );
 
   app.get("/v0/version", (c) =>
     c.json({
@@ -364,6 +394,8 @@ export function createApp(config: AppConfig) {
         conversationId: string;
         requestId: string;
         step: number;
+        creditCost: number;
+        skill: TembroSkillId | null;
       },
     ): Promise<AgentStepResponse> => {
       const allowed = new Set(tools.map((tool) => tool.name));
@@ -382,6 +414,8 @@ export function createApp(config: AppConfig) {
           responseId: result.responseId,
           toolHash,
           step: meta.step,
+          creditCost: meta.creditCost,
+          skill: meta.skill,
           expiresAt: Date.now() + AGENT_TOKEN_TTL_MS,
         });
         return {
@@ -392,6 +426,8 @@ export function createApp(config: AppConfig) {
           tool_calls: result.toolCalls,
           continuation_token: continuationToken,
           credits_remaining: credits,
+          credits_charged: meta.creditCost,
+          skill: meta.skill,
         };
       }
       await store.appendMessage(meta.conversationId, {
@@ -405,6 +441,8 @@ export function createApp(config: AppConfig) {
           requestId: meta.requestId,
           steps: meta.step,
           usage: result.usage ?? null,
+          creditsCharged: meta.creditCost,
+          skill: meta.skill,
         },
         userId,
       );
@@ -415,22 +453,33 @@ export function createApp(config: AppConfig) {
         reply: result.reply,
         tool_calls: [],
         credits_remaining: credits,
+        credits_charged: meta.creditCost,
+        skill: meta.skill,
       };
     };
 
     if (parsed.data.kind === "start") {
       const requestId = parsed.data.request_id ?? randomUUID();
+      const skill = parsed.data.skill ?? null;
+      const creditCost = estimateCreditCost(
+        chatCostCredits,
+        parsed.data.message,
+        parsed.data.skill,
+      );
       let conversationId = parsed.data.conversation_id ?? null;
       if (conversationId) {
         const owned = await store.conversationBelongsTo(conversationId, userId);
         if (!owned) return c.json({ error: "not_found" }, 404);
       }
-      const charge = await store.chargeCredits(userId, chatCostCredits, requestId);
+      const charge = await store.chargeCredits(userId, creditCost, requestId);
       if (charge.duplicate) {
         return c.json({ error: "duplicate_request", request_id: requestId }, 409);
       }
       if (!charge.charged) {
-        return c.json({ error: "insufficient_credits", credits: charge.balance }, 402);
+        return c.json(
+          { error: "insufficient_credits", credits: charge.balance, credits_required: creditCost },
+          402,
+        );
       }
       try {
         conversationId ??= await store.createConversation(userId);
@@ -441,7 +490,7 @@ export function createApp(config: AppConfig) {
         const history = await store.getMessages(conversationId, userId, historyLimit);
         await store.logEvent(
           "agent.started",
-          { conversationId, requestId, toolCount: tools.length },
+          { conversationId, requestId, toolCount: tools.length, creditCost, skill },
           userId,
         );
         const result = await agent.step({
@@ -450,10 +499,16 @@ export function createApp(config: AppConfig) {
           tools,
         });
         return c.json(
-          await responseFor(result, { conversationId, requestId, step: 1 }),
+          await responseFor(result, {
+            conversationId,
+            requestId,
+            step: 1,
+            creditCost,
+            skill,
+          }),
         );
       } catch (error) {
-        await store.addCredits(userId, chatCostCredits, "refund:agent", requestId);
+        await store.addCredits(userId, creditCost, "refund:agent", requestId);
         throw error;
       }
     }
@@ -470,7 +525,7 @@ export function createApp(config: AppConfig) {
     if (continuation.step >= MAX_AGENT_STEPS) {
       await store.addCredits(
         userId,
-        chatCostCredits,
+        continuation.creditCost,
         "refund:agent",
         continuation.requestId,
       );
@@ -484,6 +539,8 @@ export function createApp(config: AppConfig) {
           requestId: continuation.requestId,
           step: continuation.step,
           outputCount: parsed.data.tool_outputs.length,
+          creditCost: continuation.creditCost,
+          skill: continuation.skill,
         },
         userId,
       );
@@ -497,12 +554,14 @@ export function createApp(config: AppConfig) {
           conversationId: continuation.conversationId,
           requestId: continuation.requestId,
           step: continuation.step + 1,
+          creditCost: continuation.creditCost,
+          skill: continuation.skill,
         }),
       );
     } catch (error) {
       await store.addCredits(
         userId,
-        chatCostCredits,
+        continuation.creditCost,
         "refund:agent",
         continuation.requestId,
       );
@@ -516,6 +575,8 @@ export function createApp(config: AppConfig) {
     if (!parsed.success) return c.json({ error: "invalid_request" }, 400);
     const request = parsed.data;
     const requestId = request.request_id ?? randomUUID();
+    const skill = request.skill ?? null;
+    const creditCost = estimateCreditCost(chatCostCredits, request.message, request.skill);
 
     let conversationId = request.conversation_id ?? null;
     if (conversationId) {
@@ -523,19 +584,26 @@ export function createApp(config: AppConfig) {
       if (!owned) return c.json({ error: "not_found" }, 404);
     }
 
-    const charge = await store.chargeCredits(userId, chatCostCredits, requestId);
+    const charge = await store.chargeCredits(userId, creditCost, requestId);
     if (charge.duplicate) {
       return c.json({ error: "duplicate_request", request_id: requestId }, 409);
     }
     if (!charge.charged) {
-      return c.json({ error: "insufficient_credits", credits: charge.balance }, 402);
+      return c.json(
+        { error: "insufficient_credits", credits: charge.balance, credits_required: creditCost },
+        402,
+      );
     }
 
     try {
       conversationId ??= await store.createConversation(userId);
       await store.appendMessage(conversationId, { role: "user", content: request.message });
       const history = await store.getMessages(conversationId, userId, historyLimit);
-      await store.logEvent("chat.request", { conversationId, requestId }, userId);
+      await store.logEvent(
+        "chat.request",
+        { conversationId, requestId, creditCost, skill },
+        userId,
+      );
       const result = await llm.complete(history, request.live_context);
       await store.appendMessage(conversationId, {
         role: "assistant",
@@ -554,10 +622,12 @@ export function createApp(config: AppConfig) {
         reply: result.reply,
         actions: result.actions,
         credits_remaining: charge.balance,
+        credits_charged: creditCost,
+        skill,
       };
       return c.json(response);
     } catch (error) {
-      await store.addCredits(userId, chatCostCredits, "refund:chat", requestId);
+      await store.addCredits(userId, creditCost, "refund:chat", requestId);
       throw error;
     }
   });

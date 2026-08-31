@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 58" role="img" aria-labelledby="title">
+  <title id="title">Tembro</title>
+  <path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/>
+  <circle cx="51" cy="29" r="8" fill="currentColor"/>
+</svg>
