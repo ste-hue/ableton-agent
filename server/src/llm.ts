@@ -88,7 +88,7 @@ Safety and execution rules:
 - Prefer creating a variation over destroying existing musical work.
 
 Step budget — this matters:
-- You have at most 24 tool calls per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
+- You have at most 40 tool calls per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
 - If a property read fails, the property does not exist on that object. Do not retry it elsewhere blind — consult the facts below.
 
 Live Object Model facts (these prevent wasted, failing calls):

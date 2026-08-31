@@ -101,7 +101,7 @@ async function runAgentTurn(options) {
   while (step.kind === "tool_calls") {
     ensureNotStopped();
     iterations += 1;
-    if (iterations > 24) throw new Error("agent exceeded the local step limit");
+    if (iterations > 48) throw new Error("agent exceeded the local step limit");
     if (!step.continuation_token) throw new Error("agent response missing continuation");
     const outputs = [];
     for (const call of step.tool_calls || []) {

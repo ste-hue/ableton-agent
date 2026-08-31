@@ -98,8 +98,8 @@ maxApi.addHandler("signin", async (email) => {
 // watchdog abandons it on its own. Soft stop aborts between steps; the hard
 // race frees the UI even if a single await hangs past every other timeout.
 let stopRequested = false;
-const TURN_SOFT_TIMEOUT_MS = 180000;
-const TURN_HARD_TIMEOUT_MS = 240000;
+const TURN_SOFT_TIMEOUT_MS = 420000;
+const TURN_HARD_TIMEOUT_MS = 480000;
 
 maxApi.addHandler("chat", async (...words) => {
   const message = words.join(" ").trim();
