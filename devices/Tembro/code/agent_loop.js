@@ -324,7 +324,7 @@ async function runAgentTurn(options) {
     }
   };
   onStatus("discovering Live tools…");
-  const tools = safeTools(await client.listTools());
+  const tools = safeTools(await raceWithStop(client.listTools(), shouldStop));
   if (tools.length === 0) throw new Error("no safe Ableton MCP tools available");
 
   onStatus("thinking with " + tools.length + " Live tools…");
@@ -403,6 +403,7 @@ module.exports = {
   TEMBRO_ARRANGE_CLIP_TOOL,
   arrangeClip,
   completionReply,
+  raceWithStop,
   safeTools,
   boundedJson,
   runAgentTurn,
