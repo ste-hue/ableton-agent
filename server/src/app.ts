@@ -497,6 +497,7 @@ export function createApp(config: AppConfig) {
           messages: history,
           liveContext: parsed.data.live_context,
           tools,
+          reasoningEffort: creditCost >= 2 ? "high" : "medium",
         });
         return c.json(
           await responseFor(result, {
@@ -577,6 +578,7 @@ export function createApp(config: AppConfig) {
         previousResponseId: continuation.responseId,
         toolOutputs: parsed.data.tool_outputs,
         tools,
+        reasoningEffort: continuation.creditCost >= 2 ? "high" : "medium",
       });
       return c.json(
         await responseFor(result, {

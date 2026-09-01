@@ -961,3 +961,103 @@ test("signed billing webhook for another store is rejected without a grant", asy
   assert.equal(response.status, 400);
   assert.equal(await store.getUserByEmail("buyer@example.com"), null);
 });
+
+test("composition-priced turns buy deep thinking; chat stays medium", async () => {
+  // Provider level: reasoningEffort lands in the Responses body with headroom.
+  const bodies: Record<string, unknown>[] = [];
+  const fakeFetch = (async function (_input: unknown, init?: RequestInit) {
+    bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+    return new Response(
+      JSON.stringify({
+        id: "resp-deep",
+        output: [
+          { type: "message", content: [{ type: "output_text", text: "ok" }] },
+        ],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  }) as typeof fetch;
+  const provider = new HttpResponsesProvider(
+    "https://api.openai.com/v1/responses",
+    "test-key",
+    "gpt-5.6-terra",
+    fakeFetch,
+  );
+  const summaryTool = {
+    name: "live_set_summary",
+    description: "Read Set summary.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  };
+  await provider.step({
+    messages: [{ role: "user", content: "fai un beat" }],
+    tools: [summaryTool],
+    reasoningEffort: "high",
+  });
+  assert.deepEqual(bodies[0]?.reasoning, { effort: "high" });
+  assert.equal(bodies[0]?.max_output_tokens, 48_000);
+
+  // App level: the credit estimate decides the effort on start AND continue.
+  const efforts: (string | undefined)[] = [];
+  const agent: AgentProvider = {
+    async step(request) {
+      efforts.push(request.reasoningEffort);
+      if (efforts.length === 2) {
+        return {
+          responseId: "resp-beat-tools",
+          reply: "",
+          toolCalls: [
+            {
+              call_id: "call-beat",
+              name: "live_set",
+              arguments: { ref: { path: "live_set" }, property: "tempo", value: 90 },
+            },
+          ],
+        };
+      }
+      return { responseId: "resp-" + efforts.length, reply: "done", toolCalls: [] };
+    },
+  };
+  const { app } = makeApp(undefined, 10, { agent });
+  const { token } = await signin(app, "effort@example.com");
+  const headers = { "content-type": "application/json", authorization: "Bearer " + token };
+  const cheap = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "start",
+      protocol_version: "0.2",
+      message: "set tempo to 126",
+      tools: [LIVE_SET_TOOL],
+    }),
+    headers,
+  });
+  assert.equal(cheap.status, 200);
+  const beat = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "start",
+      protocol_version: "0.2",
+      message: "make a house beat",
+      tools: [LIVE_SET_TOOL],
+    }),
+    headers,
+  });
+  assert.equal(beat.status, 200);
+  const started = (await beat.json()) as {
+    conversation_id: string;
+    continuation_token: string;
+  };
+  const continued = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "continue",
+      protocol_version: "0.2",
+      conversation_id: started.conversation_id,
+      continuation_token: started.continuation_token,
+      tools: [LIVE_SET_TOOL],
+      tool_outputs: [{ call_id: "call-beat", output: '{"ok":true}' }],
+    }),
+    headers,
+  });
+  assert.equal(continued.status, 200);
+  assert.deepEqual(efforts, ["medium", "high", "high"]);
+});

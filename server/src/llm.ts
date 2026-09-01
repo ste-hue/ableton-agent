@@ -36,6 +36,8 @@ export interface AgentStepRequest {
   tools: McpTool[];
   previousResponseId?: string;
   toolOutputs?: AgentToolOutput[];
+  /** Composition-priced turns (2+ credits) buy deep thinking; chat stays medium. */
+  reasoningEffort?: "medium" | "high";
 }
 
 export interface AgentStepResult {
@@ -55,6 +57,9 @@ export interface AgentProvider {
 }
 
 const AGENT_OUTPUT_TOKEN_BUDGET = 32_000;
+// High reasoning effort spends part of the output budget on thinking tokens:
+// give deep turns headroom so plans are not truncated mid-thought.
+const AGENT_DEEP_OUTPUT_TOKEN_BUDGET = 48_000;
 const AGENT_RECOVERY_OUTPUT_TOKEN_BUDGET = 64_000;
 
 const AGENT_OUTPUT_RECOVERY_INSTRUCTIONS = `Output recovery rules:
@@ -281,8 +286,11 @@ export class HttpResponsesProvider implements AgentProvider {
       tools,
       tool_choice: "auto",
       parallel_tool_calls: false,
-      reasoning: { effort: "medium" },
-      max_output_tokens: AGENT_OUTPUT_TOKEN_BUDGET,
+      reasoning: { effort: request.reasoningEffort ?? "medium" },
+      max_output_tokens:
+        request.reasoningEffort === "high"
+          ? AGENT_DEEP_OUTPUT_TOKEN_BUDGET
+          : AGENT_OUTPUT_TOKEN_BUDGET,
       store: true,
     };
     if (request.previousResponseId) body.previous_response_id = request.previousResponseId;
