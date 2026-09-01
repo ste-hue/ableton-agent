@@ -21,7 +21,7 @@
   "vars": {
     "LLM_ENDPOINT": "https://api.openai.com/v1/chat/completions",
     "LLM_RESPONSES_ENDPOINT": "https://api.openai.com/v1/responses",
-    "LLM_MODEL": "gpt-5.6-terra",
+    "LLM_MODEL": "gpt-5.6-sol",
     "APP_VERSION": "0.1.5-beta",
     "SUBSCRIPTION_GRANT_CREDITS": "500",
     "CHAT_COST_CREDITS": "1",
