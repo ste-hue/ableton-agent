@@ -521,6 +521,18 @@
           path: "Browser / Library / Places",
           description: "Live's library of instruments, effects, presets, samples, Packs, and user folders. Tembro searches it before loading anything.",
           url: "https://www.ableton.com/en/live-manual/12/working-with-the-browser/"
+        },
+        scene: {
+          object: "Scene",
+          path: "live_set scenes N",
+          description: "One row of Session View. Firing a scene launches every clip in that row together.",
+          url: "https://docs.cycling74.com/apiref/lom/scene/"
+        },
+        application: {
+          object: "Application",
+          path: "live_app",
+          description: "The Live application itself: version, documents, and the view hierarchy above the Song.",
+          url: "https://docs.cycling74.com/apiref/lom/application/"
         }
       };
       const MUTATING_TOOLS = new Set([
@@ -719,23 +731,66 @@
           .replace(/^tembro_/, "")
           .replace(/_/g, " ");
       }
+      // Every tool with a fixed target links straight to its object's page.
+      const TOOL_DOCS = {
+        live_ping: "application",
+        live_bridge_status: "application",
+        live_set_summary: "song",
+        live_transport: "song",
+        live_clip_notes: "clip",
+        live_clip_update_notes: "clip",
+        live_clip_add_notes: "clip",
+        live_clip_envelope: "clip",
+        live_clip_velocity_envelope: "clip",
+        live_clip_warp_markers: "clip",
+        live_clip_duplicate_to_arrangement: "clipSlot",
+        tembro_arrange_clip: "clipSlot",
+        live_track_create_audio_clip: "track",
+        live_track_insert_device: "device",
+        live_device_parameters: "device",
+        live_parameter_set: "parameter",
+        live_load_device: "browser",
+        live_browser_roots: "browser",
+        live_browser_capabilities: "browser",
+        live_browser_search: "browser",
+        live_browser_load: "browser",
+        live_browser_preview: "browser",
+        find_similar_sounds: "browser"
+      };
+      // Generic tools (live_get, live_set, live_call, live_children, …) aim at
+      // whatever LOM path their arguments name: resolve the page from the most
+      // specific path present, reading its tail.
+      const PATH_DOCS = [
+        [/mixer_device (volume|panning|sends)/, "parameter"],
+        [/mixer_device/, "mixer"],
+        [/parameters \d+/, "parameter"],
+        [/devices \d+$/, "device"],
+        [/clip_slots \d+ clip\b/, "clip"],
+        [/arrangement_clips \d+/, "clip"],
+        [/clip_slots \d+/, "clipSlot"],
+        [/scenes \d+/, "scene"],
+        [/(^| )tracks \d+$|return_tracks \d+$|master_track$/, "track"],
+        [/^live_app/, "application"],
+        [/^live_set/, "song"]
+      ];
       function docForTool(name, args) {
-        const tool = String(name || "").toLowerCase();
-        const context = JSON.stringify(args || {}).toLowerCase();
-        if (tool.includes("browser") || tool === "find_similar_sounds") return LIVE_DOCS.browser;
-        if (tool.includes("parameter")) return LIVE_DOCS.parameter;
-        if (tool.includes("duplicate_to_arrangement") || tool === "tembro_arrange_clip") return LIVE_DOCS.clipSlot;
-        if (tool.includes("clip")) return LIVE_DOCS.clip;
-        if (tool.includes("device")) return LIVE_DOCS.device;
-        if (tool.includes("track")) return LIVE_DOCS.track;
-        if (tool.includes("transport") || tool === "live_set_summary") return LIVE_DOCS.song;
-        if (context.includes("mixer_device")) return LIVE_DOCS.mixer;
-        if (context.includes("parameters")) return LIVE_DOCS.parameter;
-        if (context.includes("clip_slots")) return LIVE_DOCS.clipSlot;
-        if (context.includes("arrangement_clips") || context.includes(" clip")) return LIVE_DOCS.clip;
-        if (context.includes("devices")) return LIVE_DOCS.device;
-        if (context.includes("tracks")) return LIVE_DOCS.track;
-        if (context.includes("live_set")) return LIVE_DOCS.song;
+        const byTool = TOOL_DOCS[String(name || "")];
+        if (byTool) return LIVE_DOCS[byTool];
+        // Collect every LOM path mentioned in the arguments; the longest one
+        // is the most specific target of the call.
+        const paths = [];
+        (function collect(value) {
+          if (typeof value === "string") {
+            if (/^(live_set|live_app)\b/.test(value.trim())) paths.push(value.trim());
+          } else if (Array.isArray(value)) value.forEach(collect);
+          else if (value && typeof value === "object") Object.values(value).forEach(collect);
+        })(args || {});
+        paths.sort((a, b) => b.length - a.length);
+        for (const path of paths) {
+          for (const [pattern, key] of PATH_DOCS) {
+            if (pattern.test(path)) return LIVE_DOCS[key];
+          }
+        }
         return LIVE_DOCS.lom;
       }
       function readableArgs(args) {
