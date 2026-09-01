@@ -176,3 +176,91 @@ test("completion reply always announces that the work is finished", () => {
     "Ho finito — arrangiamento verificato.",
   );
 });
+
+test("a stop request lands while a server round is in flight", async () => {
+  let stopped = false;
+  const client = {
+    async listTools() {
+      return [SUMMARY_TOOL];
+    },
+    async callTool() {
+      return { set_signature: "sig-1" };
+    },
+  };
+  const api = {
+    async agentStart() {
+      return {
+        kind: "tool_calls",
+        conversation_id: "conversation-1",
+        continuation_token: "continuation-1",
+        tool_calls: [{ call_id: "call-1", name: "live_set_summary", arguments: {} }],
+      };
+    },
+    agentContinue() {
+      // Simulates the model thinking for a long time: this promise never
+      // settles, so only the stop poll can end the turn.
+      stopped = true;
+      return new Promise(() => {});
+    },
+  };
+  await assert.rejects(
+    runAgentTurn({
+      api,
+      client,
+      message: "vai",
+      liveContext: {},
+      conversationId: null,
+      shouldStop: () => stopped,
+    }),
+    (err) => err.stopped === true,
+  );
+});
+
+test("the turn aborts after five consecutive failed Live calls", async () => {
+  let continues = 0;
+  const failingCall = (n) => ({
+    call_id: "call-" + n,
+    name: "live_set_summary",
+    arguments: {},
+  });
+  const client = {
+    async listTools() {
+      return [SUMMARY_TOOL];
+    },
+    async callTool() {
+      throw new Error("socket refused");
+    },
+  };
+  const api = {
+    async agentStart() {
+      return {
+        kind: "tool_calls",
+        conversation_id: "conversation-1",
+        continuation_token: "continuation-1",
+        tool_calls: [failingCall(1), failingCall(2), failingCall(3)],
+      };
+    },
+    async agentContinue() {
+      continues += 1;
+      return {
+        kind: "tool_calls",
+        conversation_id: "conversation-1",
+        continuation_token: "continuation-" + (continues + 1),
+        tool_calls: [failingCall(10 + continues), failingCall(20 + continues)],
+      };
+    },
+  };
+  await assert.rejects(
+    runAgentTurn({
+      api,
+      client,
+      message: "vai",
+      liveContext: {},
+      conversationId: null,
+    }),
+    /failed in a row.*socket refused/,
+  );
+  // 3 failures in the first batch, 2 in the second: the breaker fires before
+  // a third server round is requested.
+  assert.equal(continues, 1);
+});
