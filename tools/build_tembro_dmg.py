@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import plistlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -52,7 +53,23 @@ def build_icon(icon_path: Path) -> None:
         source.convert("RGBA").save(icon_path, format="ICNS")
 
 
-def compile_installer(app_path: Path, temp: Path) -> None:
+def stamp_installer(destination: Path, api_url: str) -> None:
+    """Rewrite the installer script's version and official API URL so the
+    banner and the stale-config guard always match the DMG being built."""
+    text = INSTALLER.read_text()
+    text, versions = re.subn(
+        r'^TEMBRO_VERSION=".*"$', f'TEMBRO_VERSION="{VERSION}"', text, count=1, flags=re.M
+    )
+    text, urls = re.subn(
+        r'^OFFICIAL_API_URL=".*"$', f'OFFICIAL_API_URL="{api_url}"', text, count=1, flags=re.M
+    )
+    if versions != 1 or urls != 1:
+        raise RuntimeError("installer script is missing TEMBRO_VERSION or OFFICIAL_API_URL")
+    destination.write_text(text)
+    destination.chmod(0o755)
+
+
+def compile_installer(app_path: Path, temp: Path, api_url: str) -> None:
     if not shutil.which("swiftc") or not shutil.which("lipo"):
         raise RuntimeError("swiftc and lipo are required to build the installer app")
 
@@ -66,8 +83,7 @@ def compile_installer(app_path: Path, temp: Path) -> None:
     shutil.copytree(DEVICE_DIR, payload / "Tembro")
     shutil.copytree(REMOTE_SCRIPT, payload / "Ableton_Live_MCP")
     shutil.copy2(UPSTREAM_LICENSE, payload / "THIRD_PARTY_LICENSE.txt")
-    shutil.copy2(INSTALLER, resources / INSTALLER.name)
-    (resources / INSTALLER.name).chmod(0o755)
+    stamp_installer(resources / INSTALLER.name, api_url)
     build_icon(resources / "Tembro.icns")
 
     arch_binaries: list[Path] = []
@@ -149,7 +165,7 @@ def build_dmg(
         stage = temp_path / "Tembro"
         stage.mkdir()
         app_path = stage / "Install Tembro.app"
-        compile_installer(app_path, temp_path)
+        compile_installer(app_path, temp_path, api_url)
         if sign_identity:
             sign(app_path, sign_identity)
         (stage / ".metadata_never_index").touch()
