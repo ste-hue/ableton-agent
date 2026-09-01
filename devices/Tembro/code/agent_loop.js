@@ -360,8 +360,14 @@ async function runAgentTurn(options) {
       onTool("start", call);
       let result;
       try {
+        // Long macros (tembro_arrange_clip) report per-placement progress:
+        // surface it on the trace row too, not only in the status line.
+        const perCallStatus = (note) => {
+          onStatus(note);
+          onTool("progress", call, { note });
+        };
         result = await raceWithStop(
-          executeTool(client, call.name, call.arguments || {}, onStatus),
+          executeTool(client, call.name, call.arguments || {}, perCallStatus),
           shouldStop,
         );
         result = { ok: true, result };

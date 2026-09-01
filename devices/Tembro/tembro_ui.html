@@ -859,6 +859,9 @@
         } else if (kind === "error") {
           row.classList.add("error");
           result.textContent = "error";
+        } else if (kind === "progress") {
+          row.classList.add("running");
+          result.textContent = (args && args.note) ? String(args.note) : "running";
         } else {
           row.classList.add("running");
           result.textContent = "running";
