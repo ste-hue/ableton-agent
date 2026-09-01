@@ -25,6 +25,7 @@ import {
   estimateCreditCost,
   isTembroSkill,
   publicSkillProfiles,
+  skillPromptFor,
 } from "./skills.js";
 import type { TembroSkillId } from "./skills.js";
 
@@ -67,7 +68,9 @@ type Env = { Variables: { userId: string } };
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const AGENT_TOKEN_TTL_MS = 30 * 60 * 1000;
-const MAX_AGENT_STEPS = 88;
+// Full-throttle beta: effectively unlimited within the device's 15-minute
+// turn watchdogs, while still bounding what a modified client can bill.
+const MAX_AGENT_STEPS = 256;
 
 const SAFE_MCP_TOOLS = new Set([
   "live_ping",
@@ -497,7 +500,16 @@ export function createApp(config: AppConfig) {
           messages: history,
           liveContext: parsed.data.live_context,
           tools,
+          reasoningEffort: "high",
+          skillPrompt: skillPromptFor(skill),
         });
+        if (result.thinking) {
+          await store.logEvent(
+            "agent.thinking",
+            { requestId, step: 1, thinking: result.thinking },
+            userId,
+          );
+        }
         return c.json(
           await responseFor(result, {
             conversationId,
@@ -577,7 +589,20 @@ export function createApp(config: AppConfig) {
         previousResponseId: continuation.responseId,
         toolOutputs: parsed.data.tool_outputs,
         tools,
+        reasoningEffort: "high",
+        skillPrompt: skillPromptFor(continuation.skill),
       });
+      if (result.thinking) {
+        await store.logEvent(
+          "agent.thinking",
+          {
+            requestId: continuation.requestId,
+            step: continuation.step + 1,
+            thinking: result.thinking,
+          },
+          userId,
+        );
+      }
       return c.json(
         await responseFor(result, {
           conversationId: continuation.conversationId,

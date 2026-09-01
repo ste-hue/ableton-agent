@@ -36,7 +36,7 @@ const SAFE_TOOL_NAMES = new Set([
   "tembro_arrange_clip",
 ]);
 
-const MAX_LOCAL_AGENT_STEPS = 96;
+const MAX_LOCAL_AGENT_STEPS = 264;
 const MAX_ARRANGEMENT_DESTINATIONS = 32;
 // A user's stop must land within this interval even while a server round or a
 // Live call is in flight — the in-flight work is abandoned, like the watchdog.

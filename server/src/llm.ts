@@ -36,12 +36,18 @@ export interface AgentStepRequest {
   tools: McpTool[];
   previousResponseId?: string;
   toolOutputs?: AgentToolOutput[];
+  /** Composition-priced turns (2+ credits) buy deep thinking; chat stays medium. */
+  reasoningEffort?: "medium" | "high";
+  /** The skill button the user pressed, as concrete musical guidance. */
+  skillPrompt?: string;
 }
 
 export interface AgentStepResult {
   responseId: string;
   reply: string;
   toolCalls: AgentToolCall[];
+  /** Model reasoning summary, when the provider returns one — for debugging. */
+  thinking?: string;
   usage?: {
     inputTokens: number;
     outputTokens: number;
@@ -55,6 +61,9 @@ export interface AgentProvider {
 }
 
 const AGENT_OUTPUT_TOKEN_BUDGET = 32_000;
+// High reasoning effort spends part of the output budget on thinking tokens:
+// give deep turns headroom so plans are not truncated mid-thought.
+const AGENT_DEEP_OUTPUT_TOKEN_BUDGET = 48_000;
 const AGENT_RECOVERY_OUTPUT_TOKEN_BUDGET = 64_000;
 
 const AGENT_OUTPUT_RECOVERY_INSTRUCTIONS = `Output recovery rules:
@@ -97,13 +106,14 @@ Safety and execution rules:
 - Prefer creating a variation over destroying existing musical work.
 
 Step budget — this matters:
-- You have at most 88 model/tool rounds per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
+- You have at most 256 model/tool rounds per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
 - If a property read fails, the property does not exist on that object. Do not retry it elsewhere blind — consult the facts below.
 
 Live Object Model facts (these prevent wasted, failing calls):
 - Track objects have NO volume, pan, or meter properties. Mixer values live on the track's mixer_device: its "volume" and "panning" are DeviceParameter children (read their "value"). Output meters are output_meter_left / output_meter_right on the Track, but only while audio is actually playing — do not use meters to decide whether something is audible; check devices and clip playing state instead.
 - Session music is heard by FIRING clips or scenes (call "fire" on a ClipSlot, Clip, or Scene), then verifying the clip's is_playing is true. Starting the transport (live_transport play/continue) plays the ARRANGEMENT, which is usually empty in session workflows — it does not launch session clips.
 - A bare Drum Rack has empty pads and makes NO sound. Load a full drum kit preset (browser search for a kit, e.g. a "Kit" preset) or load samples into pads; verify the rack has chains before writing drum notes.
+- NEVER assume General MIDI drum mapping. Every Ableton kit maps its own pads: after loading a kit, read the Drum Rack's drum pads (live_children on the rack device with "drum_pads", or the visible_drum_pads children) and note each pad's "note" and "name". Write kick/snare/hat/clap notes using THOSE pitches. A clap on a hi-hat pad is exactly the failure this rule prevents.
 - Clip slots: a track's clip_slots N has_clip tells you where clips are; the clip object is clip_slots N clip.
 - Object ids can change between sessions; resolve fresh ids from live_set_summary rather than reusing remembered ones.
 
@@ -254,9 +264,12 @@ export class HttpResponsesProvider implements AgentProvider {
   }
 
   async step(request: AgentStepRequest): Promise<AgentStepResult> {
-    const instructions = request.liveContext
+    let instructions = request.liveContext
       ? `${AGENT_SYSTEM_PROMPT}\n\nCurrent Live context supplied by the device:\n${JSON.stringify(request.liveContext)}`
       : AGENT_SYSTEM_PROMPT;
+    if (request.skillPrompt) {
+      instructions += `\n\nThe user pressed a skill button for this turn. Its focus:\n${request.skillPrompt}`;
+    }
     const input = request.previousResponseId
       ? (request.toolOutputs ?? []).map((item) => ({
           type: "function_call_output",
@@ -281,8 +294,11 @@ export class HttpResponsesProvider implements AgentProvider {
       tools,
       tool_choice: "auto",
       parallel_tool_calls: false,
-      reasoning: { effort: "medium" },
-      max_output_tokens: AGENT_OUTPUT_TOKEN_BUDGET,
+      reasoning: { effort: request.reasoningEffort ?? "medium", summary: "auto" },
+      max_output_tokens:
+        request.reasoningEffort === "high"
+          ? AGENT_DEEP_OUTPUT_TOKEN_BUDGET
+          : AGENT_OUTPUT_TOKEN_BUDGET,
       store: true,
     };
     if (request.previousResponseId) body.previous_response_id = request.previousResponseId;
@@ -324,6 +340,10 @@ interface ResponsesApiData {
         type: "message";
         content?: Array<{ type?: string; text?: string }>;
       }
+    | {
+        type: "reasoning";
+        summary?: Array<{ type?: string; text?: string }>;
+      }
   >;
   output_text?: string;
   usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number };
@@ -343,7 +363,14 @@ function parseAgentResponse(data: ResponsesApiData, model: string): AgentStepRes
 
   const toolCalls: AgentToolCall[] = [];
   const text: string[] = [];
+  const thinking: string[] = [];
   for (const item of data.output ?? []) {
+    if (item.type === "reasoning") {
+      for (const part of item.summary ?? []) {
+        if (part.text) thinking.push(part.text);
+      }
+      continue;
+    }
     if (item.type === "function_call") {
       if (!item.call_id || !item.name) {
         throw new RetryableAgentOutputError("LLM returned an invalid tool call");
@@ -380,6 +407,7 @@ function parseAgentResponse(data: ResponsesApiData, model: string): AgentStepRes
     responseId: data.id,
     reply,
     toolCalls,
+    ...(thinking.length ? { thinking: thinking.join("\n").slice(0, 4000) } : {}),
     ...(data.usage
       ? {
           usage: {
