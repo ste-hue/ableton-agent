@@ -32,7 +32,7 @@ export const TEMBRO_SKILLS: readonly TembroSkillProfile[] = [
     shortLabel: "Beat making",
     description: "A playable groove with a pocket and a useful variation.",
     prompt:
-      "Focus: groove. Build a beat with a real pocket, in the style and length the user implies (default eight bars). Verify the kit's actual pad mapping before writing a single note. The user's words override this focus.",
+      "Focus: groove. Build a beat with a real pocket in the style the user implies. When the user does not limit the scope, think full-track: the groove plus the variations and fills a complete arrangement needs. Verify the kit's actual pad mapping before writing a single note. The user's words override this focus.",
     creditMultiplier: 2,
   },
   {
@@ -41,7 +41,7 @@ export const TEMBRO_SKILLS: readonly TembroSkillProfile[] = [
     shortLabel: "Harmony / melody",
     description: "Chords and a melodic idea that leave room for the track.",
     prompt:
-      "Focus: harmony and melody that serve the track — voice-leading over block chords, a melody with space, in the key and mood the user implies. The user's words override this focus.",
+      "Focus: harmony and melody that serve the track — voice-leading over block chords, a melody with space, in the key and mood the user implies. When the user does not limit the scope, write enough harmonic material to carry a complete arrangement, not a sketch. The user's words override this focus.",
     creditMultiplier: 2,
   },
   {
