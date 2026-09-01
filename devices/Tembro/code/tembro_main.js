@@ -48,7 +48,7 @@ const bridge = new LomBridge(client);
 let conversationId = null;
 let busy = false;
 let updateUrl = null;
-const DEVICE_VERSION = "0.1.4-beta";
+const DEVICE_VERSION = "0.1.5-beta";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 
@@ -186,6 +186,16 @@ async function handleChat(message, skill = null) {
         maxApi.outlet(["progress", current, maximum]);
       },
       onTool: (kind, call, result) => {
+        if (kind === "progress") {
+          maxApi.outlet([
+            "step",
+            "progress",
+            call.call_id || "",
+            call.name,
+            JSON.stringify(result || {}),
+          ]);
+          return;
+        }
         maxApi.outlet([
           "step",
           kind,
