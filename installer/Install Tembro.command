@@ -1,7 +1,10 @@
 #!/bin/zsh
 set -euo pipefail
 
-TEMBRO_VERSION="0.1.3-beta"
+# TEMBRO_VERSION and OFFICIAL_API_URL are rewritten by tools/build_tembro_dmg.py
+# at packaging time; these defaults only matter when running the script directly.
+TEMBRO_VERSION="0.1.5-beta"
+OFFICIAL_API_URL="https://gettembro.com"
 UPSTREAM_COMMIT="70f7df9192b78d9bd9405f369c9e046c88f1610e"
 UV_VERSION="0.12.7"
 NON_INTERACTIVE=0
@@ -60,6 +63,16 @@ ditto "$REMOTE_SOURCE" "$REMOTE_TARGET"
 
 echo "• Installing Tembro's private local bridge…"
 mkdir -p "$TEMBRO_HOME" "$TOOL_BIN" "$TOOL_DIR"
+
+# A leftover test config with a different api_base overrides the official URL
+# baked into the device and leaves the chat unable to connect (seen in the
+# field as getaddrinfo ENOTFOUND on a dead test hostname). Set it aside.
+CONFIG_FILE="$TEMBRO_HOME/config.json"
+if [[ -f "$CONFIG_FILE" ]] && grep -q '"api_base"' "$CONFIG_FILE" \
+  && ! grep -q "\"api_base\"[[:space:]]*:[[:space:]]*\"${OFFICIAL_API_URL}\"" "$CONFIG_FILE"; then
+  mv "$CONFIG_FILE" "$CONFIG_FILE.bak"
+  echo "• Set aside an old test config (config.json → config.json.bak)"
+fi
 if [[ ! -x "$UV_BIN" ]]; then
   curl --fail --location --silent --show-error \
     "https://astral.sh/uv/${UV_VERSION}/install.sh" \
