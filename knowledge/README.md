@@ -10,6 +10,13 @@ supererà la dimensione utile del prompt, passerà dietro un layer di retrieval.
 - `drums/` — produzione ritmica: sequencing, kick design, arrangiamento e
   transizioni, complessità, workflow/mix, metodo di studio dei pattern,
   sequencing generativo.
+- `fondamenti/`, `ritmo/`, `drum-rack/`, `composizione/`, `arrangiamento/`,
+  `produzione/`, `generi/`, `workflow/` — schede tematiche brevi (in italiano)
+  che le skill `.agents/skills/` consultano per singola decisione: ogni scheda
+  ha la stessa struttura a quattro blocchi (vincoli, principi, metodo di
+  lavoro, errori tipici).
+- `examples/` — bozze di brani usate come esempio tecnico; non canoniche finché
+  non approvate dall'utente.
 - `sources.md` — bibliografia dei testi studiati. I libri sono opere protette:
   NON vanno mai committati in questo repository (che è pubblico). Restano negli
   archivi privati dei contributor; qui entrano solo sintesi e principi, con i

@@ -157,3 +157,13 @@ concerns behind the conventions, not patterns to copy. Read it when a style is
 named and you want orientation, and treat what you find there as context for
 invention. If your output could have been produced by pattern-matching the
 style name, you have used it wrong.
+
+For electronic dance sequencing, recurring intros/fills, probabilistic variation,
+Euclidean distribution, or requests for greater originality, also read
+`references/generative-sequencing.md`. It supplies transformation grammars and a
+novelty procedure, not genre patterns to reproduce.
+
+When a decision needs deeper theory or a source-backed comparison, read the
+relevant Markdown topic under `../../../knowledge/` and use
+`../../../knowledge/sources.md` for page references. Retrieve only the topic
+needed for the decision and preserve the stated limitations.

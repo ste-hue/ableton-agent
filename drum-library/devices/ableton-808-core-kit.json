@@ -1,0 +1,23 @@
+{
+  "id": "ableton-808-core-kit",
+  "display_name": "808 Core Kit",
+  "ableton_browser_query": "808 Core Kit",
+  "preset_sha256": "d7771cb20034ee4b9ab96765bcee25196622e02465323d25e0a2f547ce3f408b",
+  "mapping_source": "Static extraction from the installed Ableton Core Library ADG preset",
+  "verified": true,
+  "midi_channel": 10,
+  "pads": {
+    "36": "Bass Drum", "37": "Rim Shot", "38": "Snare Drum", "39": "Hand Clap",
+    "40": "Low Conga", "41": "Mid Conga", "42": "Closed Hi Hat", "43": "Hi Conga",
+    "44": "Low Tom", "45": "Mid Tom", "46": "Open Hi Hat", "47": "Hi Tom",
+    "48": "Maracas", "49": "Cymbal", "50": "Cow Bell", "51": "Claves"
+  },
+  "pad_roles": {
+    "36": "kick", "37": "rim", "38": "snare", "39": "clap",
+    "40": "hand_drum", "41": "hand_drum", "42": "closed_hat", "43": "hand_drum",
+    "44": "low_tom", "45": "mid_tom", "46": "open_hat", "47": "high_tom",
+    "48": "shaker", "49": "crash", "50": "cowbell", "51": "clave"
+  },
+  "prototype_allowed_pitches": [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51],
+  "recommended_genres": ["hip-hop", "trap", "electro", "house", "rnb"]
+}

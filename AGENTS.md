@@ -14,6 +14,13 @@ The MCP server is the pinned upstream `ableton-live-mcp` installed in `.venv/`
 `127.0.0.1:8765`. Host configs: `.codex/config.toml` (Codex), `.mcp.json` +
 `.claude/settings.json` (Claude Code).
 
+## User collaboration contract
+
+Before musical work, read `.agents/COLLABORATION.md` completely. It records the
+user's durable workflow and communication preferences for this project. Update it
+only when the user asks or confirms that a recurring preference should become a
+rule. Safety and authorization rules in this file always take precedence.
+
 ## Knowledge sources
 
 - **What exists in the LOM** (objects, properties, methods): the `ableton-lom` skill

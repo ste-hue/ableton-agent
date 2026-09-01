@@ -1,0 +1,34 @@
+{
+  "id": "ableton-909-core-kit",
+  "display_name": "909 Core Kit",
+  "ableton_browser_query": "909 Core Kit",
+  "preset_sha256": "fffce8c84c722d096ebbf47015c39132aedcdc70d87f1951d71d1710a932d1a1",
+  "mapping_source": "Pad chains read from the installed Ableton rack during an earlier verified Live session",
+  "verified": true,
+  "midi_channel": 10,
+  "pads": {
+    "36": "Bass Drum",
+    "37": "Rim Shot",
+    "38": "Snare Drum",
+    "39": "Hand Clap",
+    "40": "Bass Drum",
+    "41": "Snare Drum",
+    "42": "Closed Hi Hat",
+    "43": "Snare Drum",
+    "44": "Low Tom",
+    "45": "Mid Tom",
+    "46": "Open Hi Hat",
+    "47": "Hi Tom",
+    "48": "Crash",
+    "49": "Crash",
+    "50": "Ride",
+    "51": "Ride"
+  },
+  "pad_roles": {
+    "36": "kick", "37": "rim", "38": "snare", "39": "clap",
+    "40": "kick", "41": "snare", "42": "closed_hat", "43": "snare",
+    "44": "low_tom", "45": "mid_tom", "46": "open_hat", "47": "high_tom",
+    "48": "crash", "49": "crash", "50": "ride", "51": "ride"
+  },
+  "prototype_allowed_pitches": [36, 37, 38, 39, 42, 44, 45, 46, 47, 48, 50]
+}

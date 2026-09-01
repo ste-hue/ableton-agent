@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "library_id": "ableton-agent-drums-v1",
+  "selection_policy": "deterministic-first-match",
+  "assets": [
+    {
+      "id": "techno-pressure-136-v1",
+      "genre": "techno",
+      "tempo_bpm": 136,
+      "bars": 128,
+      "meter": [4, 4],
+      "device_profile": "devices/ableton-909-core-kit.json",
+      "kit_id": "909-core-kit",
+      "midi_file": "midi/techno/136-techno-beat-0001-909-core-kit.mid",
+      "metadata_file": "metadata/techno.json",
+      "tags": ["hypnotic", "driving", "straight", "peak-time"]
+    },
+    {
+      "id": "disco-machine-122-v1",
+      "genre": "disco",
+      "tempo_bpm": 122,
+      "bars": 128,
+      "meter": [4, 4],
+      "device_profile": "devices/ableton-707-core-kit.json",
+      "kit_id": "707-core-kit",
+      "midi_file": "midi/disco/122-disco-beat-0001-707-core-kit.mid",
+      "metadata_file": "metadata/disco.json",
+      "tags": ["machine-disco", "open-hat", "syncopated", "dancefloor"]
+    },
+    {
+      "id": "house-pocket-124-v1",
+      "genre": "house",
+      "tempo_bpm": 124,
+      "bars": 128,
+      "meter": [4, 4],
+      "device_profile": "devices/ableton-808-core-kit.json",
+      "kit_id": "808-core-kit",
+      "midi_file": "midi/house/124-house-beat-0001-808-core-kit.mid",
+      "metadata_file": "metadata/house.json",
+      "tags": ["classic-house", "shuffle", "offbeat", "club"]
+    }
+  ]
+}

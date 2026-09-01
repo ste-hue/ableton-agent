@@ -1,0 +1,77 @@
+{
+  "id": "disco-machine-122-v1",
+  "genre": "disco",
+  "tempo_bpm": 122,
+  "bars": 128,
+  "meter": [
+    4,
+    4
+  ],
+  "device_profile": "devices/ableton-707-core-kit.json",
+  "kit_id": "707-core-kit",
+  "midi_file": "midi/disco/122-disco-beat-0001-707-core-kit.mid",
+  "metadata_file": "metadata/disco.json",
+  "tags": [
+    "machine-disco",
+    "open-hat",
+    "syncopated",
+    "dancefloor"
+  ],
+  "identity": "Machine disco: four-on-floor continuity, swung hats, syncopated rim/tom answers.",
+  "sections": [
+    [
+      1,
+      16,
+      "percussion entrance"
+    ],
+    [
+      17,
+      48,
+      "full disco engine"
+    ],
+    [
+      49,
+      64,
+      "break and lift"
+    ],
+    [
+      65,
+      96,
+      "ride-led peak"
+    ],
+    [
+      97,
+      112,
+      "second lift"
+    ],
+    [
+      113,
+      128,
+      "final chorus and DJ outro"
+    ]
+  ],
+  "validation": {
+    "bars": 128,
+    "length_beats": 512,
+    "note_count": 2416,
+    "used_pitches": [
+      36,
+      37,
+      38,
+      39,
+      42,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      51
+    ],
+    "velocity_range": [
+      67,
+      121
+    ],
+    "last_note_end": 508.1
+  }
+}
