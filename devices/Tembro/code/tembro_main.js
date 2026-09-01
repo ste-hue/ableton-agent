@@ -121,11 +121,19 @@ let stopRequested = false;
 const TURN_SOFT_TIMEOUT_MS = 840000;
 const TURN_HARD_TIMEOUT_MS = 900000;
 const CONTEXT_TIMEOUT_MS = 30000;
+const HEARTBEAT_MS = 5000;
 
-async function handleChat(message, skill = null) {
+// Messages typed while a turn is running are queued (echoed into the
+// transcript right away) and start on their own when the turn finishes.
+// /stop drops the queue along with the running turn.
+const pendingChats = [];
+const PENDING_MAX = 3;
+
+async function handleChat(message, skill = null, echoed = false) {
   message = String(message || "").trim();
   if (!message) return;
   if (message === "/stop") {
+    pendingChats.length = 0;
     if (busy) {
       stopRequested = true;
       ui("working", "stopping…");
@@ -133,7 +141,13 @@ async function handleChat(message, skill = null) {
     return;
   }
   if (busy) {
-    ui("working", "one request at a time — still working (send /stop to abort)");
+    if (pendingChats.length >= PENDING_MAX) {
+      ui("working", "queue is full — still working (send /stop to abort)");
+      return;
+    }
+    pendingChats.push({ message, skill });
+    transcript("you", message);
+    ui("working", "queued — still working, this starts when the current run finishes");
     return;
   }
   busy = true;
@@ -141,7 +155,9 @@ async function handleChat(message, skill = null) {
   const watchdog = setTimeout(() => {
     stopRequested = true;
   }, TURN_SOFT_TIMEOUT_MS);
-  transcript("you", message);
+  // The page frees its own spinner if these stop arriving (dead engine).
+  const heartbeat = setInterval(() => maxApi.outlet(["engine", "alive"]), HEARTBEAT_MS);
+  if (!echoed) transcript("you", message);
   try {
     // 1. Live context (read-only), immediately before the request. This phase
     // hung forever in the field (bridge socket contention): it gets its own
@@ -252,7 +268,14 @@ async function handleChat(message, skill = null) {
     }
   } finally {
     clearTimeout(watchdog);
+    clearInterval(heartbeat);
     busy = false;
+    const next = pendingChats.shift();
+    if (next) {
+      setImmediate(() => {
+        handleChat(next.message, next.skill, true).catch(() => {});
+      });
+    }
   }
 }
 

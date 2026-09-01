@@ -578,8 +578,14 @@
       function outlet(selector, ...args) {
         if (window.max && typeof window.max.outlet === "function") window.max.outlet(selector, ...args);
       }
+      let engineLastSeen = Date.now();
       function bind(selector, callback) {
-        if (window.max && typeof window.max.bindInlet === "function") window.max.bindInlet(selector, callback);
+        if (window.max && typeof window.max.bindInlet === "function") {
+          window.max.bindInlet(selector, (...args) => {
+            engineLastSeen = Date.now();
+            callback(...args);
+          });
+        }
       }
       function showConnected(value) {
         connected = value;
@@ -647,14 +653,37 @@
         if (thoughtTimer) clearInterval(thoughtTimer);
         thoughtTimer = null;
       }
+      // If the device engine dies mid-turn (node process gone, device removed),
+      // no message will ever free the spinner and the stop button has nobody to
+      // talk to. The engine emits a heartbeat every 5s while working; when the
+      // page hears nothing at all for 20s during a busy turn, it frees itself
+      // and says what to do instead of spinning forever.
+      const ENGINE_SILENCE_MS = 20000;
+      let engineWatchTimer = null;
+      function stopEngineWatch() {
+        if (engineWatchTimer) clearInterval(engineWatchTimer);
+        engineWatchTimer = null;
+      }
+      function startEngineWatch() {
+        stopEngineWatch();
+        engineLastSeen = Date.now();
+        engineWatchTimer = setInterval(() => {
+          if (Date.now() - engineLastSeen < ENGINE_SILENCE_MS) return;
+          setBusy(false);
+          ui.status.textContent = "engine not responding — remove Tembro from the track and add it again";
+          addMessage(
+            "tembro",
+            "I lost contact with the device engine, so nothing was actually running. Remove Tembro from the track and add it back (or reopen the Set), then send your message again.",
+          );
+        }, 3000);
+      }
       function setBusy(value, label) {
         const wasBusy = busy;
         busy = value;
-        ui.send.disabled = value;
         ui.working.classList.toggle("visible", value);
         ui.skillRail.classList.toggle("disabled", value);
-        if (value && !wasBusy) startThoughts();
-        if (!value && wasBusy) stopThoughts();
+        if (value && !wasBusy) { startThoughts(); startEngineWatch(); }
+        if (!value && wasBusy) { stopThoughts(); stopEngineWatch(); }
         if (label) ui.workingText.textContent = label.replace(/^[·⏳✓⚠]\s*/, "");
       }
       function copyText(text, button) {
@@ -871,7 +900,10 @@
       }
       function submit() {
         const text = ui.prompt.value.trim();
-        if (!text || busy || !connected) return;
+        if (!text || !connected) return;
+        // While a turn is running the message still goes out: the engine
+        // queues it, echoes it into the transcript, and starts it when the
+        // current run finishes. Never drop what the user typed.
         if (selectedSkill) {
           outlet("chat_skill", selectedSkill, text);
         } else {
@@ -879,7 +911,7 @@
         }
         ui.prompt.value = "";
         ui.prompt.style.height = "auto";
-        setBusy(true, "reading Live");
+        if (!busy) setBusy(true, "reading Live");
       }
 
       ui.connect.addEventListener("click", () => {
@@ -965,6 +997,9 @@
         setBusy(working, text);
         if (/connection failed|expired|offline/i.test(text)) ui.connect.disabled = false;
       });
+      // Heartbeat from the engine while a turn runs; receiving it (like any
+      // other message) refreshes engineLastSeen via the bind wrapper.
+      bind("engine", () => {});
       bind("state", (...args) => {
         const state = args.join(" ");
         if (state === "success" || state === "error" || state === "idle") setBusy(false);
