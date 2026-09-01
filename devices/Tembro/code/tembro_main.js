@@ -48,7 +48,7 @@ const bridge = new LomBridge(client);
 let conversationId = null;
 let busy = false;
 let updateUrl = null;
-const DEVICE_VERSION = "0.1.3-beta";
+const DEVICE_VERSION = "0.1.4-beta";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 
