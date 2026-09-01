@@ -90,6 +90,10 @@ function reportAuth() {
 }
 
 maxApi.addHandler("license", async (email, licenseKey) => {
+  // The page's dead-engine watchdog runs during any busy phase, so the
+  // heartbeat must cover license activation too — a slow server response
+  // would otherwise be misreported as a dead engine after 20s.
+  const heartbeat = setInterval(() => maxApi.outlet(["engine", "alive"]), 5000);
   try {
     if (!email || !licenseKey) throw new Error("enter email and access code");
     ui("working", "connecting…");
@@ -99,6 +103,8 @@ maxApi.addHandler("license", async (email, licenseKey) => {
     transcript("tembro", "access active · credits: " + result.credits);
   } catch (err) {
     ui("error", "connection failed: " + err.message);
+  } finally {
+    clearInterval(heartbeat);
   }
 });
 
@@ -142,6 +148,12 @@ async function handleChat(message, skill = null, echoed = false) {
   }
   if (busy) {
     if (pendingChats.length >= PENDING_MAX) {
+      // Never destroy what the user typed: echo it and say it won't run.
+      transcript("you", message);
+      transcript(
+        "tembro",
+        "the queue is full — this one will NOT run; resend it when I finish (or send /stop)",
+      );
       ui("working", "queue is full — still working (send /stop to abort)");
       return;
     }
@@ -270,6 +282,9 @@ async function handleChat(message, skill = null, echoed = false) {
     clearTimeout(watchdog);
     clearInterval(heartbeat);
     busy = false;
+    // A 401 cleared the session: queued messages can only fail the same way,
+    // and running them would bury the sign-in view under fresh errors.
+    if (!api.signedIn) pendingChats.length = 0;
     const next = pendingChats.shift();
     if (next) {
       setImmediate(() => {
@@ -383,6 +398,16 @@ maxApi.addHandler("open_doc", (rawUrl) => {
     /* only fixed official documentation URLs are accepted */
   }
 });
+
+// Best-effort: never leave the bridge child orphaned holding the 8765 socket
+// when the engine goes away (device removed, Live quits, node crashes).
+process.on("exit", () => client.stop());
+for (const signal of ["SIGTERM", "SIGINT"]) {
+  process.on(signal, () => {
+    client.stop();
+    process.exit(0);
+  });
+}
 
 reportAuth();
 startUiLoad();

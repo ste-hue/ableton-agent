@@ -990,11 +990,14 @@
         ui.update.textContent = "update " + args.join(" ");
         ui.update.classList.remove("hidden");
       });
+      // Busy is decided ONLY by the state channel. Deriving it from status
+      // text hid the stop button for the whole arrangement macro ("arranging
+      // clip 3/24…" matched no keyword) and re-armed the spinner on error
+      // texts that happened to contain one.
       bind("status", (...args) => {
         const text = args.join(" ");
         ui.status.textContent = text;
-        const working = /working|reading|thinking|discovering|Live ·|checking|connecting|applying/i.test(text);
-        setBusy(working, text);
+        if (busy) ui.workingText.textContent = text.replace(/^[·⏳✓⚠]\s*/, "");
         if (/connection failed|expired|offline/i.test(text)) ui.connect.disabled = false;
       });
       // Heartbeat from the engine while a turn runs; receiving it (like any
@@ -1002,7 +1005,8 @@
       bind("engine", () => {});
       bind("state", (...args) => {
         const state = args.join(" ");
-        if (state === "success" || state === "error" || state === "idle") setBusy(false);
+        if (state === "working") setBusy(true);
+        else if (state === "success" || state === "error" || state === "idle") setBusy(false);
       });
       bind("transcript", (...args) => {
         const who = args.shift() || "tembro";

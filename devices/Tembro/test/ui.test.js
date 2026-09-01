@@ -53,3 +53,23 @@ test("messages typed while busy are queued, never dropped, and a dead engine fre
   // Heartbeat keeps the page's dead-engine watchdog honest.
   assert.match(source, /\["engine", "alive"\]/);
 });
+
+test("busy is driven by the state channel, and stop reaches inside the arrangement macro", () => {
+  const html = fs.readFileSync(UI_FILE, "utf8");
+  // The stop button must stay visible through long macros: busy comes from
+  // the state channel, never from pattern-matching status text.
+  assert.match(html, /if \(state === "working"\) setBusy\(true\)/);
+  assert.doesNotMatch(html, /working\|reading\|thinking\|discovering/);
+
+  const loop = fs.readFileSync(path.join(__dirname, "..", "code", "agent_loop.js"), "utf8");
+  assert.match(loop, /arrangeClip\(client, args \|\| \{\}, onStatus, shouldStop\)/);
+
+  const main = fs.readFileSync(path.join(__dirname, "..", "code", "tembro_main.js"), "utf8");
+  // The bridge child is stopped when the engine goes away.
+  assert.match(main, /process\.on\("exit", \(\) => client\.stop\(\)\)/);
+
+  const mcp = fs.readFileSync(path.join(__dirname, "..", "code", "mcp_client.js"), "utf8");
+  // A missing bridge executable fails the call, not the whole engine.
+  assert.match(mcp, /this\.proc\.on\("error"/);
+  assert.match(mcp, /not installed or failed to start/);
+});

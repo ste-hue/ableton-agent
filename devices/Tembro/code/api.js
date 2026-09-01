@@ -36,7 +36,12 @@ function saveSession(sessionFile, token, instanceId) {
   );
 }
 
-function request(baseUrl, method, pathName, body, token) {
+const DEFAULT_TIMEOUT_MS = 120000;
+// Agent steps can legitimately think for minutes on big arrangement plans;
+// the device-side turn watchdogs (840/900s) remain the real backstop.
+const AGENT_TIMEOUT_MS = 300000;
+
+function request(baseUrl, method, pathName, body, token, timeoutMs) {
   return new Promise((resolve, reject) => {
     const url = new URL(pathName, baseUrl);
     const payload = body === undefined ? null : Buffer.from(JSON.stringify(body));
@@ -49,7 +54,7 @@ function request(baseUrl, method, pathName, body, token) {
     const lib = url.protocol === "http:" ? http : https;
     const req = lib.request(
       url,
-      { method, headers, timeout: 120000 },
+      { method, headers, timeout: timeoutMs || DEFAULT_TIMEOUT_MS },
       (res) => {
         const chunks = [];
         res.on("data", (c) => chunks.push(c));
@@ -166,7 +171,14 @@ class TembroApi {
     if (skill) body.skill = skill;
     if (liveContext) body.live_context = liveContext;
     if (conversationId) body.conversation_id = conversationId;
-    const res = await this.request(this.baseUrl, "POST", "/v0/agent", body, this.token);
+    const res = await this.request(
+      this.baseUrl,
+      "POST",
+      "/v0/agent",
+      body,
+      this.token,
+      AGENT_TIMEOUT_MS,
+    );
     return this._agentResponse(res);
   }
 
@@ -186,6 +198,7 @@ class TembroApi {
         tool_outputs: toolOutputs,
       },
       this.token,
+      AGENT_TIMEOUT_MS,
     );
     return this._agentResponse(res);
   }
@@ -201,6 +214,15 @@ class TembroApi {
     }
     if (res.status === 422 && res.json && res.json.error === "agent_step_limit") {
       throw new Error("agent stopped after too many Live steps");
+    }
+    if (res.status === 502 && res.json && res.json.error === "agent_provider_error") {
+      const balance =
+        typeof res.json.credits_remaining === "number"
+          ? " (credits refunded — balance: " + res.json.credits_remaining + ")"
+          : "";
+      throw new Error(
+        (res.json.detail || "the model call failed; try again") + balance,
+      );
     }
     if (res.status !== 200 || !res.json) {
       const detail = res.json && res.json.error ? ": " + res.json.error : "";
