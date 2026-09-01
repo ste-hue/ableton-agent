@@ -264,3 +264,49 @@ test("the turn aborts after five consecutive failed Live calls", async () => {
   // a third server round is requested.
   assert.equal(continues, 1);
 });
+
+test("a stop request interrupts the arrangement macro between placements", async () => {
+  const calls = [];
+  let placed = 0;
+  let summary = 0;
+  const client = {
+    async callTool(name, args) {
+      calls.push(name);
+      if (name === "live_set_summary") {
+        summary += 1;
+        const clips = [];
+        for (let i = 0; i < placed; i += 1) clips.push({ id: 100 + i });
+        return {
+          set_signature: `sig-${summary - 1}`,
+          tracks: [{ id: 7, arrangement_clips: clips }],
+        };
+      }
+      if (name === "live_clip_duplicate_to_arrangement") {
+        placed += 1;
+        return { ok: true };
+      }
+      if (name === "live_get") {
+        return {
+          properties: { start_time: 0, end_time: 16, is_arrangement_clip: true },
+        };
+      }
+      throw new Error("unexpected tool " + name);
+    },
+  };
+  await assert.rejects(
+    arrangeClip(
+      client,
+      {
+        track: { id: 7 },
+        clip: { id: 70 },
+        destination_times: [0, 16, 32, 48],
+        expected_set_signature: "sig-0",
+      },
+      () => {},
+      () => placed >= 1,
+    ),
+    (err) => err.stopped === true && /placing 1 of 4/.test(err.message),
+  );
+  // One placement landed, then the stop check fired before the second.
+  assert.equal(placed, 1);
+});

@@ -31,17 +31,36 @@ class McpClient {
     });
     this.proc.stdout.setEncoding("utf8");
     this.proc.stdout.on("data", (chunk) => this._onData(chunk));
-    this.proc.on("exit", () => {
-      const err = new Error("MCP server process exited");
-      for (const p of this.pending.values()) {
-        clearTimeout(p.timer);
-        p.reject(err);
-      }
-      this.pending.clear();
-      this.proc = null;
-      this.initialized = false;
-      this.tools = null;
+    // Without these handlers a missing or broken bridge executable raises an
+    // uncaught 'error'/EPIPE and kills the whole node.script engine instead of
+    // failing this one call with a message the user can act on.
+    this.proc.on("error", (spawnError) => {
+      this._failAll(
+        new Error(
+          "Tembro's local bridge is not installed or failed to start (" +
+            this.command +
+            "): " +
+            (spawnError && spawnError.message ? spawnError.message : spawnError),
+        ),
+      );
     });
+    this.proc.stdin.on("error", () => {
+      /* the paired 'exit'/'error' event rejects the pending requests */
+    });
+    this.proc.on("exit", () => {
+      this._failAll(new Error("MCP server process exited"));
+    });
+  }
+
+  _failAll(err) {
+    for (const p of this.pending.values()) {
+      clearTimeout(p.timer);
+      p.reject(err);
+    }
+    this.pending.clear();
+    this.proc = null;
+    this.initialized = false;
+    this.tools = null;
   }
 
   stop() {
@@ -75,6 +94,9 @@ class McpClient {
   }
 
   _send(obj) {
+    if (!this.proc || !this.proc.stdin.writable) {
+      throw new Error("Tembro's local bridge is not running");
+    }
     this.proc.stdin.write(JSON.stringify(obj) + "\n");
   }
 
@@ -87,7 +109,13 @@ class McpClient {
         reject(new Error("MCP request timed out: " + method + " (outcome unknown — do not resend)"));
       }, timeoutMs || 60000);
       this.pending.set(id, { resolve, reject, timer });
-      this._send({ jsonrpc: "2.0", id, method, params: params || {} });
+      try {
+        this._send({ jsonrpc: "2.0", id, method, params: params || {} });
+      } catch (err) {
+        clearTimeout(timer);
+        this.pending.delete(id);
+        reject(err);
+      }
     });
   }
 

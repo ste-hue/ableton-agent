@@ -90,6 +90,10 @@ function reportAuth() {
 }
 
 maxApi.addHandler("license", async (email, licenseKey) => {
+  // The page's dead-engine watchdog runs during any busy phase, so the
+  // heartbeat must cover license activation too — a slow server response
+  // would otherwise be misreported as a dead engine after 20s.
+  const heartbeat = setInterval(() => maxApi.outlet(["engine", "alive"]), 5000);
   try {
     if (!email || !licenseKey) throw new Error("enter email and access code");
     ui("working", "connecting…");
@@ -99,6 +103,8 @@ maxApi.addHandler("license", async (email, licenseKey) => {
     transcript("tembro", "access active · credits: " + result.credits);
   } catch (err) {
     ui("error", "connection failed: " + err.message);
+  } finally {
+    clearInterval(heartbeat);
   }
 });
 
@@ -121,11 +127,19 @@ let stopRequested = false;
 const TURN_SOFT_TIMEOUT_MS = 840000;
 const TURN_HARD_TIMEOUT_MS = 900000;
 const CONTEXT_TIMEOUT_MS = 30000;
+const HEARTBEAT_MS = 5000;
 
-async function handleChat(message, skill = null) {
+// Messages typed while a turn is running are queued (echoed into the
+// transcript right away) and start on their own when the turn finishes.
+// /stop drops the queue along with the running turn.
+const pendingChats = [];
+const PENDING_MAX = 3;
+
+async function handleChat(message, skill = null, echoed = false) {
   message = String(message || "").trim();
   if (!message) return;
   if (message === "/stop") {
+    pendingChats.length = 0;
     if (busy) {
       stopRequested = true;
       ui("working", "stopping…");
@@ -133,7 +147,19 @@ async function handleChat(message, skill = null) {
     return;
   }
   if (busy) {
-    ui("working", "one request at a time — still working (send /stop to abort)");
+    if (pendingChats.length >= PENDING_MAX) {
+      // Never destroy what the user typed: echo it and say it won't run.
+      transcript("you", message);
+      transcript(
+        "tembro",
+        "the queue is full — this one will NOT run; resend it when I finish (or send /stop)",
+      );
+      ui("working", "queue is full — still working (send /stop to abort)");
+      return;
+    }
+    pendingChats.push({ message, skill });
+    transcript("you", message);
+    ui("working", "queued — still working, this starts when the current run finishes");
     return;
   }
   busy = true;
@@ -141,7 +167,9 @@ async function handleChat(message, skill = null) {
   const watchdog = setTimeout(() => {
     stopRequested = true;
   }, TURN_SOFT_TIMEOUT_MS);
-  transcript("you", message);
+  // The page frees its own spinner if these stop arriving (dead engine).
+  const heartbeat = setInterval(() => maxApi.outlet(["engine", "alive"]), HEARTBEAT_MS);
+  if (!echoed) transcript("you", message);
   try {
     // 1. Live context (read-only), immediately before the request. This phase
     // hung forever in the field (bridge socket contention): it gets its own
@@ -252,7 +280,17 @@ async function handleChat(message, skill = null) {
     }
   } finally {
     clearTimeout(watchdog);
+    clearInterval(heartbeat);
     busy = false;
+    // A 401 cleared the session: queued messages can only fail the same way,
+    // and running them would bury the sign-in view under fresh errors.
+    if (!api.signedIn) pendingChats.length = 0;
+    const next = pendingChats.shift();
+    if (next) {
+      setImmediate(() => {
+        handleChat(next.message, next.skill, true).catch(() => {});
+      });
+    }
   }
 }
 
@@ -360,6 +398,16 @@ maxApi.addHandler("open_doc", (rawUrl) => {
     /* only fixed official documentation URLs are accepted */
   }
 });
+
+// Best-effort: never leave the bridge child orphaned holding the 8765 socket
+// when the engine goes away (device removed, Live quits, node crashes).
+process.on("exit", () => client.stop());
+for (const signal of ["SIGTERM", "SIGINT"]) {
+  process.on(signal, () => {
+    client.stop();
+    process.exit(0);
+  });
+}
 
 reportAuth();
 startUiLoad();

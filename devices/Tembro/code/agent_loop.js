@@ -181,7 +181,7 @@ function validRef(value) {
   );
 }
 
-async function arrangeClip(client, args, onStatus = () => {}) {
+async function arrangeClip(client, args, onStatus = () => {}, shouldStop = () => false) {
   args = args || {};
   if (!validRef(args && args.track) || !validRef(args && args.clip)) {
     throw new Error("tembro_arrange_clip requires valid track and clip references");
@@ -221,6 +221,19 @@ async function arrangeClip(client, args, onStatus = () => {}) {
   const verified = [];
 
   for (let index = 0; index < destinations.length; index += 1) {
+    // Stop must interrupt the macro itself, not just abandon its promise:
+    // otherwise placements keep landing minutes after the user saw "stopped".
+    if (shouldStop()) {
+      const err = new Error(
+        "stopped during arrangement after placing " +
+          verified.length +
+          " of " +
+          destinations.length +
+          " clips",
+      );
+      err.stopped = true;
+      throw err;
+    }
     const destination = destinations[index];
     onStatus(
       "arranging clip " + (index + 1) + "/" + destinations.length + "…",
@@ -296,9 +309,9 @@ async function arrangeClip(client, args, onStatus = () => {}) {
   };
 }
 
-async function executeTool(client, name, args, onStatus) {
+async function executeTool(client, name, args, onStatus, shouldStop = () => false) {
   if (name === "tembro_arrange_clip") {
-    return arrangeClip(client, args || {}, onStatus);
+    return arrangeClip(client, args || {}, onStatus, shouldStop);
   }
   return client.callTool(name, args || {});
 }
@@ -367,7 +380,7 @@ async function runAgentTurn(options) {
           onTool("progress", call, { note });
         };
         result = await raceWithStop(
-          executeTool(client, call.name, call.arguments || {}, perCallStatus),
+          executeTool(client, call.name, call.arguments || {}, perCallStatus, shouldStop),
           shouldStop,
         );
         result = { ok: true, result };
