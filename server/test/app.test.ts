@@ -261,6 +261,95 @@ test("agent alternates model and local MCP results but charges only once", async
   assert.equal(final.credits_charged, 1);
 });
 
+test("agent meters every model call and reports the whole turn on completion", async () => {
+  const usage = (input: number, cached: number, output: number, reasoning: number) => ({
+    inputTokens: input,
+    cachedInputTokens: cached,
+    outputTokens: output,
+    reasoningTokens: reasoning,
+    totalTokens: input + output,
+    model: "gpt-5.6-sol",
+  });
+  let step = 0;
+  const agent: AgentProvider = {
+    async step() {
+      step += 1;
+      if (step === 1) {
+        return {
+          responseId: "resp-first",
+          reply: "",
+          toolCalls: [
+            {
+              call_id: "call-tempo",
+              name: "live_set",
+              arguments: { ref: { path: "live_set" }, property: "tempo", value: 126 },
+            },
+          ],
+          usage: usage(1000, 0, 300, 250),
+        };
+      }
+      return {
+        responseId: "resp-final",
+        reply: "Ho finito — tempo a 126.",
+        toolCalls: [],
+        usage: usage(1400, 900, 60, 20),
+      };
+    },
+  };
+  const { app, store } = makeApp(undefined, 2, { agent });
+  const { token } = await signin(app, "meter@example.com");
+  const headers = { "content-type": "application/json", authorization: "Bearer " + token };
+  const started = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "start",
+      protocol_version: "0.2",
+      message: "porta il tempo a 126",
+      tools: [LIVE_SET_TOOL],
+    }),
+    headers,
+  });
+  const first = (await started.json()) as { conversation_id: string; continuation_token: string };
+  const continued = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "continue",
+      protocol_version: "0.2",
+      conversation_id: first.conversation_id,
+      continuation_token: first.continuation_token,
+      tools: [LIVE_SET_TOOL],
+      tool_outputs: [{ call_id: "call-tempo", output: '{"ok":true}' }],
+    }),
+    headers,
+  });
+  assert.equal(continued.status, 200);
+
+  type Payload = { step?: number; usage?: { inputTokens: number }; model?: string };
+  const metered = store.events.filter((e) => e.kind === "agent.usage");
+  assert.deepEqual(
+    metered.map((e) => {
+      const payload = e.payload as Payload;
+      return [payload.step, payload.usage?.inputTokens];
+    }),
+    [
+      [1, 1000],
+      [2, 1400],
+    ],
+  );
+  const completed = store.events.find((e) => e.kind === "agent.completed")?.payload as
+    | Payload
+    | undefined;
+  assert.deepEqual(completed?.usage, {
+    calls: 2,
+    inputTokens: 2400,
+    cachedInputTokens: 900,
+    outputTokens: 360,
+    reasoningTokens: 270,
+    totalTokens: 2760,
+  });
+  assert.equal(completed?.model, "gpt-5.6-sol");
+});
+
 test("agent rejects a tampered continuation token", async () => {
   const { app } = makeApp();
   const { token } = await signin(app, "tamper@example.com");

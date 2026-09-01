@@ -48,12 +48,20 @@ export interface AgentStepResult {
   toolCalls: AgentToolCall[];
   /** Model reasoning summary, when the provider returns one — for debugging. */
   thinking?: string;
-  usage?: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    model: string;
-  };
+  usage?: AgentStepUsage;
+}
+
+/**
+ * Token usage of one model call. Cached input and reasoning tokens are kept
+ * apart because the provider prices them differently from plain input/output.
+ */
+export interface AgentStepUsage {
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  totalTokens: number;
+  model: string;
 }
 
 export interface AgentProvider {
@@ -346,7 +354,13 @@ interface ResponsesApiData {
       }
   >;
   output_text?: string;
-  usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number };
+  usage?: {
+    input_tokens?: number;
+    input_tokens_details?: { cached_tokens?: number };
+    output_tokens?: number;
+    output_tokens_details?: { reasoning_tokens?: number };
+    total_tokens?: number;
+  };
 }
 
 class RetryableAgentOutputError extends Error {}
@@ -412,7 +426,9 @@ function parseAgentResponse(data: ResponsesApiData, model: string): AgentStepRes
       ? {
           usage: {
             inputTokens: data.usage.input_tokens ?? 0,
+            cachedInputTokens: data.usage.input_tokens_details?.cached_tokens ?? 0,
             outputTokens: data.usage.output_tokens ?? 0,
+            reasoningTokens: data.usage.output_tokens_details?.reasoning_tokens ?? 0,
             totalTokens: data.usage.total_tokens ?? 0,
             model,
           },
