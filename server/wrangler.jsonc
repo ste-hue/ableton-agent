@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "tembro-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "gettembro.com",
+      "custom_domain": true
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tembro",
+      "database_id": "7467f156-4a2a-4bcc-924d-f348b6ebffd0",
+      "migrations_dir": "migrations/d1"
+    }
+  ],
+  "vars": {
+    "LLM_ENDPOINT": "https://api.openai.com/v1/chat/completions",
+    "LLM_RESPONSES_ENDPOINT": "https://api.openai.com/v1/responses",
+    "LLM_MODEL": "gpt-5.6-sol",
+    "APP_VERSION": "0.1.5-beta",
+    "SUBSCRIPTION_GRANT_CREDITS": "500",
+    "CHAT_COST_CREDITS": "1",
+    "BETA_GRANT_CREDITS": "100",
+    "CHECKOUT_URL": "",
+    "DOWNLOAD_URL": "https://github.com/ste-hue/ableton-agent/releases/download/v0.1.5-beta/Tembro-0.1.5-beta.dmg",
+    "SUPPORT_EMAIL": ""
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  }
+}

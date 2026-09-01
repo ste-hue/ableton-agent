@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tembro</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --black: #18151d;
+      --white: #ded8c7;
+      --paper: #24212b;
+      --soft: #302c38;
+      --line: #504859;
+      --mid: #aaa2b2;
+      --quiet: #7f7587;
+      --sun: #a89b5c;
+      --rust: #a56554;
+      --sage: #7f927c;
+      --blue: #718c99;
+      --mauve: #806f84;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { color: var(--white); background: var(--black); }
+    button, input, textarea { font: inherit; color: inherit; }
+    button { border: 0; cursor: pointer; }
+    .app {
+      height: 100%;
+      min-height: 420px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+      padding: 12px;
+    }
+    .topbar {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+    }
+    .mascot {
+      width: 37px;
+      height: 34px;
+      flex: 0 0 auto;
+      color: var(--sun);
+    }
+    .mascot circle, .auth-art circle, .empty-bubble circle, .wait-eclipse circle { fill: var(--rust); }
+    .mascot svg, .auth-art svg { width: 100%; height: 100%; display: block; }
+    .brand { min-width: 0; }
+    .brand strong { display: block; font-size: 14px; letter-spacing: -.025em; }
+    .status {
+      max-width: 280px;
+      overflow: hidden;
+      color: var(--mid);
+      font: 10px/1.4 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .pills { min-width: 0; margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    .pill {
+      max-width: 190px;
+      min-height: 28px;
+      padding: 6px 8px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--mid);
+      background: var(--paper);
+      font: 9px/1.25 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .035em;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    button.pill:hover { color: var(--black); border-color: var(--white); background: var(--white); }
+    .connection::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      display: inline-block;
+      margin-right: 6px;
+      background: var(--line);
+    }
+    .connection.connected { color: var(--white); border-color: var(--sage); }
+    .connection.connected::before { background: var(--sage); }
+    .icon-button {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+      color: var(--mid);
+      background: transparent;
+      font-size: 16px;
+    }
+    .icon-button:hover { color: var(--black); background: var(--white); }
+    .stage { min-height: 0; }
+    .card { height: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+    .auth { display: grid; place-items: center; padding: clamp(22px, 7vw, 60px); }
+    .auth-box { width: min(420px, 100%); }
+    .auth-art {
+      width: 86px;
+      height: 78px;
+      margin-bottom: 24px;
+      color: var(--sun);
+    }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 4vw, 38px); font-weight: 610; line-height: 1; letter-spacing: -.06em; }
+    .lede { max-width: 360px; margin: 0 0 28px; color: var(--mid); font-size: 13px; line-height: 1.55; }
+    .fields { display: grid; gap: 12px; }
+    label {
+      color: var(--mid);
+      font: 9px/1.3 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    input {
+      width: 100%;
+      height: 44px;
+      margin-top: 6px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      outline: none;
+      background: var(--paper);
+      font-size: 13px;
+    }
+    input:focus, textarea:focus { border-color: var(--white); outline: 1px solid var(--white); outline-offset: -2px; }
+    .primary {
+      height: 44px;
+      margin-top: 2px;
+      color: var(--white);
+      background: var(--rust);
+      font-size: 12px;
+      font-weight: 680;
+    }
+    .primary:hover { color: var(--white); outline: 1px solid var(--white); background: var(--black); }
+    .primary:disabled { opacity: .45; cursor: default; }
+    .fineprint { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--soft); color: var(--quiet); font-size: 10px; line-height: 1.5; }
+    .chat { min-height: 0; display: grid; grid-template-rows: 1fr auto; }
+    .messages {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 24px clamp(14px, 4vw, 34px) 14px;
+      scroll-behavior: smooth;
+      scrollbar-color: var(--black) var(--soft);
+      scrollbar-width: thin;
+    }
+    .empty { min-height: 100%; display: grid; place-items: center; padding: 28px; text-align: center; }
+    .empty-bubble {
+      width: 72px;
+      height: 65px;
+      margin: 0 auto 16px;
+      color: var(--sun);
+    }
+    .empty-bubble svg { width: 100%; height: 100%; display: block; }
+    .empty strong { display: block; margin-bottom: 8px; font-size: 20px; font-weight: 600; letter-spacing: -.035em; }
+    .empty span { color: var(--mid); font-size: 12px; line-height: 1.55; }
+    .message { display: flex; margin: 0 0 14px; animation: in .18s ease-out; }
+    .message.you { justify-content: flex-end; }
+    .bubble {
+      max-width: min(84%, 650px);
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #2c2834;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+    .you .bubble { color: var(--white); border-color: var(--rust); background: var(--rust); }
+    .who {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--mid);
+      font: 8px/1 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .you .who { color: #e0c1b8; }
+    .trace-terminal {
+      margin: 0 0 9px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #1d1a23;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    }
+    .trace-terminal > summary {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      color: var(--quiet);
+      cursor: pointer;
+      font-size: 8px;
+      letter-spacing: .06em;
+      list-style: none;
+      text-transform: uppercase;
+    }
+    .trace-terminal > summary::-webkit-details-marker { display: none; }
+    .trace-title { color: var(--sage); font-weight: 750; letter-spacing: .13em; }
+    .trace-state { margin-left: auto; color: var(--mid); }
+    .trace-count { min-width: 20px; padding: 2px 5px; border-radius: 999px; color: var(--white); background: var(--soft); text-align: center; }
+    .trace-body { display: grid; grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--soft); }
+    .trace-log { max-height: 116px; overflow-y: auto; padding: 4px 7px; scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
+    .trace-placeholder { padding: 10px 4px; color: var(--quiet); font-size: 9px; }
+    .trace-row {
+      width: 100%;
+      min-height: 27px;
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 7px;
+      padding: 4px;
+      border-bottom: 1px dotted var(--soft);
+      color: var(--mid);
+      background: transparent;
+      text-align: left;
+      font-size: 9px;
+    }
+    .trace-row:hover, .trace-row:focus { color: var(--white); background: var(--soft); outline: none; }
+    .trace-seq { color: var(--quiet); }
+    .trace-call { overflow: hidden; color: var(--white); text-overflow: ellipsis; white-space: nowrap; }
+    .trace-object { color: var(--blue); }
+    .trace-result { min-width: 44px; color: var(--sun); text-align: right; text-transform: uppercase; }
+    .trace-row.success .trace-result { color: var(--sage); }
+    .trace-row.error .trace-result { color: var(--rust); }
+    .trace-row.mutation .trace-call::before { content: "write "; color: var(--rust); }
+    .trace-row.read .trace-call::before { content: "read "; color: var(--blue); }
+    .trace-inspector { padding: 10px; border-top: 1px solid var(--soft); background: #25212c; }
+    .trace-inspector-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; color: var(--blue); font-size: 9px; text-transform: uppercase; }
+    .trace-close { margin-left: auto; color: var(--quiet); background: transparent; font-size: 14px; }
+    .trace-inspector strong { display: block; margin-bottom: 5px; color: var(--white); font-size: 11px; }
+    .trace-inspector p { margin: 0 0 7px; color: var(--mid); font: 10px/1.45 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .trace-inspector code { display: block; margin-bottom: 7px; color: var(--sage); font-size: 9px; }
+    .trace-args { max-height: 70px; margin: 0 0 8px; overflow: auto; color: var(--quiet); font: 8px/1.45 ui-monospace, "SFMono-Regular", Menlo, monospace; white-space: pre-wrap; }
+    .trace-doc { min-height: 28px; padding: 5px 8px; border: 1px solid var(--blue); border-radius: 6px; color: var(--white); background: var(--blue); font-size: 9px; }
+    .trace-doc:hover { border-color: var(--white); }
+    .tool-step {
+      width: min(84%, 650px);
+      margin: 0 0 8px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--mid);
+      font-size: 10px;
+    }
+    .tool-step summary { cursor: pointer; color: var(--white); font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+    .tool-step .step-detail { padding: 7px 0 1px 18px; line-height: 1.45; }
+    .tool-step.success { border-color: var(--sage); background: var(--paper); }
+    .tool-step.error { border: 2px solid var(--rust); }
+    .composer-wrap { padding: 10px clamp(10px, 3vw, 20px) 14px; border-top: 1px solid var(--soft); }
+    .skill-rail { display: flex; gap: 6px; margin-bottom: 9px; overflow-x: auto; scrollbar-width: none; }
+    .skill-rail::-webkit-scrollbar { display: none; }
+    .skill-rail.disabled { opacity: .42; pointer-events: none; }
+    .skill-button {
+      min-width: max-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--mid);
+      background: transparent;
+      font-size: 10px;
+    }
+    .skill-button:hover { color: var(--white); border-color: var(--white); }
+    .skill-button:nth-child(1).active { color: var(--white); border-color: var(--sage); background: var(--sage); }
+    .skill-button:nth-child(2).active { color: var(--white); border-color: var(--rust); background: var(--rust); }
+    .skill-button:nth-child(3).active { color: var(--white); border-color: var(--blue); background: var(--blue); }
+    .skill-button:nth-child(4).active { color: var(--white); border-color: var(--mauve); background: var(--mauve); }
+    .skill-cost { font: 8px/1 ui-monospace, "SFMono-Regular", Menlo, monospace; opacity: .75; }
+    .working {
+      display: none;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 11px;
+      margin: 0 0 9px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--mid);
+      border-color: var(--mauve);
+      background: #2c2834;
+    }
+    .working.visible { display: grid; }
+    .wait-eclipse { width: 46px; height: 42px; color: var(--sun); animation: breathe 2.8s ease-in-out infinite; }
+    .wait-eclipse svg { width: 100%; height: 100%; display: block; }
+    .wait-copy { min-width: 0; display: grid; gap: 4px; }
+    .wait-copy span { overflow: hidden; font: 8px/1.2 ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .04em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    .wait-copy strong { color: var(--white); font-size: 11px; font-weight: 520; line-height: 1.35; }
+    .cost-line { display: flex; justify-content: space-between; gap: 18px; margin: 0 3px 7px; color: var(--quiet); font: 8px/1.2 ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: .04em; text-transform: uppercase; }
+    .dots { display: inline-flex; gap: 3px; }
+    .dots i { width: 4px; height: 4px; background: var(--white); animation: pulse 1s infinite; }
+    .dots i:nth-child(2) { animation-delay: .15s; }
+    .dots i:nth-child(3) { animation-delay: .3s; }
+    .composer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: end;
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #2c2834;
+    }
+    textarea {
+      min-height: 40px;
+      max-height: 130px;
+      resize: none;
+      padding: 10px 8px 8px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      font-size: 13px;
+      line-height: 1.38;
+    }
+    textarea:focus { outline: 0; }
+    .send {
+      width: 40px;
+      height: 40px;
+      color: var(--white);
+      background: var(--blue);
+      font-size: 16px;
+    }
+    .send:hover { color: var(--white); outline: 1px solid var(--white); background: var(--black); }
+    .send:disabled { opacity: .35; cursor: default; }
+    .chip {
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--mid);
+      background: transparent;
+      font: 9px/1 ui-monospace, "SFMono-Regular", Menlo, monospace;
+      letter-spacing: .025em;
+      text-transform: uppercase;
+    }
+    .chip:hover, .chip:focus { color: var(--black); border-color: var(--white); background: var(--white); }
+    .you .chip { color: var(--black); border-color: #8b8880; }
+    .you .chip:hover { color: var(--white); background: var(--black); }
+    .hidden { display: none !important; }
+    @keyframes in { from { opacity: 0; transform: translateY(4px); } }
+    @keyframes pulse { 0%, 70%, 100% { opacity: .2; } 35% { opacity: 1; } }
+    @keyframes breathe { 0%, 100% { opacity: .58; transform: scale(.94); } 50% { opacity: 1; transform: scale(1); } }
+    @media (max-width: 560px) {
+      .app { padding: 8px; gap: 7px; }
+      .context-pill { display: none; }
+      .status { max-width: 120px; }
+      .bubble, .tool-step { max-width: 94%; }
+      .composer-wrap { padding-inline: 8px; }
+      .working { grid-template-columns: 40px minmax(0, 1fr) auto; }
+      .wait-eclipse { width: 40px; height: 36px; }
+      .pill { max-width: 100px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .message { animation: none; }
+      .dots i { animation: none; opacity: 1; }
+      .messages { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="mascot" aria-hidden="true"><svg viewBox="0 0 64 58" focusable="false"><path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/><circle cx="51" cy="29" r="8" fill="currentColor"/></svg></div>
+      <div class="brand">
+        <strong>Tembro</strong>
+        <div class="status" id="status">starting</div>
+      </div>
+      <div class="pills">
+        <span class="pill context-pill" id="context">waiting for Live</span>
+        <span class="pill" id="credits">— credits</span>
+        <button class="pill hidden" id="update">update</button>
+        <span class="pill connection" id="connection">offline</span>
+      </div>
+      <button class="icon-button hidden" id="settings" title="Access settings">⋯</button>
+    </header>
+
+    <section class="stage">
+      <div class="card auth" id="authView">
+        <div class="auth-box">
+          <div class="auth-art" aria-hidden="true">
+            <svg viewBox="0 0 64 58" focusable="false">
+              <path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/>
+              <circle cx="51" cy="29" r="8" fill="currentColor"/>
+            </svg>
+          </div>
+          <h1>Let’s get you into the Set.</h1>
+          <p class="lede">One sign-in. Then Tembro sits in Live and waits until you need a hand.</p>
+          <div class="fields">
+            <label>Email
+              <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+            </label>
+            <label>Access code
+              <input id="access" type="password" autocomplete="off" placeholder="License or beta code">
+            </label>
+            <button type="button" id="pasteAccess" class="chip">Paste code</button>
+            <button class="primary" id="connect">Connect</button>
+          </div>
+          <div class="fineprint">Your sign-in goes only to Tembro and stays remembered on this Mac. As it should.</div>
+        </div>
+      </div>
+
+      <div class="card chat hidden" id="chatView">
+        <div class="messages" id="messages">
+          <div class="empty" id="empty">
+            <div>
+              <div class="empty-bubble" aria-hidden="true"><svg viewBox="0 0 64 58" focusable="false"><path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/><circle cx="51" cy="29" r="8" fill="currentColor"/></svg></div>
+              <strong>What does the track need?</strong>
+              <span>Try “give me 128 bars of dark trap”<br>or “this bassline could move a little more.”</span>
+            </div>
+          </div>
+        </div>
+        <div class="composer-wrap">
+          <details class="trace-terminal" id="traceTerminal" open>
+            <summary><span class="trace-title">Liveworks</span><span>agent calls</span><span class="trace-state" id="traceState">idle</span><span class="trace-count" id="traceCount">0</span></summary>
+            <div class="trace-body">
+              <div class="trace-log" id="traceLog"><div class="trace-placeholder" id="tracePlaceholder">Agent calls will appear here as they happen.</div></div>
+              <aside class="trace-inspector hidden" id="traceInspector">
+                <div class="trace-inspector-head"><span id="traceObject">Live Object Model</span><button type="button" class="trace-close" id="traceClose" title="Close explanation">×</button></div>
+                <strong id="traceTool">Tool</strong>
+                <p id="traceDescription"></p>
+                <code id="tracePath"></code>
+                <pre class="trace-args" id="traceArgs"></pre>
+                <button type="button" class="trace-doc" id="traceDoc">Open official documentation ↗</button>
+              </aside>
+            </div>
+          </details>
+          <div class="skill-rail" id="skillRail" aria-label="Tembro skills"></div>
+          <div class="working" id="working">
+            <div class="wait-eclipse" aria-hidden="true"><svg viewBox="0 0 64 58" focusable="false"><path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/><circle cx="51" cy="29" r="8" fill="currentColor"/></svg></div>
+            <div class="wait-copy"><span id="workingText">working</span><strong id="studioThought">Silence is part of the drum pattern.</strong></div>
+            <button id="stop" class="chip" title="Stop this request">Stop</button>
+          </div>
+          <div class="cost-line"><span id="skillName">Custom request</span><span id="costHint">≈ 1 credit</span></div>
+          <div class="composer">
+            <textarea id="prompt" rows="1" placeholder="Describe the result you want…"></textarea>
+            <button type="button" id="pastePrompt" class="chip" title="Paste from clipboard">Paste</button>
+            <button class="send" id="send" title="Send">↑</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const DEFAULT_SKILLS = [
+        { id: "clip_edit", label: "Tweak this clip", shortLabel: "Clip tweak", prompt: "Make the selected clip breathe a little more. Keep its role and length.", estimated_credits: 1 },
+        { id: "beat_making", label: "Build a beat", shortLabel: "Beat making", prompt: "Build an eight-bar beat with a clear pocket and one variation.", estimated_credits: 2 },
+        { id: "harmony_melody", label: "Harmony + melody", shortLabel: "Harmony / melody", prompt: "Write an eight-bar chord progression and a melody that leaves room.", estimated_credits: 2 },
+        { id: "song_from_scratch", label: "Arrange the whole thing", shortLabel: "Full arrangement", prompt: "Build a full 128-bar arrangement with proper drum suspensions and fills only where they earn it.", estimated_credits: 4 }
+      ];
+      const STUDIO_THOUGHTS = [
+        "Silence is part of the drum pattern.",
+        "A fill works better after a little space.",
+        "The hook does not need every sound at once.",
+        "Tembro says done only after reading Live again.",
+        "Repetition is fine. Copy-paste energy is not.",
+        "A kick leaving can hit as hard as a kick arriving."
+      ];
+      const LIVE_DOCS = {
+        lom: {
+          object: "Live Object Model",
+          path: "live_set / live_app",
+          description: "The map Tembro uses to reach Live objects, read their properties, call functions, and verify changes.",
+          url: "https://docs.cycling74.com/apiref/lom/"
+        },
+        song: {
+          object: "Song",
+          path: "live_set",
+          description: "The whole Live Set: tempo, time signature, transport, tracks, scenes, and Arrangement state.",
+          url: "https://docs.cycling74.com/apiref/lom/song/"
+        },
+        track: {
+          object: "Track",
+          path: "live_set tracks N",
+          description: "An audio, MIDI, return, or master track, including its clip slots, Arrangement clips, devices, and mixer.",
+          url: "https://docs.cycling74.com/apiref/lom/track/"
+        },
+        clip: {
+          object: "Clip",
+          path: "live_set tracks N clip_slots M clip",
+          description: "A MIDI or audio clip. Tembro can inspect notes, timing, loop state, envelopes, velocity, and Arrangement position.",
+          url: "https://docs.cycling74.com/apiref/lom/clip/"
+        },
+        clipSlot: {
+          object: "ClipSlot",
+          path: "live_set tracks N clip_slots M",
+          description: "One cell in Session View. It can contain a clip and is also the bridge for moving material into the Arrangement.",
+          url: "https://docs.cycling74.com/apiref/lom/clipslot/"
+        },
+        device: {
+          object: "Device",
+          path: "live_set tracks N devices M",
+          description: "A Live instrument or effect. Its automatable controls are exposed as DeviceParameter objects.",
+          url: "https://docs.cycling74.com/apiref/lom/device/"
+        },
+        parameter: {
+          object: "DeviceParameter",
+          path: "live_set tracks N devices M parameters L",
+          description: "One automatable device control. Tembro reads its range and state before setting its value.",
+          url: "https://docs.cycling74.com/apiref/lom/deviceparameter/"
+        },
+        mixer: {
+          object: "MixerDevice",
+          path: "live_set tracks N mixer_device",
+          description: "The track mixer: volume, panning, activator, crossfade assignment, and sends.",
+          url: "https://docs.cycling74.com/apiref/lom/mixerdevice/"
+        },
+        browser: {
+          object: "Live Browser",
+          path: "Browser / Library / Places",
+          description: "Live's library of instruments, effects, presets, samples, Packs, and user folders. Tembro searches it before loading anything.",
+          url: "https://www.ableton.com/en/live-manual/12/working-with-the-browser/"
+        },
+        scene: {
+          object: "Scene",
+          path: "live_set scenes N",
+          description: "One row of Session View. Firing a scene launches every clip in that row together.",
+          url: "https://docs.cycling74.com/apiref/lom/scene/"
+        },
+        application: {
+          object: "Application",
+          path: "live_app",
+          description: "The Live application itself: version, documents, and the view hierarchy above the Song.",
+          url: "https://docs.cycling74.com/apiref/lom/application/"
+        }
+      };
+      const MUTATING_TOOLS = new Set([
+        "live_set", "live_call", "live_parameter_set", "live_clip_update_notes",
+        "live_clip_add_notes", "live_clip_duplicate_to_arrangement", "live_clip_envelope",
+        "live_clip_velocity_envelope", "live_clip_warp_markers", "live_track_create_audio_clip",
+        "live_track_insert_device", "live_transport", "live_browser_load", "live_load_device",
+        "tembro_arrange_clip"
+      ]);
+      const $ = (id) => document.getElementById(id);
+      const ui = {
+        auth: $("authView"), chat: $("chatView"), email: $("email"), access: $("access"),
+        connect: $("connect"), prompt: $("prompt"), send: $("send"), messages: $("messages"),
+        empty: $("empty"), status: $("status"), context: $("context"), credits: $("credits"),
+        connection: $("connection"), working: $("working"), workingText: $("workingText"), studioThought: $("studioThought"), settings: $("settings"), update: $("update"), stop: $("stop"),
+        skillRail: $("skillRail"), skillName: $("skillName"), costHint: $("costHint"),
+        traceTerminal: $("traceTerminal"), traceState: $("traceState"), traceCount: $("traceCount"),
+        traceLog: $("traceLog"), tracePlaceholder: $("tracePlaceholder"), traceInspector: $("traceInspector"),
+        traceObject: $("traceObject"), traceTool: $("traceTool"), traceDescription: $("traceDescription"),
+        tracePath: $("tracePath"), traceArgs: $("traceArgs"), traceDoc: $("traceDoc"), traceClose: $("traceClose"),
+        pasteAccess: $("pasteAccess"), pastePrompt: $("pastePrompt")
+      };
+      let connected = false;
+      let busy = false;
+      let selectedSkill = null;
+      let skillProfiles = DEFAULT_SKILLS;
+      let thoughtIndex = 0;
+      let thoughtTimer = null;
+      const toolRows = new Map();
+      let currentDocUrl = LIVE_DOCS.lom.url;
+
+      function loadLocal(key) {
+        try { return localStorage.getItem(key) || ""; } catch (_) { return ""; }
+      }
+      function saveLocal(key, value) {
+        try { localStorage.setItem(key, value); } catch (_) {}
+      }
+      let pendingEmail = "";
+      let pendingAccess = "";
+      ui.email.value = loadLocal("tembro_email");
+      ui.access.value = loadLocal("tembro_access");
+
+      function outlet(selector, ...args) {
+        if (window.max && typeof window.max.outlet === "function") window.max.outlet(selector, ...args);
+      }
+      let engineLastSeen = Date.now();
+      function bind(selector, callback) {
+        if (window.max && typeof window.max.bindInlet === "function") {
+          window.max.bindInlet(selector, (...args) => {
+            engineLastSeen = Date.now();
+            callback(...args);
+          });
+        }
+      }
+      function showConnected(value) {
+        connected = value;
+        ui.connection.textContent = value ? "connected" : "offline";
+        ui.connection.classList.toggle("connected", value);
+        ui.auth.classList.toggle("hidden", value);
+        ui.chat.classList.toggle("hidden", !value);
+        ui.settings.classList.toggle("hidden", !value);
+        if (value) setTimeout(() => ui.prompt.focus(), 80);
+      }
+      function estimateCost(text, skillId) {
+        const requested = skillProfiles.find((profile) => profile.id === skillId);
+        const base = skillProfiles.find((profile) => profile.id === "clip_edit")?.estimated_credits || 1;
+        const lower = String(text || "").trim().toLowerCase();
+        let inferred = base;
+        if (/\b(full|complete|whole)\s+(track|song|arrangement)\b|\b(song|track)\s+from\s+scratch\b|\b(arrangiamento|brano)\s+(completo|intero)\b|\b(?:64|96|128|160|192|256)\s*[-–—]?\s*(?:bars?|barre|battute)\b/.test(lower)) {
+          inferred = base * 4;
+        } else if (/\b(chords?|harmony|harmonies|melod(?:y|ies|ia|ie)|accordi?|armonia|beat|drums?|groove|batteria|ritmo|808)\b/.test(lower)) {
+          inferred = base * 2;
+        }
+        return Math.max(inferred, requested?.estimated_credits || base);
+      }
+      function updateCostHint() {
+        const profile = skillProfiles.find((item) => item.id === selectedSkill);
+        const cost = estimateCost(ui.prompt.value, selectedSkill);
+        ui.skillName.textContent = profile?.shortLabel || "Custom request";
+        ui.costHint.textContent = "≈ " + cost + (cost === 1 ? " credit" : " credits");
+      }
+      function renderSkills(profiles) {
+        if (!Array.isArray(profiles) || !profiles.length) return;
+        skillProfiles = profiles;
+        ui.skillRail.replaceChildren();
+        profiles.forEach((profile) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "skill-button";
+          button.dataset.skill = profile.id;
+          const label = document.createElement("span");
+          label.textContent = profile.label;
+          const cost = document.createElement("span");
+          cost.className = "skill-cost";
+          cost.textContent = profile.estimated_credits + "c";
+          button.append(label, cost);
+          button.addEventListener("click", () => {
+            selectedSkill = profile.id;
+            ui.prompt.value = profile.prompt;
+            ui.prompt.dispatchEvent(new Event("input"));
+            ui.skillRail.querySelectorAll(".skill-button").forEach((item) => item.classList.toggle("active", item === button));
+            updateCostHint();
+            ui.prompt.focus();
+          });
+          ui.skillRail.appendChild(button);
+        });
+        updateCostHint();
+      }
+      function startThoughts() {
+        if (thoughtTimer) return;
+        ui.studioThought.textContent = STUDIO_THOUGHTS[thoughtIndex % STUDIO_THOUGHTS.length];
+        thoughtTimer = setInterval(() => {
+          thoughtIndex = (thoughtIndex + 1) % STUDIO_THOUGHTS.length;
+          ui.studioThought.textContent = STUDIO_THOUGHTS[thoughtIndex];
+        }, 3600);
+      }
+      function stopThoughts() {
+        if (thoughtTimer) clearInterval(thoughtTimer);
+        thoughtTimer = null;
+      }
+      // If the device engine dies mid-turn (node process gone, device removed),
+      // no message will ever free the spinner and the stop button has nobody to
+      // talk to. The engine emits a heartbeat every 5s while working; when the
+      // page hears nothing at all for 20s during a busy turn, it frees itself
+      // and says what to do instead of spinning forever.
+      const ENGINE_SILENCE_MS = 20000;
+      let engineWatchTimer = null;
+      function stopEngineWatch() {
+        if (engineWatchTimer) clearInterval(engineWatchTimer);
+        engineWatchTimer = null;
+      }
+      function startEngineWatch() {
+        stopEngineWatch();
+        engineLastSeen = Date.now();
+        engineWatchTimer = setInterval(() => {
+          if (Date.now() - engineLastSeen < ENGINE_SILENCE_MS) return;
+          setBusy(false);
+          ui.status.textContent = "engine not responding — remove Tembro from the track and add it again";
+          addMessage(
+            "tembro",
+            "I lost contact with the device engine, so nothing was actually running. Remove Tembro from the track and add it back (or reopen the Set), then send your message again.",
+          );
+        }, 3000);
+      }
+      function setBusy(value, label) {
+        const wasBusy = busy;
+        busy = value;
+        ui.working.classList.toggle("visible", value);
+        ui.skillRail.classList.toggle("disabled", value);
+        if (value && !wasBusy) { startThoughts(); startEngineWatch(); }
+        if (!value && wasBusy) { stopThoughts(); stopEngineWatch(); }
+        if (label) ui.workingText.textContent = label.replace(/^[·⏳✓⚠]\s*/, "");
+      }
+      function copyText(text, button) {
+        const done = (ok) => {
+          button.textContent = ok ? "Copied" : "Copy failed";
+          setTimeout(() => { button.textContent = "Copy"; }, 1500);
+        };
+        const fallback = () => {
+          const scratch = document.createElement("textarea");
+          scratch.value = text;
+          document.body.appendChild(scratch);
+          scratch.select();
+          let ok = false;
+          try { ok = document.execCommand("copy"); } catch (_) {}
+          scratch.remove();
+          done(ok);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => done(true), fallback);
+        } else {
+          fallback();
+        }
+      }
+      async function pasteInto(field, button, replace) {
+        const label = button.textContent;
+        const fail = () => {
+          button.textContent = "Paste blocked";
+          setTimeout(() => { button.textContent = label; }, 2200);
+          field.focus();
+        };
+        try {
+          const text = await navigator.clipboard.readText();
+          if (!text) return fail();
+          if (replace) {
+            field.value = text.trim();
+          } else {
+            const start = field.selectionStart ?? field.value.length;
+            const end = field.selectionEnd ?? start;
+            field.value = field.value.slice(0, start) + text + field.value.slice(end);
+          }
+          field.dispatchEvent(new Event("input"));
+          field.focus();
+        } catch (_) {
+          fail();
+        }
+      }
+      function addMessage(who, text) {
+        if (!text) return;
+        ui.empty.classList.add("hidden");
+        const row = document.createElement("div");
+        row.className = "message " + (who === "you" ? "you" : "tembro");
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        const label = document.createElement("span");
+        label.className = "who";
+        label.textContent = who === "you" ? "You" : "Tembro";
+        bubble.append(label, document.createTextNode(text));
+        if (who !== "you") {
+          const copyBtn = document.createElement("button");
+          copyBtn.textContent = "Copy";
+          copyBtn.className = "chip";
+          copyBtn.style.display = "block";
+          copyBtn.style.marginTop = "8px";
+          copyBtn.addEventListener("click", () => copyText(text, copyBtn));
+          bubble.appendChild(copyBtn);
+        }
+        row.appendChild(bubble);
+        ui.messages.appendChild(row);
+        ui.messages.scrollTop = ui.messages.scrollHeight;
+      }
+      function toolTitle(name) {
+        return String(name || "Live action")
+          .replace(/^live_/, "")
+          .replace(/^tembro_/, "")
+          .replace(/_/g, " ");
+      }
+      // Every tool with a fixed target links straight to its object's page.
+      const TOOL_DOCS = {
+        live_ping: "application",
+        live_bridge_status: "application",
+        live_set_summary: "song",
+        live_transport: "song",
+        live_clip_notes: "clip",
+        live_clip_update_notes: "clip",
+        live_clip_add_notes: "clip",
+        live_clip_envelope: "clip",
+        live_clip_velocity_envelope: "clip",
+        live_clip_warp_markers: "clip",
+        live_clip_duplicate_to_arrangement: "clipSlot",
+        tembro_arrange_clip: "clipSlot",
+        live_track_create_audio_clip: "track",
+        live_track_insert_device: "device",
+        live_device_parameters: "device",
+        live_parameter_set: "parameter",
+        live_load_device: "browser",
+        live_browser_roots: "browser",
+        live_browser_capabilities: "browser",
+        live_browser_search: "browser",
+        live_browser_load: "browser",
+        live_browser_preview: "browser",
+        find_similar_sounds: "browser"
+      };
+      // Generic tools (live_get, live_set, live_call, live_children, …) aim at
+      // whatever LOM path their arguments name: resolve the page from the most
+      // specific path present, reading its tail.
+      const PATH_DOCS = [
+        [/mixer_device (volume|panning|sends)/, "parameter"],
+        [/mixer_device/, "mixer"],
+        [/parameters \d+/, "parameter"],
+        [/devices \d+$/, "device"],
+        [/clip_slots \d+ clip\b/, "clip"],
+        [/arrangement_clips \d+/, "clip"],
+        [/clip_slots \d+/, "clipSlot"],
+        [/scenes \d+/, "scene"],
+        [/(^| )tracks \d+$|return_tracks \d+$|master_track$/, "track"],
+        [/^live_app/, "application"],
+        [/^live_set/, "song"]
+      ];
+      function docForTool(name, args) {
+        const byTool = TOOL_DOCS[String(name || "")];
+        if (byTool) return LIVE_DOCS[byTool];
+        // Collect every LOM path mentioned in the arguments; the longest one
+        // is the most specific target of the call.
+        const paths = [];
+        (function collect(value) {
+          if (typeof value === "string") {
+            if (/^(live_set|live_app)\b/.test(value.trim())) paths.push(value.trim());
+          } else if (Array.isArray(value)) value.forEach(collect);
+          else if (value && typeof value === "object") Object.values(value).forEach(collect);
+        })(args || {});
+        paths.sort((a, b) => b.length - a.length);
+        for (const path of paths) {
+          for (const [pattern, key] of PATH_DOCS) {
+            if (pattern.test(path)) return LIVE_DOCS[key];
+          }
+        }
+        return LIVE_DOCS.lom;
+      }
+      function readableArgs(args) {
+        const keys = Object.keys(args || {});
+        return keys.length ? JSON.stringify(args, null, 2) : "No arguments — this call reads the current Live state.";
+      }
+      function showToolDoc(name, args) {
+        const doc = docForTool(name, args);
+        currentDocUrl = doc.url;
+        ui.traceObject.textContent = doc.object;
+        ui.traceTool.textContent = name;
+        ui.traceDescription.textContent = doc.description;
+        ui.tracePath.textContent = doc.path;
+        ui.traceArgs.textContent = readableArgs(args);
+        ui.traceInspector.classList.remove("hidden");
+        ui.traceTerminal.open = true;
+      }
+      function updateTraceState() {
+        const rows = [...toolRows.values()];
+        ui.traceCount.textContent = String(rows.length);
+        ui.traceState.textContent = rows.some((row) => row.classList.contains("running"))
+          ? "working"
+          : rows.length
+            ? "idle"
+            : "ready";
+      }
+      function resetTrace() {
+        toolRows.clear();
+        ui.traceLog.replaceChildren(ui.tracePlaceholder);
+        ui.tracePlaceholder.classList.remove("hidden");
+        ui.traceInspector.classList.add("hidden");
+        updateTraceState();
+      }
+      function updateToolStep(kind, id, name, argsText) {
+        const key = String(id || name || toolRows.size);
+        let args = {};
+        try { args = argsText ? JSON.parse(argsText) : {}; } catch (_) { args = { preview: argsText }; }
+        let row = toolRows.get(key);
+        if (!row) {
+          ui.tracePlaceholder.classList.add("hidden");
+          row = document.createElement("button");
+          row.type = "button";
+          row.className = "trace-row " + (MUTATING_TOOLS.has(name) ? "mutation" : "read");
+          const seq = document.createElement("span");
+          seq.className = "trace-seq";
+          seq.textContent = String(toolRows.size + 1).padStart(2, "0");
+          const call = document.createElement("span");
+          call.className = "trace-call";
+          call.textContent = toolTitle(name);
+          const object = document.createElement("span");
+          object.className = "trace-object";
+          object.textContent = docForTool(name, args).object;
+          const result = document.createElement("span");
+          result.className = "trace-result";
+          result.textContent = "running";
+          row.append(seq, call, object, result);
+          row.addEventListener("click", () => showToolDoc(name, args));
+          ui.traceLog.appendChild(row);
+          toolRows.set(key, row);
+        }
+        row.classList.remove("running", "success", "error");
+        const result = row.querySelector(".trace-result");
+        if (kind === "success") {
+          row.classList.add("success");
+          result.textContent = "done";
+        } else if (kind === "error") {
+          row.classList.add("error");
+          result.textContent = "error";
+        } else if (kind === "progress") {
+          row.classList.add("running");
+          result.textContent = (args && args.note) ? String(args.note) : "running";
+        } else {
+          row.classList.add("running");
+          result.textContent = "running";
+        }
+        updateTraceState();
+        ui.traceLog.scrollTop = ui.traceLog.scrollHeight;
+      }
+      function submit() {
+        const text = ui.prompt.value.trim();
+        if (!text || !connected) return;
+        // While a turn is running the message still goes out: the engine
+        // queues it, echoes it into the transcript, and starts it when the
+        // current run finishes. Never drop what the user typed.
+        if (selectedSkill) {
+          outlet("chat_skill", selectedSkill, text);
+        } else {
+          outlet("chat", text);
+        }
+        ui.prompt.value = "";
+        ui.prompt.style.height = "auto";
+        if (!busy) setBusy(true, "reading Live");
+      }
+
+      ui.connect.addEventListener("click", () => {
+        const email = ui.email.value.trim();
+        const code = ui.access.value.trim();
+        if (!email || !code) {
+          ui.status.textContent = "enter email and access code";
+          return;
+        }
+        pendingEmail = email;
+        pendingAccess = code;
+        ui.connect.disabled = true;
+        ui.status.textContent = "connecting";
+        outlet("license", email, code);
+      });
+      ui.send.addEventListener("click", submit);
+      ui.prompt.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          submit();
+        }
+      });
+      ui.prompt.addEventListener("input", () => {
+        ui.prompt.style.height = "auto";
+        ui.prompt.style.height = Math.min(ui.prompt.scrollHeight, 130) + "px";
+        updateCostHint();
+      });
+      ui.settings.addEventListener("click", () => showConnected(false));
+      ui.update.addEventListener("click", () => outlet("open_update"));
+      ui.stop.addEventListener("click", () => outlet("chat", "/stop"));
+      ui.pasteAccess.addEventListener("click", () => pasteInto(ui.access, ui.pasteAccess, true));
+      ui.pastePrompt.addEventListener("click", () => pasteInto(ui.prompt, ui.pastePrompt, false));
+      // jweb has no macOS Edit menu, so Cmd+C/X/V/A never reach the page on
+      // their own: implement the clipboard shortcuts by hand. The paste chips
+      // stay as the fallback for the day the clipboard API is unavailable.
+      document.addEventListener("keydown", async (event) => {
+        if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+        const key = String(event.key || "").toLowerCase();
+        const field = document.activeElement;
+        const editable =
+          field && (field.tagName === "TEXTAREA" || field.tagName === "INPUT");
+        if (key === "v" && editable) {
+          event.preventDefault();
+          try {
+            const text = await navigator.clipboard.readText();
+            if (!text) return;
+            const start = field.selectionStart ?? field.value.length;
+            const end = field.selectionEnd ?? start;
+            field.value = field.value.slice(0, start) + text + field.value.slice(end);
+            const cursor = start + text.length;
+            field.setSelectionRange(cursor, cursor);
+            field.dispatchEvent(new Event("input"));
+          } catch (_) {
+            /* clipboard read denied: the paste chips still work */
+          }
+        } else if (key === "c" || key === "x") {
+          let text = "";
+          if (editable && field.selectionStart !== field.selectionEnd) {
+            text = field.value.slice(field.selectionStart, field.selectionEnd);
+          } else {
+            text = String(window.getSelection() || "");
+          }
+          if (!text) return;
+          event.preventDefault();
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch (_) {
+            /* nothing sensible to do; the per-message Copy buttons remain */
+          }
+          if (key === "x" && editable) {
+            const start = field.selectionStart;
+            const end = field.selectionEnd;
+            field.value = field.value.slice(0, start) + field.value.slice(end);
+            field.setSelectionRange(start, start);
+            field.dispatchEvent(new Event("input"));
+          }
+        } else if (key === "a" && editable) {
+          event.preventDefault();
+          field.select();
+        }
+      });
+      ui.traceClose.addEventListener("click", () => ui.traceInspector.classList.add("hidden"));
+      ui.traceDoc.addEventListener("click", () => outlet("open_doc", currentDocUrl));
+
+      bind("auth", (...args) => {
+        const value = args.join(" ").trim() === "connected";
+        ui.connect.disabled = false;
+        showConnected(value);
+        if (value && pendingEmail) {
+          saveLocal("tembro_email", pendingEmail);
+          saveLocal("tembro_access", pendingAccess);
+          pendingEmail = "";
+          pendingAccess = "";
+        }
+      });
+      bind("credits", (...args) => {
+        const value = args.join(" ").trim();
+        ui.credits.textContent = value + (value === "1" ? " credit" : " credits");
+      });
+      bind("skills", (...args) => {
+        try {
+          const profiles = JSON.parse(args.join(" "));
+          renderSkills(profiles);
+        } catch (_) {
+          renderSkills(DEFAULT_SKILLS);
+        }
+      });
+      bind("charge", (...args) => {
+        const value = Number(args[0]) || 1;
+        ui.costHint.textContent = value + (value === 1 ? " credit used" : " credits used");
+      });
+      bind("context", (...args) => { ui.context.textContent = args.join(" "); });
+      bind("progress", (...args) => {
+        const current = args[0] || "?";
+        const maximum = args[1] || "?";
+        setBusy(true, "step " + current + "/" + maximum + " · working in Live");
+      });
+      bind("step", (...args) => {
+        const kind = args.shift() || "start";
+        const id = args.shift() || "";
+        const name = args.shift() || "Live action";
+        updateToolStep(kind, id, name, args.join(" "));
+      });
+      bind("update", (...args) => {
+        ui.update.textContent = "update " + args.join(" ");
+        ui.update.classList.remove("hidden");
+      });
+      // Busy is decided ONLY by the state channel. Deriving it from status
+      // text hid the stop button for the whole arrangement macro ("arranging
+      // clip 3/24…" matched no keyword) and re-armed the spinner on error
+      // texts that happened to contain one.
+      bind("status", (...args) => {
+        const text = args.join(" ");
+        ui.status.textContent = text;
+        if (busy) ui.workingText.textContent = text.replace(/^[·⏳✓⚠]\s*/, "");
+        if (/connection failed|expired|offline/i.test(text)) ui.connect.disabled = false;
+      });
+      // Heartbeat from the engine while a turn runs; receiving it (like any
+      // other message) refreshes engineLastSeen via the bind wrapper.
+      bind("engine", () => {});
+      bind("state", (...args) => {
+        const state = args.join(" ");
+        if (state === "working") setBusy(true);
+        else if (state === "success" || state === "error" || state === "idle") setBusy(false);
+      });
+      bind("transcript", (...args) => {
+        const who = args.shift() || "tembro";
+        addMessage(String(who).toLowerCase(), args.join(" "));
+      });
+      bind("reset", () => {
+        ui.messages.querySelectorAll(".message").forEach((node) => node.remove());
+        ui.messages.querySelectorAll(".tool-step").forEach((node) => node.remove());
+        resetTrace();
+        ui.empty.classList.remove("hidden");
+      });
+
+      renderSkills(DEFAULT_SKILLS);
+      updateTraceState();
+
+      if (window.max && typeof window.max.outlet === "function") {
+        outlet("ui_ready");
+      } else {
+        showConnected(true);
+        ui.status.textContent = "preview · connected";
+        ui.context.textContent = "142 BPM · 6 tracks";
+        ui.credits.textContent = "100 credits";
+      }
+    })();
+  </script>
+</body>
+</html>

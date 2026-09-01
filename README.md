@@ -4,7 +4,19 @@ Parli in italiano (o inglese), l'AI suona Ableton. La catena completa —
 linguaggio naturale → LLM → MCP → Live Object Model → Ableton vero — è già
 installata e validata su questo Mac.
 
-## Setup su un altro Mac (dopo il clone)
+## Tembro beta
+
+La versione per musicisti si scarica da [gettembro.com](https://gettembro.com)
+come un solo DMG. Apri `Install Tembro.app`: il device Max for Live e il bridge
+locale vengono installati nelle cartelle corrette e gli aggiornamenti
+sostituiscono sempre la stessa copia. Non serve clonare il repo, installare
+Xcode, usare il Terminale o possedere una chiave OpenAI.
+
+Il beta unsigned può richiedere tasto destro → **Open** al primo avvio. La build
+è già predisposta per Developer ID e notarizzazione quando l'account Apple sarà
+attivo.
+
+## Setup per sviluppatori su un altro Mac (dopo il clone)
 
 Il repo non contiene l'ambiente Python né il Remote Script: li ricrea lo script di
 setup. Servono: macOS, [Ableton Live 12](https://www.ableton.com/trial/) (Trial ok),
@@ -64,6 +76,12 @@ gira in locale: il bridge è solo su `127.0.0.1` e non va mai esposto in rete.
 | `docs/validation-plan.md` | Procedura di validazione end-to-end (superata il 2026-08-26) |
 | `AGENTS.md` | Regole operative condivise da tutti gli agenti |
 | `.agents/skills/ableton-lom/` | Riferimento completo del Live Object Model |
-| `.mcp.json`, `.claude/settings.json` | Config Claude Code |
-| `.codex/config.toml` | Config Codex |
+| `.mcp.json.example`, `.claude/settings.json` | Config Claude Code (`.mcp.json` è generato da `setup.sh`, non versionato) |
+| `.codex/config.toml.example` | Config Codex (`.codex/config.toml` è generato da `setup.sh`, non versionato) |
 | `.venv/` | Server MCP `ableton-live-mcp` pinnato (non toccare) |
+
+## License
+
+Il codice è rilasciato sotto licenza [MIT](LICENSE) — libero anche per uso
+commerciale. La licenza copre solo il codice: il nome **Tembro**, il logo e il
+branding sono esclusi e regolati da [TRADEMARKS.md](TRADEMARKS.md).
