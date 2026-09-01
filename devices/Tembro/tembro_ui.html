@@ -944,6 +944,55 @@
       ui.stop.addEventListener("click", () => outlet("chat", "/stop"));
       ui.pasteAccess.addEventListener("click", () => pasteInto(ui.access, ui.pasteAccess, true));
       ui.pastePrompt.addEventListener("click", () => pasteInto(ui.prompt, ui.pastePrompt, false));
+      // jweb has no macOS Edit menu, so Cmd+C/X/V/A never reach the page on
+      // their own: implement the clipboard shortcuts by hand. The paste chips
+      // stay as the fallback for the day the clipboard API is unavailable.
+      document.addEventListener("keydown", async (event) => {
+        if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+        const key = String(event.key || "").toLowerCase();
+        const field = document.activeElement;
+        const editable =
+          field && (field.tagName === "TEXTAREA" || field.tagName === "INPUT");
+        if (key === "v" && editable) {
+          event.preventDefault();
+          try {
+            const text = await navigator.clipboard.readText();
+            if (!text) return;
+            const start = field.selectionStart ?? field.value.length;
+            const end = field.selectionEnd ?? start;
+            field.value = field.value.slice(0, start) + text + field.value.slice(end);
+            const cursor = start + text.length;
+            field.setSelectionRange(cursor, cursor);
+            field.dispatchEvent(new Event("input"));
+          } catch (_) {
+            /* clipboard read denied: the paste chips still work */
+          }
+        } else if (key === "c" || key === "x") {
+          let text = "";
+          if (editable && field.selectionStart !== field.selectionEnd) {
+            text = field.value.slice(field.selectionStart, field.selectionEnd);
+          } else {
+            text = String(window.getSelection() || "");
+          }
+          if (!text) return;
+          event.preventDefault();
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch (_) {
+            /* nothing sensible to do; the per-message Copy buttons remain */
+          }
+          if (key === "x" && editable) {
+            const start = field.selectionStart;
+            const end = field.selectionEnd;
+            field.value = field.value.slice(0, start) + field.value.slice(end);
+            field.setSelectionRange(start, start);
+            field.dispatchEvent(new Event("input"));
+          }
+        } else if (key === "a" && editable) {
+          event.preventDefault();
+          field.select();
+        }
+      });
       ui.traceClose.addEventListener("click", () => ui.traceInspector.classList.add("hidden"));
       ui.traceDoc.addEventListener("click", () => outlet("open_doc", currentDocUrl));
 

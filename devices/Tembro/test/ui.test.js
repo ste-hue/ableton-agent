@@ -73,3 +73,11 @@ test("busy is driven by the state channel, and stop reaches inside the arrangeme
   assert.match(mcp, /this\.proc\.on\("error"/);
   assert.match(mcp, /not installed or failed to start/);
 });
+
+test("clipboard shortcuts are implemented by hand (jweb has no Edit menu)", () => {
+  const html = fs.readFileSync(UI_FILE, "utf8");
+  assert.match(html, /event\.metaKey \|\| event\.ctrlKey/);
+  assert.match(html, /navigator\.clipboard\.readText\(\)/);
+  assert.match(html, /navigator\.clipboard\.writeText\(text\)/);
+  assert.match(html, /field\.select\(\)/);
+});
