@@ -10,7 +10,7 @@ import {
 import { z } from "zod";
 import type { Store } from "./store.js";
 import { hashToken } from "./store.js";
-import type { AgentProvider, AgentStepResult, LlmProvider } from "./llm.js";
+import type { AgentProvider, AgentStepResult, AgentStepUsage, LlmProvider } from "./llm.js";
 import type { LicenseProvider } from "./billing.js";
 import { billingGrantFromWebhook, verifyLemonSignature } from "./billing.js";
 import {
@@ -114,6 +114,43 @@ interface AgentTokenPayload {
   creditCost: number;
   skill: TembroSkillId | null;
   expiresAt: number;
+  /** Tokens spent by the turn so far — rides in the token so the final step can report the whole turn. */
+  usage?: AgentTurnUsage;
+}
+
+/** Running token totals of one agent turn, summed over its model calls. */
+interface AgentTurnUsage {
+  calls: number;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  totalTokens: number;
+}
+
+const EMPTY_TURN_USAGE: AgentTurnUsage = {
+  calls: 0,
+  inputTokens: 0,
+  cachedInputTokens: 0,
+  outputTokens: 0,
+  reasoningTokens: 0,
+  totalTokens: 0,
+};
+
+function addTurnUsage(
+  previous: AgentTurnUsage | undefined,
+  step: AgentStepUsage | undefined,
+): AgentTurnUsage {
+  const base = previous ?? EMPTY_TURN_USAGE;
+  if (!step) return base;
+  return {
+    calls: base.calls + 1,
+    inputTokens: base.inputTokens + step.inputTokens,
+    cachedInputTokens: base.cachedInputTokens + step.cachedInputTokens,
+    outputTokens: base.outputTokens + step.outputTokens,
+    reasoningTokens: base.reasoningTokens + step.reasoningTokens,
+    totalTokens: base.totalTokens + step.totalTokens,
+  };
 }
 
 function safeAgentTools(tools: McpTool[]): McpTool[] {
@@ -399,6 +436,8 @@ export function createApp(config: AppConfig) {
         step: number;
         creditCost: number;
         skill: TembroSkillId | null;
+        /** Totals of the previous steps of this turn (none on step 1). */
+        usageSoFar?: AgentTurnUsage;
       },
     ): Promise<AgentStepResponse> => {
       const allowed = new Set(tools.map((tool) => tool.name));
@@ -407,6 +446,22 @@ export function createApp(config: AppConfig) {
         result.toolCalls.some((call) => !allowed.has(call.name))
       ) {
         throw new Error("model_requested_unavailable_tool");
+      }
+      // Every model call is metered individually: the provider bills per call,
+      // and a turn's real cost is the sum, not the last step's context size.
+      const turnUsage = addTurnUsage(meta.usageSoFar, result.usage);
+      if (result.usage) {
+        await store.logEvent(
+          "agent.usage",
+          {
+            requestId: meta.requestId,
+            step: meta.step,
+            usage: result.usage,
+            turn: turnUsage,
+            skill: meta.skill,
+          },
+          userId,
+        );
       }
       const credits = await store.creditBalance(userId);
       if (result.toolCalls.length > 0) {
@@ -420,6 +475,7 @@ export function createApp(config: AppConfig) {
           creditCost: meta.creditCost,
           skill: meta.skill,
           expiresAt: Date.now() + AGENT_TOKEN_TTL_MS,
+          usage: turnUsage,
         });
         return {
           protocol_version: "0.2",
@@ -443,7 +499,8 @@ export function createApp(config: AppConfig) {
           conversationId: meta.conversationId,
           requestId: meta.requestId,
           steps: meta.step,
-          usage: result.usage ?? null,
+          usage: turnUsage,
+          model: result.usage?.model ?? null,
           creditsCharged: meta.creditCost,
           skill: meta.skill,
         },
@@ -610,6 +667,7 @@ export function createApp(config: AppConfig) {
           step: continuation.step + 1,
           creditCost: continuation.creditCost,
           skill: continuation.skill,
+          usageSoFar: continuation.usage,
         }),
       );
     } catch (error) {
