@@ -56,6 +56,12 @@ export function isTembroSkill(value: unknown): value is TembroSkillId {
   return typeof value === "string" && TEMBRO_SKILL_IDS.some((id) => id === value);
 }
 
+/** The musical guidance the pressed skill button carries to the model. */
+export function skillPromptFor(skill: TembroSkillId | null | undefined): string | undefined {
+  if (!skill) return undefined;
+  return TEMBRO_SKILLS.find((profile) => profile.id === skill)?.prompt;
+}
+
 export function estimateCreditMultiplier(
   message: string,
   requestedSkill?: TembroSkillId,

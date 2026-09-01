@@ -38,6 +38,8 @@ export interface AgentStepRequest {
   toolOutputs?: AgentToolOutput[];
   /** Composition-priced turns (2+ credits) buy deep thinking; chat stays medium. */
   reasoningEffort?: "medium" | "high";
+  /** The skill button the user pressed, as concrete musical guidance. */
+  skillPrompt?: string;
 }
 
 export interface AgentStepResult {
@@ -102,7 +104,7 @@ Safety and execution rules:
 - Prefer creating a variation over destroying existing musical work.
 
 Step budget — this matters:
-- You have at most 88 model/tool rounds per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
+- You have at most 256 model/tool rounds per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
 - If a property read fails, the property does not exist on that object. Do not retry it elsewhere blind — consult the facts below.
 
 Live Object Model facts (these prevent wasted, failing calls):
@@ -259,9 +261,12 @@ export class HttpResponsesProvider implements AgentProvider {
   }
 
   async step(request: AgentStepRequest): Promise<AgentStepResult> {
-    const instructions = request.liveContext
+    let instructions = request.liveContext
       ? `${AGENT_SYSTEM_PROMPT}\n\nCurrent Live context supplied by the device:\n${JSON.stringify(request.liveContext)}`
       : AGENT_SYSTEM_PROMPT;
+    if (request.skillPrompt) {
+      instructions += `\n\nThe user pressed a skill button for this turn. Its focus:\n${request.skillPrompt}`;
+    }
     const input = request.previousResponseId
       ? (request.toolOutputs ?? []).map((item) => ({
           type: "function_call_output",

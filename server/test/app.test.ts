@@ -535,7 +535,7 @@ test("Responses provider emits MCP function calls and continues with tool output
   assert.match(AGENT_SYSTEM_PROMPT, /at most 128 notes/);
   assert.match(AGENT_SYSTEM_PROMPT, /live_clip_duplicate_to_arrangement/);
   assert.match(AGENT_SYSTEM_PROMPT, /tembro_arrange_clip/);
-  assert.match(AGENT_SYSTEM_PROMPT, /at most 88 model\/tool rounds/);
+  assert.match(AGENT_SYSTEM_PROMPT, /at most 256 model\/tool rounds/);
   assert.match(AGENT_SYSTEM_PROMPT, /kick and snare must not run mechanically through all 128 bars/);
   assert.match(AGENT_SYSTEM_PROMPT, /complete Arrangement from first bar to last/);
   assert.match(AGENT_SYSTEM_PROMPT, /final half-bar or bar before a meaningful section boundary/);
@@ -962,7 +962,7 @@ test("signed billing webhook for another store is rejected without a grant", asy
   assert.equal(await store.getUserByEmail("buyer@example.com"), null);
 });
 
-test("composition-priced turns buy deep thinking; chat stays medium", async () => {
+test("every agent turn runs at deep thinking (full-throttle beta)", async () => {
   // Provider level: reasoningEffort lands in the Responses body with headroom.
   const bodies: Record<string, unknown>[] = [];
   const fakeFetch = (async function (_input: unknown, init?: RequestInit) {
@@ -1059,5 +1059,31 @@ test("composition-priced turns buy deep thinking; chat stays medium", async () =
     headers,
   });
   assert.equal(continued.status, 200);
-  assert.deepEqual(efforts, ["medium", "high", "high"]);
+  assert.deepEqual(efforts, ["high", "high", "high"]);
+});
+
+test("the pressed skill button's guidance reaches the model", async () => {
+  const prompts: (string | undefined)[] = [];
+  const agent: AgentProvider = {
+    async step(request) {
+      prompts.push(request.skillPrompt);
+      return { responseId: "resp-skill", reply: "done", toolCalls: [] };
+    },
+  };
+  const { app } = makeApp(undefined, 10, { agent });
+  const { token } = await signin(app, "skillprompt@example.com");
+  const headers = { "content-type": "application/json", authorization: "Bearer " + token };
+  const res = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "start",
+      protocol_version: "0.2",
+      message: "vai",
+      skill: "beat_making",
+      tools: [LIVE_SET_TOOL],
+    }),
+    headers,
+  });
+  assert.equal(res.status, 200);
+  assert.match(String(prompts[0]), /eight-bar beat/);
 });
