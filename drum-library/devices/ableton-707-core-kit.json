@@ -1,0 +1,23 @@
+{
+  "id": "ableton-707-core-kit",
+  "display_name": "707 Core Kit",
+  "ableton_browser_query": "707 Core Kit",
+  "preset_sha256": "783f5dd7e464795b71ddb8ef2cc5d4b6e73e17839cc4cd20d6b21357e5af6e4c",
+  "mapping_source": "Static extraction from the installed Ableton Core Library ADG preset",
+  "verified": true,
+  "midi_channel": 10,
+  "pads": {
+    "36": "Bassdrum", "37": "Rimshot", "38": "Snare", "39": "Handclap",
+    "40": "Snare", "41": "Kick", "42": "Closed Hi Hat", "43": "Tom Low",
+    "44": "Tamb", "45": "Tom Low", "46": "Open Hi Hat", "47": "Tom Mid",
+    "48": "Tom Hi", "49": "Crash", "50": "Cowbell", "51": "Ride"
+  },
+  "pad_roles": {
+    "36": "kick", "37": "rim", "38": "snare", "39": "clap",
+    "40": "snare", "41": "kick", "42": "closed_hat", "43": "low_tom",
+    "44": "tambourine", "45": "low_tom", "46": "open_hat", "47": "mid_tom",
+    "48": "high_tom", "49": "crash", "50": "cowbell", "51": "ride"
+  },
+  "prototype_allowed_pitches": [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51],
+  "recommended_genres": ["house", "disco", "electro", "synth-pop"]
+}

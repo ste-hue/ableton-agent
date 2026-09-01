@@ -9,7 +9,11 @@ they are Markdown with no host-specific machinery, which is why they live in
 |---|---|
 | `ableton-lom` | What exists in the Live Object Model: objects, properties, methods |
 | `beat-making` | Rhythm: groove dimensions, drum-map constraints, the pattern compiler |
+| `drummer-dance` | Full dance-drum production: 8/16/32-bar arrangement, drum machines, routing, buses, FX, transitions, and phrase-synchronous automation |
+| `easydrum` | Fast `EASYDRUM [genre]` mode: new stock drum tracks and a direct 128-bar Arrangement with minimal production overhead |
 | `harmony-melody` | Pitched material: harmonic function, voice leading, register, contour |
+| `makedrums` | `MAKEDRUMS [genre]`: select a pre-generated, device-mapped arrangement and place it in Ableton Live |
+| `padremap` | Real LOM inspection of Drum Rack pads/chains and maintenance of the reusable verified preset-map cache |
 | `song-from-scratch` | The macro loop: brief → hypothesis → realize → mutate → compare → recipe |
 
 `AGENTS.md` holds the operating rules and applies to every session regardless

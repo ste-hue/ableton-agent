@@ -1,0 +1,76 @@
+{
+  "id": "techno-pressure-136-v1",
+  "genre": "techno",
+  "tempo_bpm": 136,
+  "bars": 128,
+  "meter": [
+    4,
+    4
+  ],
+  "device_profile": "devices/ableton-909-core-kit.json",
+  "kit_id": "909-core-kit",
+  "midi_file": "midi/techno/136-techno-beat-0001-909-core-kit.mid",
+  "metadata_file": "metadata/techno.json",
+  "tags": [
+    "hypnotic",
+    "driving",
+    "straight",
+    "peak-time"
+  ],
+  "identity": "Straight 909 pressure: subtraction, closed/open-hat tension, restrained tom ramps.",
+  "sections": [
+    [
+      1,
+      16,
+      "filtered-style drum intro"
+    ],
+    [
+      17,
+      48,
+      "main pressure"
+    ],
+    [
+      49,
+      64,
+      "break and rebuild"
+    ],
+    [
+      65,
+      96,
+      "ride peak"
+    ],
+    [
+      97,
+      112,
+      "second break and return"
+    ],
+    [
+      113,
+      128,
+      "final drive and outro"
+    ]
+  ],
+  "validation": {
+    "bars": 128,
+    "length_beats": 512,
+    "note_count": 2139,
+    "used_pitches": [
+      36,
+      37,
+      38,
+      39,
+      42,
+      44,
+      45,
+      46,
+      47,
+      48,
+      50
+    ],
+    "velocity_range": [
+      65,
+      119
+    ],
+    "last_note_end": 495.1
+  }
+}

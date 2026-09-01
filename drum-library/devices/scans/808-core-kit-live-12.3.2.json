@@ -1,0 +1,28 @@
+{
+  "preset_id": "808-core-kit",
+  "display_name": "808 Core Kit",
+  "browser_query": "808 Core Kit",
+  "browser_uri": "query:Drums#FileId_5446",
+  "preset_sha256": "d7771cb20034ee4b9ab96765bcee25196622e02465323d25e0a2f547ce3f408b",
+  "live_version": "12.3.2",
+  "scanned_at": "2026-09-01T07:10:13Z",
+  "verification_source": "live-lom",
+  "pads": {
+    "36": {"name": "Bass Drum", "chains": [{"name": "Bass Drum", "in_note": 36, "out_note": 60, "choke_group": 0}]},
+    "37": {"name": "Rim Shot", "chains": [{"name": "Rim Shot", "in_note": 37, "out_note": 60, "choke_group": 0}]},
+    "38": {"name": "Snare Drum", "chains": [{"name": "Snare Drum", "in_note": 38, "out_note": 60, "choke_group": 0}]},
+    "39": {"name": "Hand Clap", "chains": [{"name": "Hand Clap", "in_note": 39, "out_note": 60, "choke_group": 0}]},
+    "40": {"name": "Low Conga", "chains": [{"name": "Low Conga", "in_note": 40, "out_note": 60, "choke_group": 0}]},
+    "41": {"name": "Mid Conga", "chains": [{"name": "Mid Conga", "in_note": 41, "out_note": 60, "choke_group": 0}]},
+    "42": {"name": "Closed Hi Hat", "chains": [{"name": "Closed Hi Hat", "in_note": 42, "out_note": 60, "choke_group": 1}]},
+    "43": {"name": "Hi Conga", "chains": [{"name": "Hi Conga", "in_note": 43, "out_note": 60, "choke_group": 0}]},
+    "44": {"name": "Low Tom", "chains": [{"name": "Low Tom", "in_note": 44, "out_note": 60, "choke_group": 0}]},
+    "45": {"name": "Mid Tom", "chains": [{"name": "Mid Tom", "in_note": 45, "out_note": 60, "choke_group": 0}]},
+    "46": {"name": "Open Hi Hat", "chains": [{"name": "Open Hi Hat", "in_note": 46, "out_note": 60, "choke_group": 1}]},
+    "47": {"name": "Hi Tom", "chains": [{"name": "Hi Tom", "in_note": 47, "out_note": 60, "choke_group": 0}]},
+    "48": {"name": "Maracas", "chains": [{"name": "Maracas", "in_note": 48, "out_note": 60, "choke_group": 0}]},
+    "49": {"name": "Cymbal", "chains": [{"name": "Cymbal", "in_note": 49, "out_note": 60, "choke_group": 0}]},
+    "50": {"name": "Cow Bell", "chains": [{"name": "Cow Bell", "in_note": 50, "out_note": 60, "choke_group": 0}]},
+    "51": {"name": "Claves", "chains": [{"name": "Claves", "in_note": 51, "out_note": 60, "choke_group": 0}]}
+  }
+}

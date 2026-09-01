@@ -1,0 +1,75 @@
+{
+  "id": "house-pocket-124-v1",
+  "genre": "house",
+  "tempo_bpm": 124,
+  "bars": 128,
+  "meter": [
+    4,
+    4
+  ],
+  "device_profile": "devices/ableton-808-core-kit.json",
+  "kit_id": "808-core-kit",
+  "midi_file": "midi/house/124-house-beat-0001-808-core-kit.mid",
+  "metadata_file": "metadata/house.json",
+  "tags": [
+    "classic-house",
+    "shuffle",
+    "offbeat",
+    "club"
+  ],
+  "identity": "Classic house pocket: firm quarters, shuffled hat lift, sparse syncopated percussion.",
+  "sections": [
+    [
+      1,
+      16,
+      "DJ intro"
+    ],
+    [
+      17,
+      48,
+      "main pocket"
+    ],
+    [
+      49,
+      64,
+      "break and rebuild"
+    ],
+    [
+      65,
+      96,
+      "club peak"
+    ],
+    [
+      97,
+      112,
+      "second break"
+    ],
+    [
+      113,
+      128,
+      "return and DJ outro"
+    ]
+  ],
+  "validation": {
+    "bars": 128,
+    "length_beats": 512,
+    "note_count": 2310,
+    "used_pitches": [
+      36,
+      37,
+      38,
+      39,
+      42,
+      44,
+      45,
+      46,
+      49,
+      50
+    ],
+    "velocity_range": [
+      64,
+      118
+    ],
+    "last_note_end": 508.1
+  }
+}

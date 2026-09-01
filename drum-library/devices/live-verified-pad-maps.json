@@ -1,0 +1,243 @@
+{
+  "entries": [
+    {
+      "browser_query": "808 Core Kit",
+      "browser_uri": "query:Drums#FileId_5446",
+      "display_name": "808 Core Kit",
+      "live_version": "12.3.2",
+      "mapping_sha256": "d2f7d9d47401d49bc54b4104de7ba3b5b09a52c68eceb1276e9169269fb7d93e",
+      "pads": {
+        "36": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 36,
+              "name": "Bass Drum",
+              "out_note": 60
+            }
+          ],
+          "name": "Bass Drum",
+          "roles": [
+            "kick"
+          ]
+        },
+        "37": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 37,
+              "name": "Rim Shot",
+              "out_note": 60
+            }
+          ],
+          "name": "Rim Shot",
+          "roles": [
+            "rim"
+          ]
+        },
+        "38": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 38,
+              "name": "Snare Drum",
+              "out_note": 60
+            }
+          ],
+          "name": "Snare Drum",
+          "roles": [
+            "snare"
+          ]
+        },
+        "39": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 39,
+              "name": "Hand Clap",
+              "out_note": 60
+            }
+          ],
+          "name": "Hand Clap",
+          "roles": [
+            "clap"
+          ]
+        },
+        "40": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 40,
+              "name": "Low Conga",
+              "out_note": 60
+            }
+          ],
+          "name": "Low Conga",
+          "roles": [
+            "hand_drum"
+          ]
+        },
+        "41": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 41,
+              "name": "Mid Conga",
+              "out_note": 60
+            }
+          ],
+          "name": "Mid Conga",
+          "roles": [
+            "hand_drum"
+          ]
+        },
+        "42": {
+          "chains": [
+            {
+              "choke_group": 1,
+              "in_note": 42,
+              "name": "Closed Hi Hat",
+              "out_note": 60
+            }
+          ],
+          "name": "Closed Hi Hat",
+          "roles": [
+            "closed_hat"
+          ]
+        },
+        "43": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 43,
+              "name": "Hi Conga",
+              "out_note": 60
+            }
+          ],
+          "name": "Hi Conga",
+          "roles": [
+            "hand_drum"
+          ]
+        },
+        "44": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 44,
+              "name": "Low Tom",
+              "out_note": 60
+            }
+          ],
+          "name": "Low Tom",
+          "roles": [
+            "low_tom"
+          ]
+        },
+        "45": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 45,
+              "name": "Mid Tom",
+              "out_note": 60
+            }
+          ],
+          "name": "Mid Tom",
+          "roles": [
+            "mid_tom"
+          ]
+        },
+        "46": {
+          "chains": [
+            {
+              "choke_group": 1,
+              "in_note": 46,
+              "name": "Open Hi Hat",
+              "out_note": 60
+            }
+          ],
+          "name": "Open Hi Hat",
+          "roles": [
+            "open_hat"
+          ]
+        },
+        "47": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 47,
+              "name": "Hi Tom",
+              "out_note": 60
+            }
+          ],
+          "name": "Hi Tom",
+          "roles": [
+            "high_tom"
+          ]
+        },
+        "48": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 48,
+              "name": "Maracas",
+              "out_note": 60
+            }
+          ],
+          "name": "Maracas",
+          "roles": [
+            "shaker"
+          ]
+        },
+        "49": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 49,
+              "name": "Cymbal",
+              "out_note": 60
+            }
+          ],
+          "name": "Cymbal",
+          "roles": [
+            "crash"
+          ]
+        },
+        "50": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 50,
+              "name": "Cow Bell",
+              "out_note": 60
+            }
+          ],
+          "name": "Cow Bell",
+          "roles": [
+            "cowbell"
+          ]
+        },
+        "51": {
+          "chains": [
+            {
+              "choke_group": 0,
+              "in_note": 51,
+              "name": "Claves",
+              "out_note": 60
+            }
+          ],
+          "name": "Claves",
+          "roles": [
+            "clave"
+          ]
+        }
+      },
+      "populated_pad_count": 16,
+      "preset_id": "808-core-kit",
+      "preset_sha256": "d7771cb20034ee4b9ab96765bcee25196622e02465323d25e0a2f547ce3f408b",
+      "scanned_at": "2026-09-01T07:10:13Z",
+      "verification_source": "live-lom"
+    }
+  ],
+  "schema_version": 1
+}
