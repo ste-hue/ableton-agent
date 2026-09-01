@@ -18,7 +18,7 @@ const { TembroApi } = require("./api.js");
 const { McpClient } = require("./mcp_client.js");
 const { LomBridge } = require("./lom_bridge.js");
 const { buildLiveContext } = require("./context.js");
-const { completionReply, runAgentTurn } = require("./agent_loop.js");
+const { completionReply, raceWithStop, runAgentTurn } = require("./agent_loop.js");
 const { spawn } = require("child_process");
 
 const maxApi = require("max-api");
@@ -120,6 +120,7 @@ maxApi.addHandler("signin", async (email) => {
 let stopRequested = false;
 const TURN_SOFT_TIMEOUT_MS = 840000;
 const TURN_HARD_TIMEOUT_MS = 900000;
+const CONTEXT_TIMEOUT_MS = 30000;
 
 async function handleChat(message, skill = null) {
   message = String(message || "").trim();
@@ -142,9 +143,29 @@ async function handleChat(message, skill = null) {
   }, TURN_SOFT_TIMEOUT_MS);
   transcript("you", message);
   try {
-    // 1. Live context (read-only), immediately before the request.
+    // 1. Live context (read-only), immediately before the request. This phase
+    // hung forever in the field (bridge socket contention): it gets its own
+    // timeout and honors the stop button like every other phase of the turn.
     ui("working", "reading Live context…");
-    const liveContext = await buildLiveContext(bridge);
+    const liveContext = await raceWithStop(
+      Promise.race([
+        buildLiveContext(bridge),
+        new Promise((_, reject) =>
+          setTimeout(
+            () =>
+              reject(
+                new Error(
+                  "could not read Live within " +
+                    CONTEXT_TIMEOUT_MS / 1000 +
+                    "s — check that Ableton is open and no other agent is driving the bridge, then try again",
+                ),
+              ),
+            CONTEXT_TIMEOUT_MS,
+          ),
+        ),
+      ]),
+      () => stopRequested,
+    );
 
     const trackCount = (liveContext.tracks || []).length;
     const tempo = liveContext.tempo ? liveContext.tempo + " BPM" : "tempo unknown";
