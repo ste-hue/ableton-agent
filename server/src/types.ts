@@ -217,7 +217,12 @@ export type LemonWebhook = z.infer<typeof LemonWebhookSchema>;
 
 export const ClientEventSchema = z.object({
   kind: z.enum(["action.executed", "action.failed", "client.error", "readback.mismatch"]),
-  payload: z.record(z.unknown()).default({}),
+  payload: z
+    .record(z.unknown())
+    .default({})
+    .refine((value) => JSON.stringify(value).length <= 8192, {
+      message: "event payload too large",
+    }),
 });
 
 // ---------------------------------------------------------------------------

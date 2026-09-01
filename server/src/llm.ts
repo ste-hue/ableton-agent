@@ -232,7 +232,9 @@ export class HttpResponsesProvider implements AgentProvider {
     private readonly apiKey: string,
     private readonly model: string,
     fetchImpl: typeof fetch = fetch,
-    private readonly timeoutMs = 60_000,
+    // Heavy arrangement-planning steps can think well past a minute; the
+    // device waits up to 300s per agent request and 840/900s per turn.
+    private readonly timeoutMs = 240_000,
   ) {
     this.fetchImpl = fetchImpl.bind(globalThis);
   }

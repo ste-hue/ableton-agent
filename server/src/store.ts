@@ -39,6 +39,14 @@ export interface Store {
   getUserIdBySessionTokenHash(tokenHash: string): Promise<string | null>;
   addCredits(userId: string, delta: number, reason: string, ref?: string): Promise<boolean>;
   chargeCredits(userId: string, amount: number, requestId: string): Promise<CreditChargeResult>;
+  /**
+   * Atomically consume one continuation step of an agent turn. Returns true
+   * exactly once per (requestId, step); a replayed token returns false, as
+   * does any step of a closed request.
+   */
+  consumeAgentStep(requestId: string, userId: string, step: number): Promise<boolean>;
+  /** Close an agent request (refund or step limit): no further continuations. */
+  closeAgentRequest(requestId: string, userId: string): Promise<void>;
   creditBalance(userId: string): Promise<number>;
   processBillingGrant(grant: BillingGrant): Promise<{ processed: boolean; userId: string }>;
   createConversation(userId: string): Promise<string>;
@@ -134,6 +142,22 @@ export class MemoryStore implements Store {
     this.charges.set(requestId, userId);
     await this.addCredits(userId, -amount, "charge:chat", requestId);
     return { charged: true, duplicate: false, balance: balance - amount };
+  }
+
+  private agentSteps = new Set<string>();
+
+  async consumeAgentStep(requestId: string, userId: string, step: number): Promise<boolean> {
+    void userId;
+    if (this.agentSteps.has(`${requestId}:closed`)) return false;
+    const key = `${requestId}:${step}`;
+    if (this.agentSteps.has(key)) return false;
+    this.agentSteps.add(key);
+    return true;
+  }
+
+  async closeAgentRequest(requestId: string, userId: string): Promise<void> {
+    void userId;
+    this.agentSteps.add(`${requestId}:closed`);
   }
 
   async creditBalance(userId: string): Promise<number> {

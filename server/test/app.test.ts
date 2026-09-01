@@ -293,6 +293,87 @@ test("agent rejects a tampered continuation token", async () => {
   assert.equal(rejected.status, 401);
 });
 
+test("a continuation token is single-use: replay is rejected with 409", async () => {
+  let steps = 0;
+  const agent: AgentProvider = {
+    async step() {
+      steps += 1;
+      if (steps === 1) {
+        return {
+          responseId: "resp-1",
+          reply: "",
+          toolCalls: [
+            {
+              call_id: "call-1",
+              name: "live_set",
+              arguments: { ref: { path: "live_set" }, property: "tempo", value: 120 },
+            },
+          ],
+        };
+      }
+      return { responseId: "resp-" + steps, reply: "done", toolCalls: [] };
+    },
+  };
+  const { app } = makeApp(undefined, 2, { agent });
+  const { token } = await signin(app, "replay@example.com");
+  const started = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "start",
+      protocol_version: "0.2",
+      message: "set tempo",
+      tools: [LIVE_SET_TOOL],
+    }),
+    headers: { "content-type": "application/json", authorization: "Bearer " + token },
+  });
+  const first = (await started.json()) as {
+    conversation_id: string;
+    continuation_token: string;
+  };
+  const continueBody = JSON.stringify({
+    kind: "continue",
+    protocol_version: "0.2",
+    conversation_id: first.conversation_id,
+    continuation_token: first.continuation_token,
+    tools: [LIVE_SET_TOOL],
+    tool_outputs: [{ call_id: "call-1", output: '{"ok":true}' }],
+  });
+  const headers = { "content-type": "application/json", authorization: "Bearer " + token };
+  const accepted = await app.request("/v0/agent", { method: "POST", body: continueBody, headers });
+  assert.equal(accepted.status, 200);
+  const modelCallsAfterFirst = steps;
+  // Replaying the very same token must not trigger another model call.
+  const replayed = await app.request("/v0/agent", { method: "POST", body: continueBody, headers });
+  assert.equal(replayed.status, 409);
+  assert.deepEqual(await replayed.json(), { error: "continuation_replayed" });
+  assert.equal(steps, modelCallsAfterFirst);
+});
+
+test("a provider failure refunds the agent turn and reports the refund", async () => {
+  const agent: AgentProvider = {
+    async step() {
+      throw new Error("provider exploded");
+    },
+  };
+  const { app } = makeApp(undefined, 2, { agent });
+  const { token } = await signin(app, "agentfail@example.com");
+  const failed = await app.request("/v0/agent", {
+    method: "POST",
+    body: JSON.stringify({
+      kind: "start",
+      protocol_version: "0.2",
+      message: "set tempo",
+      tools: [LIVE_SET_TOOL],
+    }),
+    headers: { "content-type": "application/json", authorization: "Bearer " + token },
+  });
+  assert.equal(failed.status, 502);
+  const body = (await failed.json()) as { error: string; credits_remaining: number };
+  assert.equal(body.error, "agent_provider_error");
+  // The reserved credit came back: the balance equals the initial grant.
+  assert.equal(body.credits_remaining, 2);
+});
+
 test("chat charges credits and returns a plan", async () => {
   const planner: LlmProvider = {
     async complete(messages: Message[]) {

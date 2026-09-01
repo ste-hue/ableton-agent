@@ -508,8 +508,25 @@ export function createApp(config: AppConfig) {
           }),
         );
       } catch (error) {
+        await store.closeAgentRequest(requestId, userId);
         await store.addCredits(userId, creditCost, "refund:agent", requestId);
-        throw error;
+        await store.logEvent(
+          "agent.failed",
+          {
+            requestId,
+            step: 0,
+            message: error instanceof Error ? error.message : String(error),
+          },
+          userId,
+        );
+        return c.json(
+          {
+            error: "agent_provider_error",
+            detail: "the model call failed; your credits were refunded",
+            credits_remaining: await store.creditBalance(userId),
+          },
+          502,
+        );
       }
     }
 
@@ -522,7 +539,19 @@ export function createApp(config: AppConfig) {
     ) {
       return c.json({ error: "invalid_continuation" }, 401);
     }
+    // Each continuation token is single-use: a stateless HMAC blob would
+    // otherwise allow replaying an old step forever — resetting the step
+    // counter and triggering unbounded provider spend on a turn charged once.
+    const consumed = await store.consumeAgentStep(
+      continuation.requestId,
+      userId,
+      continuation.step,
+    );
+    if (!consumed) {
+      return c.json({ error: "continuation_replayed" }, 409);
+    }
     if (continuation.step >= MAX_AGENT_STEPS) {
+      await store.closeAgentRequest(continuation.requestId, userId);
       await store.addCredits(
         userId,
         continuation.creditCost,
@@ -559,13 +588,34 @@ export function createApp(config: AppConfig) {
         }),
       );
     } catch (error) {
+      // A refunded turn must not remain completable through its outstanding
+      // token: close the request in the same breath as the refund.
+      await store.closeAgentRequest(continuation.requestId, userId);
       await store.addCredits(
         userId,
         continuation.creditCost,
         "refund:agent",
         continuation.requestId,
       );
-      throw error;
+      await store.logEvent(
+        "agent.failed",
+        {
+          requestId: continuation.requestId,
+          step: continuation.step,
+          message: error instanceof Error ? error.message : String(error),
+        },
+        userId,
+      );
+      // Say what happened and show the post-refund balance instead of a bare
+      // internal_error that leaves the user believing the credit was spent.
+      return c.json(
+        {
+          error: "agent_provider_error",
+          detail: "the model call failed mid-turn; your credits were refunded",
+          credits_remaining: await store.creditBalance(userId),
+        },
+        502,
+      );
     }
   });
 
