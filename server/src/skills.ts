@@ -22,7 +22,8 @@ export const TEMBRO_SKILLS: readonly TembroSkillProfile[] = [
     label: "Tweak this clip",
     shortLabel: "Clip tweak",
     description: "One focused change to the selected clip or the Live Set.",
-    prompt: "Make the selected clip breathe a little more. Keep its role and length.",
+    prompt:
+      "Focus: one musical improvement to the selected clip or Set. Serve the user's actual request — the user's words always override this focus.",
     creditMultiplier: 1,
   },
   {
@@ -30,7 +31,8 @@ export const TEMBRO_SKILLS: readonly TembroSkillProfile[] = [
     label: "Build a beat",
     shortLabel: "Beat making",
     description: "A playable groove with a pocket and a useful variation.",
-    prompt: "Build an eight-bar beat with a clear pocket and one variation.",
+    prompt:
+      "Focus: groove. Build a beat with a real pocket, in the style and length the user implies (default eight bars). Verify the kit's actual pad mapping before writing a single note. The user's words override this focus.",
     creditMultiplier: 2,
   },
   {
@@ -38,7 +40,8 @@ export const TEMBRO_SKILLS: readonly TembroSkillProfile[] = [
     label: "Harmony + melody",
     shortLabel: "Harmony / melody",
     description: "Chords and a melodic idea that leave room for the track.",
-    prompt: "Write an eight-bar chord progression and a melody that leaves room.",
+    prompt:
+      "Focus: harmony and melody that serve the track — voice-leading over block chords, a melody with space, in the key and mood the user implies. The user's words override this focus.",
     creditMultiplier: 2,
   },
   {
@@ -47,7 +50,7 @@ export const TEMBRO_SKILLS: readonly TembroSkillProfile[] = [
     shortLabel: "Full arrangement",
     description: "A complete structure, with real transitions and readback.",
     prompt:
-      "Build a full 128-bar arrangement with proper drum suspensions and fills only where they earn it.",
+      "Focus: a complete track that stands on its own — structure, energy curve, transitions that earn their place. Scale and genre come from the user's words, which always override this focus.",
     creditMultiplier: 4,
   },
 ];

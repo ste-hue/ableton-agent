@@ -527,7 +527,7 @@ test("Responses provider emits MCP function calls and continues with tool output
     tools: [summaryTool],
   });
   assert.equal(first.toolCalls[0]?.name, "live_set_summary");
-  assert.deepEqual(bodies[0]?.reasoning, { effort: "medium" });
+  assert.deepEqual(bodies[0]?.reasoning, { effort: "medium", summary: "auto" });
   assert.equal(bodies[0]?.max_output_tokens, 32_000);
   assert.equal(bodies[0]?.parallel_tool_calls, false);
   assert.match(String(bodies[0]?.instructions), /expert music-making agent/);
@@ -993,7 +993,7 @@ test("every agent turn runs at deep thinking (full-throttle beta)", async () => 
     tools: [summaryTool],
     reasoningEffort: "high",
   });
-  assert.deepEqual(bodies[0]?.reasoning, { effort: "high" });
+  assert.deepEqual(bodies[0]?.reasoning, { effort: "high", summary: "auto" });
   assert.equal(bodies[0]?.max_output_tokens, 48_000);
 
   // App level: the credit estimate decides the effort on start AND continue.
@@ -1085,5 +1085,5 @@ test("the pressed skill button's guidance reaches the model", async () => {
     headers,
   });
   assert.equal(res.status, 200);
-  assert.match(String(prompts[0]), /eight-bar beat/);
+  assert.match(String(prompts[0]), /Focus: groove/);
 });

@@ -46,6 +46,8 @@ export interface AgentStepResult {
   responseId: string;
   reply: string;
   toolCalls: AgentToolCall[];
+  /** Model reasoning summary, when the provider returns one — for debugging. */
+  thinking?: string;
   usage?: {
     inputTokens: number;
     outputTokens: number;
@@ -111,6 +113,7 @@ Live Object Model facts (these prevent wasted, failing calls):
 - Track objects have NO volume, pan, or meter properties. Mixer values live on the track's mixer_device: its "volume" and "panning" are DeviceParameter children (read their "value"). Output meters are output_meter_left / output_meter_right on the Track, but only while audio is actually playing — do not use meters to decide whether something is audible; check devices and clip playing state instead.
 - Session music is heard by FIRING clips or scenes (call "fire" on a ClipSlot, Clip, or Scene), then verifying the clip's is_playing is true. Starting the transport (live_transport play/continue) plays the ARRANGEMENT, which is usually empty in session workflows — it does not launch session clips.
 - A bare Drum Rack has empty pads and makes NO sound. Load a full drum kit preset (browser search for a kit, e.g. a "Kit" preset) or load samples into pads; verify the rack has chains before writing drum notes.
+- NEVER assume General MIDI drum mapping. Every Ableton kit maps its own pads: after loading a kit, read the Drum Rack's drum pads (live_children on the rack device with "drum_pads", or the visible_drum_pads children) and note each pad's "note" and "name". Write kick/snare/hat/clap notes using THOSE pitches. A clap on a hi-hat pad is exactly the failure this rule prevents.
 - Clip slots: a track's clip_slots N has_clip tells you where clips are; the clip object is clip_slots N clip.
 - Object ids can change between sessions; resolve fresh ids from live_set_summary rather than reusing remembered ones.
 
@@ -291,7 +294,7 @@ export class HttpResponsesProvider implements AgentProvider {
       tools,
       tool_choice: "auto",
       parallel_tool_calls: false,
-      reasoning: { effort: request.reasoningEffort ?? "medium" },
+      reasoning: { effort: request.reasoningEffort ?? "medium", summary: "auto" },
       max_output_tokens:
         request.reasoningEffort === "high"
           ? AGENT_DEEP_OUTPUT_TOKEN_BUDGET
@@ -337,6 +340,10 @@ interface ResponsesApiData {
         type: "message";
         content?: Array<{ type?: string; text?: string }>;
       }
+    | {
+        type: "reasoning";
+        summary?: Array<{ type?: string; text?: string }>;
+      }
   >;
   output_text?: string;
   usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number };
@@ -356,7 +363,14 @@ function parseAgentResponse(data: ResponsesApiData, model: string): AgentStepRes
 
   const toolCalls: AgentToolCall[] = [];
   const text: string[] = [];
+  const thinking: string[] = [];
   for (const item of data.output ?? []) {
+    if (item.type === "reasoning") {
+      for (const part of item.summary ?? []) {
+        if (part.text) thinking.push(part.text);
+      }
+      continue;
+    }
     if (item.type === "function_call") {
       if (!item.call_id || !item.name) {
         throw new RetryableAgentOutputError("LLM returned an invalid tool call");
@@ -393,6 +407,7 @@ function parseAgentResponse(data: ResponsesApiData, model: string): AgentStepRes
     responseId: data.id,
     reply,
     toolCalls,
+    ...(thinking.length ? { thinking: thinking.join("\n").slice(0, 4000) } : {}),
     ...(data.usage
       ? {
           usage: {

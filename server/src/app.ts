@@ -503,6 +503,13 @@ export function createApp(config: AppConfig) {
           reasoningEffort: "high",
           skillPrompt: skillPromptFor(skill),
         });
+        if (result.thinking) {
+          await store.logEvent(
+            "agent.thinking",
+            { requestId, step: 1, thinking: result.thinking },
+            userId,
+          );
+        }
         return c.json(
           await responseFor(result, {
             conversationId,
@@ -585,6 +592,17 @@ export function createApp(config: AppConfig) {
         reasoningEffort: "high",
         skillPrompt: skillPromptFor(continuation.skill),
       });
+      if (result.thinking) {
+        await store.logEvent(
+          "agent.thinking",
+          {
+            requestId: continuation.requestId,
+            step: continuation.step + 1,
+            thinking: result.thinking,
+          },
+          userId,
+        );
+      }
       return c.json(
         await responseFor(result, {
           conversationId: continuation.conversationId,
