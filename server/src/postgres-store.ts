@@ -163,6 +163,29 @@ export class PostgresStore implements Store {
     };
   }
 
+  async consumeAgentStep(requestId: string, userId: string, step: number): Promise<boolean> {
+    const rows = await this.sql.query(
+      `INSERT INTO agent_steps (request_id, step, user_id)
+       SELECT $1, $2, $3
+       WHERE NOT EXISTS (
+         SELECT 1 FROM agent_steps WHERE request_id = $1 AND step = -1
+       )
+       ON CONFLICT (request_id, step) DO NOTHING
+       RETURNING request_id`,
+      [requestId, step, userId],
+    );
+    return rows.length > 0;
+  }
+
+  async closeAgentRequest(requestId: string, userId: string): Promise<void> {
+    await this.sql.query(
+      `INSERT INTO agent_steps (request_id, step, user_id)
+       VALUES ($1, -1, $2)
+       ON CONFLICT (request_id, step) DO NOTHING`,
+      [requestId, userId],
+    );
+  }
+
   async creditBalance(userId: string): Promise<number> {
     const rows = await this.sql`SELECT credit_balance FROM users WHERE id = ${userId}`;
     return rows[0] ? numeric((rows[0] as Row).credit_balance) : 0;

@@ -185,6 +185,29 @@ export class D1Store implements Store {
     };
   }
 
+  async consumeAgentStep(requestId: string, userId: string, step: number): Promise<boolean> {
+    const result = await this.db
+      .prepare(
+        `INSERT OR IGNORE INTO agent_steps (request_id, step, user_id)
+         SELECT ?, ?, ?
+         WHERE NOT EXISTS (
+           SELECT 1 FROM agent_steps WHERE request_id = ? AND step = -1
+         )`,
+      )
+      .bind(requestId, step, userId, requestId)
+      .run();
+    return changes(result) > 0;
+  }
+
+  async closeAgentRequest(requestId: string, userId: string): Promise<void> {
+    await this.db
+      .prepare(
+        "INSERT OR IGNORE INTO agent_steps (request_id, step, user_id) VALUES (?, -1, ?)",
+      )
+      .bind(requestId, userId)
+      .run();
+  }
+
   async creditBalance(userId: string): Promise<number> {
     const row = await this.db
       .prepare("SELECT credit_balance FROM users WHERE id = ?")
