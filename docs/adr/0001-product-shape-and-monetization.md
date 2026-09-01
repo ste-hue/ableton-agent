@@ -142,14 +142,20 @@ before Live works (issue #43 keeps the format portable so that door stays open).
    `server/src/skills.ts` become per-outcome prices: placement 0, edit 1,
    generate-new 2, full arrangement 4.
 
-5. **Beta → paid: a reverse trial, not perpetual freemium.** Download is free
-   and needs no account; the first 14 days are the full product (library + 10
-   edits); afterwards the library locks behind the licence and edits behind
-   the subscription. Free-trial products convert 8–25% versus 3–5% for
-   freemium (OpenView/Lenny, 1,000+ products) [R4]. The 100-credit beta grant
-   and shared access code go away (supersedes roadmap item 2 and the current
-   `BETA_GRANT_CREDITS` / `BETA_ACCESS_CODE` flow; see ADR-0002 for the
-   login-free mechanics).
+5. **Beta → paid: a free tier sized to one whole track, with no expiry.**
+   Download is free and needs no account and no card. Every install gets
+   **20 library placements and 12 edits**, enough to build and finish one
+   track; there is no timer. When the counters are used up the library locks
+   behind the licence and edits behind the subscription. The size is an
+   outcome, not a duration: the person who reaches the end has a track and can
+   say so (decided 2026-09-02: "deve poter fare un'intera traccia"). Time-boxed
+   trials convert 8–25% versus 3–5% for perpetual freemium (OpenView/Lenny,
+   1,000+ products) [R4]; a usage-capped tier sits between the two and we
+   accept the lower bound because, at this stage, the free tier exists to
+   produce finished tracks and testimonials, not revenue. The 100-credit beta
+   grant and shared access code go away (supersedes roadmap item 2 and the
+   current `BETA_GRANT_CREDITS` / `BETA_ACCESS_CODE` flow; see ADR-0002 for
+   the login-free mechanics).
 
 6. **Channel: our site + Lemon Squeezy for checkout; discovery elsewhere.**
    Lemon Squeezy has zero marketplace reach and no M4L device sells there yet
@@ -160,6 +166,26 @@ before Live works (issue #43 keeps the format portable so that door stays open).
    and Isotonik (unpublished revenue share) are deferred; if ever, as a
    one-off "lifetime + bring-your-own-key" SKU, since neither channel fits
    metered products [R3].
+
+7. **Community: a Discord server, invited at two moments.** Stefano creates
+   the server. The device offers the invite (a) at the first success — the
+   first placement that plays — and (b) when a track is finished, i.e. when
+   the free counters run out or the user marks the track done. Nothing is
+   asked before value is shown (the Baymard/NN/g evidence in ADR-0002). The
+   Discord is where testers post finished tracks and where feedback and the
+   library ranking signal (thumbs, "which one did you keep") are gathered; it
+   is not a support desk replacing email. The invite is shown once per moment,
+   never as a wall.
+
+8. **The source repository goes private; the ADRs stay inside it.**
+   `docs/product-analysis.md` chose "closed consumer product" on 2026-08-30 but
+   the code stayed on a public repository. That ends: `ste-hue/ableton-agent`
+   becomes private (0 forks, 0 stars at the time of the decision, 2026-09-02;
+   collaborators keep access). The ADRs are working records that guide issues and PRs, not
+   marketing; the public surface is the site and the download. Consequence:
+   the DMG cannot stay on this repository's GitHub Releases (assets of a
+   private repository require authentication) and moves to a public host
+   before the flip — see Consequences.
 
 ### Unit economics
 
@@ -172,6 +198,14 @@ before Live works (issue #43 keeps the format portable so that door stays open).
 | Editor subscription, all 40 edits used | €12/mo | 40 × $0.15 ≈ €6.00 *(estimate, see note)* | ≈ €1.16 | ≈ 40% worst case |
 | Editor subscription, typical (15 edits) | €12/mo | ≈ €2.25 | ≈ €1.16 | ≈ 72% |
 | Top-up 20 edits | €6 | ≤ €3.00 | ≈ €0.80 | ≥ 37% |
+| Free tier, fully used (20 placements + 12 edits) | €0 | 12 × $0.15 ≈ €1.80 | — | acquisition cost |
+
+At ≈ €1.80 per free user who finishes a track, one licence (€59 net ≈ €55.55)
+pays for ≈ 30 free users who never buy, i.e. the free tier breaks even at
+≈ 3% conversion to licence, or ≈ 15% to one month of Editor (€12 net ≈ €10.84
+covers ≈ 6 free users). Both are inside
+the ranges above; the number to watch is free users who spend all 12 edits
+without ever placing a pattern (edit-only use is the expensive path).
 
 Cost-per-edit note: a heavy cached turn on gpt-5.6-luna measured ≈ $0.015
 (`docs/0.1.3-roadmap.md` item 2). The current model, gpt-5.6-sol, sits in the
@@ -197,8 +231,10 @@ Concrete edits, in the order they unblock each other:
   Toontrack and Unison sell; it is also the Bitwig door.
 - **Issue #44 (agent turns)** is re-scoped as the Editor tier: one edit = one
   bounded turn, drum-focused by default, explicit "done"; details in ADR-0002.
-- **Issue #45 (onboarding)** is re-scoped to the reverse trial: no account
-  before value, licence key only at purchase.
+- **Issue #45 (onboarding)** is re-scoped to the free tier: no account before
+  value, counters "placements left / edits left" visible in the device, the
+  Discord invite at first success and at track finished, licence key only at
+  purchase.
 - **`server/src/skills.ts`**: `creditMultiplier` becomes a per-outcome price
   (placement 0, `clip_edit` 1, `beat_making` 2, `song_from_scratch` 4);
   `harmony_melody` stays defined but is not shown in the default device UI.
@@ -206,11 +242,23 @@ Concrete edits, in the order they unblock each other:
   Editor €12/mo + top-up); copy leads with "drums you audition and place in
   seconds, edited by an agent that knows your Set", not with "AI in Ableton".
 - **`server/wrangler.jsonc`**: `BETA_GRANT_CREDITS` and `BETA_OPEN_ACCESS`
-  are replaced by trial parameters (trial days, trial edits) once ADR-0002's
-  onboarding lands; `SUBSCRIPTION_GRANT_CREDITS` becomes 40.
+  are replaced by free-tier parameters (`FREE_PLACEMENTS` 20, `FREE_EDITS` 12)
+  once ADR-0002's onboarding lands; `SUBSCRIPTION_GRANT_CREDITS` becomes 40;
+  `DOWNLOAD_URL` stops pointing at this repository's GitHub Releases.
+- **Repository private, in this order:** (1) publish the current DMG on a public
+  host that needs no authentication (a separate public releases repository or
+  Workers Static Assets — the DMG is < 0.5 MB); (2) update `DOWNLOAD_URL` and
+  the install instructions and verify the new URL downloads without a session;
+  (3) flip `ste-hue/ableton-agent` to private and confirm the collaborator
+  still has access. Never in the reverse order: testers would lose the download.
+- **Discord:** Stefano creates the server; the invite link becomes a Worker
+  variable so the device never hard-codes it; the device shows it at the two
+  moments in Decision B.7.
 - **Superseded:** "closed consumer product with a subscription" as the only
   model (`docs/product-analysis.md`, 2026-08-30) → hybrid licence + subscription;
-  "beta grant stays 100" (`docs/0.1.3-roadmap.md` item 2) → reverse trial.
+  "beta grant stays 100" (`docs/0.1.3-roadmap.md` item 2) → free tier of one
+  track; "closed consumer product" on a public repository → closed product,
+  private repository.
   **Confirmed:** Lemon Squeezy; credits-not-tokens; ~€12/mo for the metered tier.
 - **Deferred:** Windows build; multi-DAW plugin; Ableton Packs / Isotonik;
   harmony/melody as a front-door skill; any audio content.
@@ -229,9 +277,14 @@ Concrete edits, in the order they unblock each other:
 - **Ableton's stance on AI devices.** Today: no policy, an editorial line of
   "AI as a tool" with the producer "in the pilot's seat" [R4]. A Packs-store AI policy either way would
   reopen the channel question.
-- **Conversion below 8%** after 200 trial installs means the reverse trial is
-  too short or the licence price too high for the value shown; test €39 before
-  changing the model.
+- **Conversion after a finished track.** The free tier has no clock, so the
+  measure is: of users who exhaust the counters, how many buy within 30 days.
+  Below 5% after 200 finished tracks, the licence price is too high for the
+  value shown — test €39 before changing the model. If many installs never
+  reach a finished track, the problem is onboarding (#45), not price.
+- **Free users who never finish and never join Discord.** If fewer than a
+  quarter of first-success users take the invite, the invite moment or its
+  wording is wrong; move it, do not add a second one.
 
 ## Sources
 

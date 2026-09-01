@@ -151,9 +151,11 @@ screen and never blocks the button path.
 
 ## Decision 4 — Onboarding without a wall
 
-1. **The device works on first open.** No email, no code: a device-generated
-   `instance_id` starts the reverse trial from ADR-0001 (library + 10 edits,
-   14 days). NN/g: users must be "highly motivated" to pay the wall's cost
+1. **The device works on first open.** No email, no code, no card: a
+   device-generated `instance_id` opens the free tier from ADR-0001 (20 library
+   placements + 12 edits, no expiry). The two counters are visible in the
+   device next to the button — "placements left / edits left" — so the end is
+   never a surprise. NN/g: users must be "highly motivated" to pay the wall's cost
    "over the tempting alternative of deleting the app" — forego it, or push it
    to the point where users are convinced;
    Baymard 2025: 18% abandon at forced account creation; Isotonik and Fors
@@ -167,6 +169,12 @@ screen and never blocks the button path.
    feedback and control]. `BETA_ACCESS_CODE` and the shared-code flow are
    removed once this lands (supersedes the open-beta flag introduced for
    issue #45).
+4. **The Discord invite follows the same rule.** It appears twice at most: a
+   chip after the first placement that plays ("this worked? come say so") and
+   a panel when the counters reach zero or the user marks the track done
+   ("finished a track — post it, get the next one"). Never on first open, never
+   as a modal, dismissable with one click; the URL comes from a Worker variable
+   returned by `/v0/skills`-style config, not hard-coded in `tembro_ui.html`.
 
 ## Decision 5 — Where the library lives and how it travels
 
@@ -229,10 +237,13 @@ Ordered so each step unblocks the next; issue numbers where one exists.
 4. **Tool set:** `agent_loop.js` allowlist trimmed and `drum_pattern_write`
    added on the device side (role → pad mapping done locally, one LOM
    mutation); annotations added to the MCP tool descriptions.
-5. **Onboarding (#45):** `POST /v0/auth/trial` with `instance_id` replaces the
-   access-code path; `session.json` reloaded on 401; `BETA_ACCESS_CODE` and
-   `BETA_OPEN_ACCESS` retired (the open-beta change of 2026-09-01 becomes
-   unnecessary and should not be deployed).
+5. **Onboarding (#45):** `POST /v0/auth/free` with `instance_id` replaces the
+   access-code path and grants `FREE_PLACEMENTS` (20) and `FREE_EDITS` (12)
+   once per instance, no expiry; the device shows both counters; the Discord
+   invite chip/panel wired to first success and to counters-at-zero, URL from
+   a `DISCORD_INVITE_URL` Worker variable; `session.json` reloaded on 401;
+   `BETA_ACCESS_CODE` and `BETA_OPEN_ACCESS` retired (the open-beta change of
+   2026-09-01 becomes unnecessary and should not be deployed).
 6. **Evals:** `server/test/` gains a Live-state task suite runnable against a
    disposable Set; CI keeps the current unit tests.
 7. **Skills menu:** `server/src/skills.ts` profiles gain `stepBudget` and
