@@ -38,6 +38,40 @@ const SAFE_TOOL_NAMES = new Set([
 
 const MAX_LOCAL_AGENT_STEPS = 96;
 const MAX_ARRANGEMENT_DESTINATIONS = 32;
+// A user's stop must land within this interval even while a server round or a
+// Live call is in flight — the in-flight work is abandoned, like the watchdog.
+const STOP_POLL_MS = 300;
+// Consecutive failed Live calls before the turn gives up instead of letting
+// the model spin its whole step budget against a bridge that keeps refusing.
+const MAX_CONSECUTIVE_TOOL_FAILURES = 5;
+
+function raceWithStop(promise, shouldStop) {
+  if (shouldStop()) {
+    const err = new Error("stopped by user");
+    err.stopped = true;
+    return Promise.reject(err);
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setInterval(() => {
+      if (shouldStop()) {
+        clearInterval(timer);
+        const err = new Error("stopped by user");
+        err.stopped = true;
+        reject(err);
+      }
+    }, STOP_POLL_MS);
+    promise.then(
+      (value) => {
+        clearInterval(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearInterval(timer);
+        reject(error);
+      },
+    );
+  });
+}
 
 const TEMBRO_ARRANGE_CLIP_TOOL = {
   name: "tembro_arrange_clip",
@@ -294,8 +328,13 @@ async function runAgentTurn(options) {
   if (tools.length === 0) throw new Error("no safe Ableton MCP tools available");
 
   onStatus("thinking with " + tools.length + " Live tools…");
-  let step = await api.agentStart(message, liveContext, tools, conversationId, skill);
+  let step = await raceWithStop(
+    api.agentStart(message, liveContext, tools, conversationId, skill),
+    shouldStop,
+  );
   let iterations = 0;
+  let consecutiveFailures = 0;
+  let lastFailure = null;
   while (step.kind === "tool_calls") {
     ensureNotStopped();
     iterations += 1;
@@ -321,29 +360,37 @@ async function runAgentTurn(options) {
       onTool("start", call);
       let result;
       try {
-        result = await executeTool(
-          client,
-          call.name,
-          call.arguments || {},
-          onStatus,
+        result = await raceWithStop(
+          executeTool(client, call.name, call.arguments || {}, onStatus),
+          shouldStop,
         );
         result = { ok: true, result };
+        consecutiveFailures = 0;
         onTool("success", call, result);
       } catch (error) {
+        if (error && error.stopped) throw error;
         result = {
           ok: false,
           error: error && error.message ? error.message : String(error),
         };
+        consecutiveFailures += 1;
+        lastFailure = result.error;
         onTool("error", call, result);
       }
       outputs.push({ call_id: call.call_id, output: boundedJson(result) });
     }
+    if (consecutiveFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
+      throw new Error(
+        consecutiveFailures +
+          " Live calls failed in a row (last: " +
+          lastFailure +
+          ") — check that Ableton is open, the Set is responsive and the Tembro bridge is running, then try again",
+      );
+    }
     onStatus("checking the result…");
-    step = await api.agentContinue(
-      step.continuation_token,
-      step.conversation_id,
-      tools,
-      outputs,
+    step = await raceWithStop(
+      api.agentContinue(step.continuation_token, step.conversation_id, tools, outputs),
+      shouldStop,
     );
   }
   if (step.kind !== "final") throw new Error("agent returned an unknown state");

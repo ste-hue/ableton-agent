@@ -207,7 +207,10 @@ async function handleChat(message, skill = null) {
     );
   } catch (err) {
     if (err && err.stopped) {
-      transcript("tembro", "stopped — ready for the next message");
+      transcript(
+        "tembro",
+        "stopped — if a Live operation was mid-flight it may have landed anyway; glance at the Set before the next request",
+      );
       ui("idle", "stopped · ready");
     } else {
       ui("error", err.message);
