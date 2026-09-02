@@ -15,3 +15,8 @@ __pycache__/
 /work/
 /dist/
 /devices/Tembro/*.amxd
+
+# Wrangler cache (contains the Cloudflare account id) and locally issued
+# session files from server/grant-family-beta.mjs (bearer tokens).
+.wrangler/
+/server/out/
