@@ -16,6 +16,8 @@ Then open `http://127.0.0.1:4173`.
 
 - `src/app/ui.js` — DOM rendering, controls, downloads and transport wiring
 - `src/engine/core-config.js` — musical profiles, kit policy, shared state and narrative form
+- `src/engine/drum-machine-theory-engine.js` — abstract 12/16-step machine grammar,
+  complementary cells, auxiliary voices and register-transfer fill families
 - `src/engine/arrangement-engine.js` — pattern families, section rendering and complete arrangement assembly
 - `src/engine/fill-engine.js` — one fill genome, four-bar master and measure-level derivations
 - `src/engine/theory-rudiment-engine.js` — subordinate Stick Control transformations and theory budget
@@ -74,6 +76,7 @@ The collapsible Creative Pattern Engine adds a composed development layer:
   response B to developed pattern C.
 - Variation Scope confines development to Detail, Groove or full Phrase level.
 - Phrase Shape selects Stable, Evolving, Call/Response or Progressive A/B/C grammar.
+  Explicit Alternating ABAB and Paired AABB chains are also available.
 - Kick Vocabulary uses anticipation, afterbeat, double-pickup or recovery gestures
   while preserving the principal anchors.
 - Backbeat Detail provides clean, ghost-pickup, drag, flam, response and mini-roll
@@ -85,6 +88,12 @@ The collapsible Creative Pattern Engine adds a composed development layer:
   foundation anchors are protected.
 - Section Mutation assigns development roles to intro, main, breakdown, build,
   drop and outro, with Off, Subtle, Auto and Expressive modes.
+
+The drum-machine theory layer is an original abstraction derived from privately
+supplied study material. It stores common compositional relationships rather than
+scans, page sequences or a transcription of any published pattern catalogue. Its
+profiles add complementary kick cells, pulse/gap hat logic, independent auxiliary
+voices and five additional fill-development families.
 
 ## DAW-ready export
 

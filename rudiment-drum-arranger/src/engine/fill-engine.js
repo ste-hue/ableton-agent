@@ -8,20 +8,21 @@ function makeFillGenome(tomContour,rnd){
   // A canonical four-measure fill phrase is composed once, then every 16/32/64 boundary
   // derives from those SAME measures by truncation / duplication / re-ordering.
   // We do NOT change the perceived tempo of the fill to create hierarchy.
-  const type=choose(["RELAXED ARC","CALL RESPONSE","ROLLING CELL","SPARSE PUNCTUATION"],rnd);
-  let primaryRoles=type==="RELAXED ARC"?[tomContour[0],tomContour[1],"rim","snare"]:
+  const machineBlueprint=rnd()<.56?machineFillBlueprint(tomContour,rnd):null;
+  const type=machineBlueprint?machineBlueprint.id:choose(["RELAXED ARC","CALL RESPONSE","ROLLING CELL","SPARSE PUNCTUATION"],rnd);
+  let primaryRoles=machineBlueprint?[...machineBlueprint.roles]:type==="RELAXED ARC"?[tomContour[0],tomContour[1],"rim","snare"]:
     type==="CALL RESPONSE"?["rim","snare",tomContour[1],tomContour[2]]:
     type==="ROLLING CELL"?["snare","rim",tomContour[1],"snare"]:
     ["rim",tomContour[1],"snare",tomContour[2]];
   if(cfg.fillOrchestration==="Snare / Rim")primaryRoles=["snare","rim","snare","rim"];
   if(cfg.fillOrchestration==="Toms")primaryRoles=[tomContour[0],tomContour[1],tomContour[2],tomContour[1]];
   if(cfg.fillOrchestration==="Percussion")primaryRoles=["percLow","percMid","percHigh","percMid"];
-  const steps=type==="RELAXED ARC"?[0,4,7,11]:
+  const steps=machineBlueprint?[...machineBlueprint.steps]:type==="RELAXED ARC"?[0,4,7,11]:
     type==="CALL RESPONSE"?[0,3,8,11]:
     type==="ROLLING CELL"?[0,2,3,6]:[0,5,9,12];
-  const densityBias=type==="ROLLING CELL"?1.0:type==="CALL RESPONSE"?.72:type==="RELAXED ARC"?.48:.38;
-  const spaceBias=type==="SPARSE PUNCTUATION"?1:type==="RELAXED ARC"?.82:.55;
-  const baseSubdivision=type==="ROLLING CELL"?16:8;
+  const densityBias=machineBlueprint?machineBlueprint.densityBias:type==="ROLLING CELL"?1.0:type==="CALL RESPONSE"?.72:type==="RELAXED ARC"?.48:.38;
+  const spaceBias=machineBlueprint?machineBlueprint.spaceBias:type==="SPARSE PUNCTUATION"?1:type==="RELAXED ARC"?.82:.55;
+  const baseSubdivision=machineBlueprint?machineBlueprint.baseSubdivision:type==="ROLLING CELL"?16:8;
   const derivationMode=choose(["PAIR DOUBLE","FIRST CELL","THIRD REPEAT","FOURTH REPEAT"],rnd);
 
   // Build four related measures from the same cell. These are not four unrelated fills.

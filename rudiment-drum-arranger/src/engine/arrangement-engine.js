@@ -80,7 +80,7 @@ function applyHatPhrase(source,rnd,amount){
   return {steps,accent,curve,phrase};
 }
 function phraseChain(shape,bars){
-  const cells={Stable:["A","A","A","B"],Evolving:["A","A","B","C"],"Call / Response":["A","B","A","C"],Progressive:["A","B","B","C"]};
+  const cells={Stable:["A","A","A","B"],"Alternating ABAB":["A","B","A","B"],"Paired AABB":["A","A","B","B"],Evolving:["A","A","B","C"],"Call / Response":["A","B","A","C"],Progressive:["A","B","B","C"]};
   const cell=cells[shape]||cells.Evolving,chain=Array.from({length:bars},(_,i)=>cell[i%cell.length]);chain[chain.length-1]="BREAK";return chain;
 }
 function sectionPatternToken(token,sec,local,phase){
@@ -96,6 +96,7 @@ function sectionPatternToken(token,sec,local,phase){
 }
 function makePatternFamily(p,rnd){
   const lineage=buildArchetypeLineage(p,rnd), A=lineage.primary, B=lineage.secondary, bias=lineage.bias;
+  const machineProfile=machineTheoryProfile(cfg.style,rnd);
   const syncAmount=clamp(cfg.syncopation/100,0,1);
   // ARRANGEMENT-FIRST POLICY:
   // Archetypes provide vocabulary, not bar-by-bar behaviour. One stable A motif is created,
@@ -163,9 +164,10 @@ function makePatternFamily(p,rnd){
   const kickIdea=kickDevelopment(kickA,rnd,creativity),kickC=scope==="Detail"?[...kickA]:displaceAccessoryGroup(kickIdea.steps,rnd,[0,4,8,12]);
   const backIdea=backbeatDevelopment(rnd,creativity),ghostC=uniq([...ghostB,...backIdea.ghost]).sort((a,b)=>a-b);
   const hatSource=creativity<.12?hatA:memory>.45?hatB:hatTemplate(rnd()<bias?B.hats.pulse:A.hats.pulse,rnd),hatIdea=applyHatPhrase(hatSource,rnd,creativity);
-  const hatC=displaceAccessoryGroup(hatIdea.steps,rnd,scope==="Detail"?[0]:[]);
-  const percSource=creativity<.12?percA:memory>.45?percB:percTemplate(percTrait,rnd),percC=displaceAccessoryGroup(developedSteps(percSource,rnd,creativity,[1,2,3,5,6,7,9,10,11,13,14,15]),rnd);
+  let hatC=displaceAccessoryGroup(hatIdea.steps,rnd,scope==="Detail"?[0]:[]);
+  const percSource=creativity<.12?percA:memory>.45?percB:percTemplate(percTrait,rnd);let percC=displaceAccessoryGroup(developedSteps(percSource,rnd,creativity,[1,2,3,5,6,7,9,10,11,13,14,15]),rnd);
   let openC=hatIdea.phrase==="Open Arc"?[2,6,10,14]:uniq([...openB,...openA]);if(openC.length>3)openC=openC.slice(-3);
+  const machineDevelopment=machineTheoryDevelop({hat:hatC,perc:percC,open:openC},machineProfile,rnd,creativity,memory);hatC=machineDevelopment.hat;percC=machineDevelopment.perc;openC=machineDevelopment.open;
   const phraseBars=[8,16,32].includes(Number(cfg.phraseEvolution))?Number(cfg.phraseEvolution):16;
   const chain=phraseChain(cfg.phraseShape||"Evolving",phraseBars);
   // Snare owns stick grammar. Hand clap is written independently as an
@@ -174,7 +176,7 @@ function makePatternFamily(p,rnd){
   const occupiedB=new Set(ghostB),occupiedC=new Set([...ghostC,...backIdea.ornaments.map(item=>Math.round(item.step))]);
   const responseA=backbeatResponse?[7]:[],responseB=backbeatResponse?[3,7,10,15,2,6,14].filter(step=>!occupiedB.has(step)).slice(0,2):[];
   const responseC=backbeatResponse?[1,5,9,13,14,2,6,10].filter(step=>!occupiedC.has(step)).slice(0,creativity>.7?4:3):[];
-  return {A:{kick:kickA,back:backA,response:responseA,ghost:[],ornaments:[],hat:hatA,hatAccent:[],hatCurve:"flat",perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,response:responseB,ghost:ghostB,ornaments:[],hat:hatB,hatAccent:[],hatCurve:"flat",perc:percB,open:openB,accent:accentB},C:{kick:kickC,back:backA,response:responseC,ghost:ghostC,ornaments:scope==="Phrase"?backIdea.ornaments:[],hat:hatC,hatAccent:hatIdea.accent,hatCurve:hatIdea.curve,perc:percC,open:openC,accent:uniq([...accentB,...hatIdea.accent])},chain,lineage,backRole,backbeatLead,backbeatResponse,creativeLanguage:{kick:kickIdea.vocabulary,backbeat:backIdea.detail,hats:hatIdea.phrase,scope,shape:cfg.phraseShape}};
+  return {A:{kick:kickA,back:backA,response:responseA,ghost:[],ornaments:[],hat:hatA,hatAccent:[],hatCurve:"flat",perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,response:responseB,ghost:ghostB,ornaments:[],hat:hatB,hatAccent:[],hatCurve:"flat",perc:percB,open:openB,accent:accentB},C:{kick:kickC,back:backA,response:responseC,ghost:ghostC,ornaments:scope==="Phrase"?backIdea.ornaments:[],hat:hatC,hatAccent:hatIdea.accent,hatCurve:hatIdea.curve,perc:percC,open:openC,accent:uniq([...accentB,...hatIdea.accent])},chain,lineage,backRole,backbeatLead,backbeatResponse,machineProfile:machineProfile.id,creativeLanguage:{kick:kickIdea.vocabulary,backbeat:backIdea.detail,hats:hatIdea.phrase,scope,shape:cfg.phraseShape}};
 }
 function addFlam(ev,bar,step,role,velocity,group){const q=step/4,t=beat(bar,q),gap=Math.max(12,Math.round(PPQ/24));ev.push({tick:Math.max(0,t-gap),duration:PPQ/20,role,velocity:clamp(velocity-28,1,127),group});ev.push({tick:t,duration:PPQ/10,role,velocity,group})}
 function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
@@ -366,6 +368,7 @@ function generate(){
     tomRimLanguage:`${narrative.tomDirection} TOM CONTOUR · ${narrative.rimMode}`,
     creativeLanguage:`${family.creativeLanguage.shape} · ${family.creativeLanguage.scope} · KICK ${family.creativeLanguage.kick} · BACKBEAT ${family.creativeLanguage.backbeat} · HATS ${family.creativeLanguage.hats}`,
     backbeatLanguage:family.backbeatResponse?`${family.backbeatLead.toUpperCase()} LEADS · ${family.backbeatResponse.toUpperCase()} RESPONDS`:`${family.backbeatLead.toUpperCase()} LEADS`,
+    machineTheory:`${family.machineProfile.toUpperCase()} DRUM-MACHINE GRAMMAR · COMPLEMENT / SUBTRACTION / REGISTER TRANSFER`,
     activeKit:activeKitKeys().map(k=>KIT_DEFS[k].label)
   }};
 }
