@@ -12,4 +12,13 @@
 .fillLaneName{display:flex;align-items:center;padding:0 10px;font:7px ui-monospace,monospace;color:#9196a2;background:#0d0f13}
 .fillLaneGrid{position:relative;background-color:#090b0e;background-image:linear-gradient(to right,transparent calc(12.5% - 1px),#303541 12.5%),linear-gradient(to right,transparent calc(3.125% - 1px),#181b22 3.125%);background-size:12.5% 100%,3.125% 100%}
 .fillNote{position:absolute;top:8px;height:18px;min-width:3px;border-radius:3px;background:var(--fill-color,var(--coral));box-shadow:0 0 9px color-mix(in srgb,var(--fill-color,var(--coral)) 35%,transparent)}
+.exportDock{grid-template-columns:minmax(0,1fr) minmax(190px,.42fr) minmax(190px,.42fr)}
+.exportOptions{display:grid;grid-template-columns:1.45fr .8fr 1fr;gap:8px;min-width:0}
+.exportOptions label{padding:3px;min-width:0}
+.exportOptions label[hidden]{display:none}
+.exportOptions span{display:block;font:8px ui-monospace,monospace;letter-spacing:.12em;color:var(--muted);margin:0 0 7px}
+.exportOptions select{width:100%;height:42px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:0 10px;outline:0}
+.exportOptions select:focus{border-color:#647327;box-shadow:0 0 0 3px rgba(216,255,62,.06)}
+@media(max-width:1150px){.exportDock{grid-template-columns:1fr 1fr}.exportOptions{grid-column:1/-1}}
 @media(max-width:760px){.fillViewerHead small{display:none}.fillRuler{padding-left:72px}.fillLane{grid-template-columns:72px 1fr}.fillLaneName{padding:0 7px}}
+@media(max-width:760px){.exportDock{grid-template-columns:1fr}.exportOptions{grid-column:auto;grid-template-columns:1fr}.exportOptions label{grid-column:auto}}

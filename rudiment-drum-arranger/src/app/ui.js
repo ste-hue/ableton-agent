@@ -13,6 +13,17 @@ function renderFillClip(){
     return `<div class="fillLane" style="--fill-color:${laneColors[(index+1)%laneColors.length]}"><div class="fillLaneName">${roleLabel(role)}</div><div class="fillLaneGrid">${notes}</div></div>`;
   }).join("");
 }
+function refreshExportControls(){
+  const scope=$("#exportScope").value||"full",instrumentMode=scope==="instrument";
+  $("#exportModeField").hidden=instrumentMode;$("#instrumentField").hidden=!instrumentMode;
+  const instrument=$("#exportInstrument"),previous=instrument.value,keys=activeKitKeys();
+  instrument.innerHTML=keys.map(key=>`<option value="${key}">${KIT_DEFS[key].label}</option>`).join("");
+  instrument.value=keys.includes(previous)?previous:(keys[0]||"");
+  const label=$("#exportArrangement").querySelector("span");
+  if(instrumentMode)label.textContent=instrument.value?KIT_DEFS[instrument.value].label:"NO INSTRUMENT";
+  else label.textContent=$("#exportMode").value==="multitrack"?"FULL DRUMS · TRACKS":"FULL DRUMS · ONE CLIP";
+  $("#exportArrangement").disabled=instrumentMode&&!instrument.value;
+}
 function render(){
   result=generate();
   $("#barCount").textContent=result.totalBars;$("#bpmReadout").textContent=cfg.bpm;$("#seedLabel").textContent=`SEED ${cfg.seed}`;
@@ -21,6 +32,7 @@ function render(){
   $("#lanes").innerHTML=result.tracks.map((track,index)=>`<div class="lane" style="--lane-color:${laneColors[index%laneColors.length]}"><div class="laneName"><i></i>${track.name.replace("DRUMS — ","")}</div><div class="laneGrid">${track.notes.slice(0,1800).map(note=>`<i style="left:${Math.min(99.8,note.tick/(result.totalBars*4*PPQ)*100)}%;opacity:${.3+note.velocity/175};height:${3+note.velocity/25}px"></i>`).join("")}</div></div>`).join("");
   renderFillClip();
   $("#productionSummary").innerHTML=summaryText();
+  refreshExportControls();
   resetPreview();
 }
 function newSeed(){let next;do{next=Math.floor(Math.random()*999999999)+1}while(next===cfg.seed);cfg.seed=next;$("#seed").value=next}
@@ -36,10 +48,19 @@ function bindSwitch(id,key){$(id).onclick=()=>{cfg[key]=!cfg[key];$(id).classLis
 bindSwitch("#doubleKick","doubleKick");bindSwitch("#pausona","pausona");
 $$('#kitGrid .kitToggle').forEach(button=>button.onclick=()=>{const key=button.dataset.kit;cfg.kit[key]=!cfg.kit[key];button.classList.toggle("active",cfg.kit[key]);render()});
 $("#targetDaw").onchange=event=>{cfg.targetDaw=event.target.value;$("#productionSummary").innerHTML=summaryText()};
+$("#exportScope").onchange=refreshExportControls;$("#exportMode").onchange=refreshExportControls;$("#exportInstrument").onchange=refreshExportControls;
 $("#generate").onclick=()=>{newSeed();render()};
 $("#playBtn").onclick=playPreview;$("#pauseBtn").onclick=pausePreview;$("#stopBtn").onclick=()=>stopPreview(true);
 $("#seek").addEventListener("input",event=>{const dur=durationSec(),wasPlaying=isPlaying;if(wasPlaying)pausePreview();transportOffset=dur*(Number(event.target.value)/1000);updateTransport();if(wasPlaying)playPreview()});
-$("#exportArrangement").onclick=()=>{const profile=dawExportProfile(cfg.targetDaw);dl(`rudiment-${slug(cfg.style)}-${result.totalBars}bars-${cfg.bpm}bpm-${profile.slug}.mid`,encodeDawArrangement(result,cfg.targetDaw))};
+$("#exportArrangement").onclick=()=>{
+  const profile=dawExportProfile(cfg.targetDaw),base=`rudiment-${slug(cfg.style)}-${result.totalBars}bars-${cfg.bpm}bpm-${profile.slug}`;
+  if($("#exportScope").value==="instrument"){
+    const key=$("#exportInstrument").value;if(!key)return;
+    dl(`${base}-${slug(KIT_DEFS[key].label)}.mid`,encodeDawInstrument(result,cfg.targetDaw,key));return;
+  }
+  if($("#exportMode").value==="multitrack")dl(`${base}-tracks.mid`,encodeDawMultitrack(result,cfg.targetDaw));
+  else dl(`${base}-one-clip.mid`,encodeDawArrangement(result,cfg.targetDaw));
+};
 $("#exportFill").onclick=()=>{const profile=dawExportProfile(cfg.targetDaw);dl(`rudiment-${slug(cfg.style)}-master-fill-4bars-${profile.slug}.mid`,encodeDawFillMaster(result,cfg.targetDaw))};
 render();
-window.RudimentApp=Object.freeze({snapshot:()=>({config:structuredClone(cfg),result:structuredClone(result)}),renderMidi:()=>encodeDawArrangement(result,cfg.targetDaw),renderFillMidi:()=>encodeDawFillMaster(result,cfg.targetDaw),profiles:DAW_EXPORT_PROFILES,adapter:AbletonMcpAdapter});
+window.RudimentApp=Object.freeze({snapshot:()=>({config:structuredClone(cfg),result:structuredClone(result)}),renderMidi:()=>encodeDawArrangement(result,cfg.targetDaw),renderMultitrackMidi:()=>encodeDawMultitrack(result,cfg.targetDaw),renderInstrumentMidi:key=>encodeDawInstrument(result,cfg.targetDaw,key),renderFillMidi:()=>encodeDawFillMaster(result,cfg.targetDaw),profiles:DAW_EXPORT_PROFILES,adapter:AbletonMcpAdapter});

@@ -51,6 +51,10 @@ The compact export panel renders one merged arrangement clip or the canonical
 four-bar master fill. Musical events remain semantic until export, so choosing a
 DAW changes only pad notes—not rhythm, velocity or timing.
 
+The adaptive content menu can export the full arrangement as one merged clip,
+one Type 1 MIDI file with tracks separated by instrument family, or one selected
+instrument only. The instrument selector always follows the currently enabled kit.
+
 - Ableton Live: verified `909 Core Kit` pad layout
 - Bitwig Studio: `Drum Machine` with a GM-compatible layout
 - Logic Pro: `Drum Kit Designer`, `Default Preset`, input mapping `GM` (MIDI

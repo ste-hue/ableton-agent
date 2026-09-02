@@ -18,6 +18,14 @@ function mappedSemanticTrack(events,profileId,name){
 }
 function encodeDawArrangement(generated,profileId){const profile=dawExportProfile(profileId);return encodeSingle(mappedSemanticTrack(generated.semanticEvents,profileId,"RUDIMENT — FULL ARRANGEMENT"),profile.channel)}
 function encodeDawFillMaster(generated,profileId){const profile=dawExportProfile(profileId);return encodeSingle(mappedSemanticTrack(generated.fillMasterEvents,profileId,"RUDIMENT — MASTER FILL · 4 BARS"),profile.channel)}
+function semanticEventsForKit(generated,kitKey){const roles=KIT_DEFS[kitKey]?.roles||[];return generated.semanticEvents.filter(event=>roles.includes(event.role))}
+function dawInstrumentTrack(generated,profileId,kitKey){return mappedSemanticTrack(semanticEventsForKit(generated,kitKey),profileId,`RUDIMENT — ${KIT_DEFS[kitKey]?.label||kitKey}`)}
+function encodeDawInstrument(generated,profileId,kitKey){const profile=dawExportProfile(profileId);return encodeSingle(dawInstrumentTrack(generated,profileId,kitKey),profile.channel)}
+function encodeDawMultitrack(generated,profileId){
+  const profile=dawExportProfile(profileId),tracks=activeKitKeys().map(key=>dawInstrumentTrack(generated,profileId,key)).filter(track=>track.notes.length);
+  const header=chunk("MThd",[...u16(1),...u16(tracks.length+1),...u16(PPQ)]);
+  return new Uint8Array([...header,...tempoTrack(cfg.bpm),...tracks.flatMap(track=>noteTrack(track,profile.channel))]);
+}
 function ableton909CoreTrack(tracks){
   const sourceMap=profiles[cfg.device],events=tracks.flatMap(track=>track.notes.map(note=>({ ...note,role:Object.keys(sourceMap).find(role=>sourceMap[role]===note.note)}))).filter(event=>event.role);
   return mappedSemanticTrack(events,"ableton-909","RUDIMENT — 909 CORE KIT");
