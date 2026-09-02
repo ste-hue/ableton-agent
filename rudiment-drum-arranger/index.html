@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rudiment — Drum Arranger</title>
+  <meta name="description" content="Rule-based electronic drum arrangement and MIDI generator." />
+  <link rel="stylesheet" href="src/styles/app.css?v=2" />
+</head>
+
+<body>
+<main>
+  <header class="topbar">
+    <div class="brand"><span class="mark">R</span><div><strong>RUDIMENT</strong><small>NARRATIVE DRUM ARRANGER</small></div></div>
+    <div class="status"><span></span> MIDI ENGINE · ARRANGEMENT FIRST</div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">MUSICAL FORM → GROOVE DNA → CONTROLLED TRANSFORMATION</p>
+      <h1>Compose the <em>story</em><br>of the drum track.</h1>
+      <p class="lede">The interface now follows the same hierarchy as the engine: choose the musical identity first, shape the narrative second, add motion third, and only then decide how the MIDI is delivered.</p>
+    </div>
+    <div class="heroStats">
+      <div class="heroStat"><small>LENGTH</small><strong id="barCount">96</strong><span>BARS</span></div>
+      <div class="heroStat"><small>OUTPUT</small><strong id="heroTracks">5</strong><span>TRACKS</span></div>
+    </div>
+  </section>
+
+  <div class="appShell">
+    <aside class="sidebar">
+      <div class="stack">
+        <section class="module">
+          <div class="moduleHead"><div class="title"><span class="num">01</span>MUSICAL DNA</div><div class="hint">choose first</div></div>
+          <div class="moduleBody">
+            <label class="field">
+              <div class="fieldTop"><span>STYLE</span></div>
+              <select id="style"></select>
+              <small>Sets the core groove family and rhythmic vocabulary. It does not replace the arrangement.</small>
+            </label>
+            <label class="field">
+              <div class="fieldTop"><span>TEMPO</span><b><span id="bpmVal">128</span> BPM</b></div>
+              <div class="bpmRow"><input id="bpm" type="range" min="60" max="200" value="128"><div class="bpmReadout" id="bpmReadout">128</div></div>
+            </label>
+            <div class="twoCol">
+              <label class="field"><div class="fieldTop"><span>FORM LENGTH</span></div><select id="length"><option>Short</option><option selected>Standard</option><option>Extended</option></select></label>
+              <label class="field"><div class="fieldTop"><span>BUILD SCALE</span></div><select id="build"><option>Small</option><option selected>Mid</option><option>Huge</option></select></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="module">
+          <div class="moduleHead"><div class="title"><span class="num">02</span>NARRATIVE MOTION</div><div class="hint">derive, don't reinvent</div></div>
+          <div class="moduleBody">
+            <label class="field">
+              <div class="fieldTop"><span>VARIATION</span><b id="variationVal">32%</b></div>
+              <input id="variation" type="range" min="0" max="100" value="32">
+              <small>How much A can become A′ while remaining recognizably the same groove.</small>
+            </label>
+            <label class="field">
+              <div class="fieldTop"><span>FILL DEVELOPMENT</span><b id="fillVal">38%</b></div>
+              <input id="fill" type="range" min="0" max="100" value="38">
+              <small>Controls how strongly the same fill cell grows across 16 → 32 → 64-bar boundaries.</small>
+            </label>
+            <div class="toggleRow">
+              <button id="doubleKick" class="active">PHRASE DOUBLE KICK<i>ON · punctuation only</i></button>
+              <button id="groove" class="active">ABLETON GROOVE<i>ON · non-kick layers</i></button>
+            </div>
+            <div class="divider"></div>
+            <div class="fieldTop"><span>PAUSONA · MACRO BUILD GESTURE</span><b id="pausonaVal">ON</b></div>
+            <button id="pausona" class="kitToggle active" style="width:100%;margin-bottom:9px"><b>PAUSONA</b><i>ON · one clear gesture into the strongest drop</i></button>
+            <div class="twoCol">
+              <label class="field"><div class="fieldTop"><span>LENGTH</span></div><select id="pausonaLength"><option selected>8 Bars</option><option>16 Bars</option></select><small>How long the macro gesture develops before the drop.</small></label>
+              <label class="field"><div class="fieldTop"><span>SHAPE</span></div><select id="pausonaShape"><option selected>Straight</option><option>Accelerate</option><option>Decelerate</option><option>Syncopated</option></select><small>One dominant rhythmic idea. Syncopation comes from accents/omissions, not timing jitter.</small></label>
+            </div>
+            <label class="field">
+              <div class="fieldTop"><span>INTENSITY</span></div>
+              <select id="pausonaIntensity"><option>Low</option><option selected>Mid</option><option>Huge</option></select>
+              <small>Controls density, velocity ceiling and final silence. It never unlocks uncontrolled extra transformations.</small>
+            </label>
+          </div>
+        </section>
+
+        <section class="module">
+          <div class="moduleHead"><div class="title"><span class="num">03</span>FEEL & DETAIL</div><div class="hint">subordinate layer</div></div>
+          <div class="moduleBody">
+            <label class="field">
+              <div class="fieldTop"><span>SWING / MICRO-TIMING</span><b id="swingVal">3/10</b></div>
+              <input id="swing" type="range" min="0" max="10" step="1" value="3">
+              <small>Kick stays the timing reference. Fast fills remain grid-priority.</small>
+            </label>
+            <div class="intentNote"><strong>THEORY IS NOT A KNOB.</strong><br>Stick-control grammar and rudiments are automatically budgeted by section, so musical form always wins over complexity.</div>
+          </div>
+        </section>
+
+        <button class="generate" id="generate">GENERATE NEW ARRANGEMENT <span>→</span></button>
+      </div>
+    </aside>
+
+    <section class="mainStage">
+      <div class="mainTop">
+        <div class="transportCard">
+          <div class="transportButtons"><button id="playBtn" title="Play">▶</button><button id="pauseBtn" title="Pause">Ⅱ</button><button id="stopBtn" title="Stop">■</button></div>
+          <div class="transportTrack">
+            <input id="seek" type="range" min="0" max="1000" value="0">
+            <div class="playerMeta"><span id="timeNow">0:00</span><span id="timeTotal">0:00</span></div>
+          </div>
+          <div class="playerState" id="playerState">READY</div>
+        </div>
+      </div>
+
+      <div class="arranger">
+        <section class="arrangerCard">
+          <div class="arrangerHead"><b>ARRANGEMENT MAP</b><small id="eventCount">0 MIDI EVENTS</small></div>
+          <div class="timelineWrap">
+            <div class="timelineHead"><span>1</span><span id="q1">24</span><span id="q2">48</span><span id="q3">72</span><span id="q4">96</span></div>
+            <div class="sections" id="sections"></div>
+            <div class="lanes" id="lanes"></div>
+            <div class="diagnostics">
+              <div class="diagnostic"><small>NARRATIVE</small><strong id="grammarMode">NARRATIVE FIRST</strong><p id="grammarDetail">Soft = core − layers · Main = soft + layer</p></div>
+              <div class="diagnostic"><small>FILL GENEALOGY</small><strong id="fillLogic">MID</strong><p id="fillSubdiv">16 → 32 → 64</p></div>
+              <div class="diagnostic"><small>TIMING</small><strong id="timingMode">TIGHT</strong><p>Kick stable · fills grid-priority</p></div>
+              <div class="diagnostic"><small>DELIVERY</small><strong id="trackCount">5 TRACKS</strong><p>Only enabled kit families are rendered</p></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <aside class="rightRail">
+      <div class="stack">
+        <section class="module">
+          <div class="moduleHead"><div class="title"><span class="num">04</span>OUTPUT / ABLETON</div><div class="hint">after composition</div></div>
+          <div class="moduleBody">
+            <label class="field"><div class="fieldTop"><span>DEVICE PROFILE</span></div><select id="device"></select><small>Only translates semantic drum roles to MIDI notes.</small></label>
+            <div class="field"><div class="fieldTop"><span>ACTIVE KIT / TRACKS</span><b id="trackSplitLabel">7 ON</b></div><div class="kitGrid" id="kitGrid">
+              <button class="kitToggle active" data-kit="kick"><b>KICK</b><i>ON · foundation</i></button>
+              <button class="kitToggle active" data-kit="snare"><b>SNARE / CLAP</b><i>ON · backbeat</i></button>
+              <button class="kitToggle active" data-kit="hats"><b>HATS</b><i>ON · pulse</i></button>
+              <button class="kitToggle active" data-kit="shaker"><b>SHAKER</b><i>ON · motion</i></button>
+              <button class="kitToggle active" data-kit="perc"><b>PERCUSSION</b><i>ON · interlock</i></button>
+              <button class="kitToggle active" data-kit="toms"><b>TOMS / RIMS</b><i>ON · fills / punctuation</i></button>
+              <button class="kitToggle active" data-kit="cymbals"><b>CYMBALS</b><i>ON · structure</i></button>
+            </div><div class="kitSummary" id="kitSummary">KICK · SNARE/CLAP · HATS · SHAKER · PERCUSSION · TOMS/RIMS · CYMBALS</div><small>Each enabled family creates its own MIDI track. Disabled families are omitted; fill gestures are re-orchestrated onto compatible enabled voices where possible.</small></div>
+            <label class="field"><div class="fieldTop"><span>SEED</span></div><div class="seed"><input id="seed" value="20260901" readonly><button id="randomSeed" title="Generate a new seed">↻</button></div><small>Generate always creates a new seed automatically.</small></label>
+          </div>
+        </section>
+
+        <section class="module">
+          <div class="moduleHead"><div class="title">CURRENT RECIPE</div><div class="hint">what the engine is doing</div></div>
+          <div class="moduleBody recipe">
+            <div class="recipeRow"><small>ARRANGEMENT</small><b>Intro → Soft → Main → Breakdown → Build → Drop</b></div>
+            <div class="recipeRow"><small>TRANSFORMATION RULE</small><b>Add / subtract / ×2 / ÷2 / ×4</b></div>
+            <div class="recipeRow"><small>THEORY ROLE</small><b>Vocabulary only · section-budgeted</b></div>
+            <div class="recipeRow"><small>CYMBALS</small><b>Structural punctuation · pre-drop language</b></div>
+            <div class="recipeRow"><small>TOMS / RIMS</small><b>Narrative fills · contours · calls / responses</b></div>
+            <div class="recipeRow"><small>PAUSONA</small><b id="pausonaRecipe">8 bars · straight · auto contour</b></div>
+            <div class="recipeRow"><small>ACTIVE KIT</small><b id="activeKitRecipe">All seven families enabled</b></div>
+          </div>
+        </section>
+
+        <section class="module">
+          <div class="moduleHead"><div class="title"><span class="num">05</span>EXPORT</div><div class="hint">real MIDI</div></div>
+          <div class="moduleBody">
+            <div class="exportHero"><span>STANDARD MIDI FILE</span><strong>.MID</strong><p>Type 1 · PPQ 480 · velocity + micro-timing</p></div>
+            <button class="download primary" id="downloadAll"><span>↓</span><div><b>FULL ARRANGEMENT</b><small>All generated drum tracks</small></div></button>
+            <button class="download primary" id="download909Clip"><span>909</span><div><b>ABLETON 909 CORE CLIP</b><small>One merged MIDI clip · stock 909 pad mapping</small></div></button>
+            <button class="download" id="downloadManifest"><span>{ }</span><div><b>ARRANGEMENT MANIFEST</b><small>Structure, mapping and groove policy</small></div></button>
+            <button class="download" id="downloadLivePayload"><span>LIVE</span><div><b>MAX FOR LIVE PAYLOAD</b><small>Tracks, devices, pad notes and Arrangement clips</small></div></button>
+            <div class="manifest"><small>SEPARATE STEMS · CLICK OR DRAG INTO DAW</small><div id="manifestRows"></div></div>
+            <div class="downloadList" id="stemButtons"></div>
+            <div class="note"><b>ABLETON READY</b><p>Composition happens here. Drum Rack inspection, Arrangement View placement and stock Groove assignment belong to the MCP adapter.</p></div>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </div>
+  <footer><span>RUDIMENT / UI 0.9</span><span>NARRATIVE → DNA → ADD/SUBTRACT → TRANSFORM → MIDI</span></footer>
+</main>
+
+  <script src="src/engine/core-config.js?v=2"></script>
+  <script src="src/engine/theory-rudiment-engine.js"></script>
+  <script src="src/engine/fill-engine.js"></script>
+  <script src="src/engine/arrangement-engine.js?v=2"></script>
+  <script src="src/engine/timing-velocity-engine.js"></script>
+  <script src="src/midi/midi-renderer.js?v=5"></script>
+  <script src="src/audio/synth-preview.js"></script>
+  <script src="src/integrations/ableton-mcp-adapter.js?v=2"></script>
+  <script src="src/app/ui.js?v=6"></script>
+</body>
+</html>

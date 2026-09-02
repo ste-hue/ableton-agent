@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "profiles": {
+    "Live Core": {
+      "kick": { "device": "Drum Rack", "expectedNotes": [36] },
+      "snare": { "device": "Drum Rack", "expectedNotes": [37, 38, 39] },
+      "hats": { "device": "Drum Rack", "expectedNotes": [42, 46] },
+      "shaker": { "device": "Drum Rack", "expectedNotes": [70] },
+      "perc": { "device": "Drum Rack", "expectedNotes": [62, 63, 64] },
+      "toms": { "device": "Drum Rack", "expectedNotes": [37, 45, 47, 50] },
+      "cymbals": { "device": "Drum Rack", "expectedNotes": [49, 51] }
+    }
+  }
+}

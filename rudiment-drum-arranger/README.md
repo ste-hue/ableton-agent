@@ -1,0 +1,47 @@
+# Rudiment Drum Arranger
+
+A dependency-free, browser-based electronic drum arrangement generator. This
+project is a behavior-preserving migration of the latest single-file prototype
+into a maintainable Codex Work project.
+
+## Run locally
+
+```sh
+python3 -m http.server 4173 --directory rudiment-drum-arranger
+```
+
+Then open `http://127.0.0.1:4173`.
+
+## Architecture
+
+- `src/app/ui.js` — DOM rendering, controls, downloads and transport wiring
+- `src/engine/core-config.js` — musical profiles, kit policy, shared state and narrative form
+- `src/engine/arrangement-engine.js` — pattern families, section rendering and complete arrangement assembly
+- `src/engine/fill-engine.js` — one fill genome, four-bar master and measure-level derivations
+- `src/engine/theory-rudiment-engine.js` — subordinate Stick Control transformations and theory budget
+- `src/engine/timing-velocity-engine.js` — swing/micro-timing policy
+- `src/audio/synth-preview.js` — Web Audio preview voices and transport
+- `src/midi/midi-renderer.js` — Standard MIDI File renderer and downloads
+- `src/integrations/ableton-mcp-adapter.js` — explicit, inactive boundary for future Ableton/MCP work
+- `reference/` — immutable copy of the migrated HTML baseline
+
+The files use ordered classic scripts intentionally. That preserves the exact
+prototype behavior while giving each subsystem a clear home. A later iteration
+can convert these boundaries to ES modules without changing the music engine.
+
+## Musical invariants
+
+- Arrangement and section narrative outrank surface variation.
+- The core groove remains recognizable through add/subtract transformations.
+- One four-bar fill master supplies all 16/32/64-bar derivations.
+- Stick Control and rudiments are budgeted detail, never the form generator.
+- Seven independent kit families include a dedicated Shaker motion layer.
+- Disabled kit families create neither events nor MIDI tracks; compatible fill
+  voices may be re-orchestrated, while a disabled kick is simply omitted.
+- Generate always chooses a fresh seed.
+- Pausona is one macro gesture with at most two transformations and a landing silence.
+
+## Baseline
+
+`reference/rudiment-drum-arranger-baseline.html` is the exact latest prototype
+used for this migration, including the distinct percussion preview voices.
