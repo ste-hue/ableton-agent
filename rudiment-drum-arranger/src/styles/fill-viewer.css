@@ -28,6 +28,7 @@
 .exportOptions span{display:block;font:8px ui-monospace,monospace;letter-spacing:.12em;color:var(--muted);margin:0 0 7px}
 .exportOptions select{width:100%;height:42px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:0 10px;outline:0}
 .exportOptions select:focus{border-color:#647327;box-shadow:0 0 0 3px rgba(216,255,62,.06)}
+.drummerMenus{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 5px}.drummerMenus .controlBlock:last-child{grid-column:1/-1}
 @media(max-width:1150px){.exportDock{grid-template-columns:1fr 1fr}.exportOptions{grid-column:1/-1}}
 @media(max-width:760px){.arrangementCanvas{--lane-label:84px}.fillViewerHead small{display:none}.fillRuler{padding-left:72px}.fillLane{grid-template-columns:72px 1fr}.fillLaneName{padding:0 7px}}
-@media(max-width:760px){.exportDock{grid-template-columns:1fr}.exportOptions{grid-column:auto;grid-template-columns:1fr}.exportOptions label{grid-column:auto}}
+@media(max-width:760px){.exportDock{grid-template-columns:1fr}.exportOptions{grid-column:auto;grid-template-columns:1fr}.exportOptions label{grid-column:auto}.drummerMenus{grid-template-columns:1fr}.drummerMenus .controlBlock:last-child{grid-column:auto}}

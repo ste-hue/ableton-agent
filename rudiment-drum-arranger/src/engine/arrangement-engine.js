@@ -48,14 +48,21 @@ function uniq(a){return [...new Set(a.filter(x=>x>=0&&x<16).map(x=>Math.round(x)
 function mutateSteps(src,rnd,amount=.22,allowed=[1,2,3,5,6,7,9,10,11,13,14,15]){let out=[...src];if(rnd()<amount&&out.length>2)out.splice(Math.floor(rnd()*out.length),1);if(rnd()<amount){const x=allowed[Math.floor(rnd()*allowed.length)];if(!out.includes(x))out.push(x)}return uniq(out).sort((a,b)=>a-b)}
 function makePatternFamily(p,rnd){
   const lineage=buildArchetypeLineage(p,rnd), A=lineage.primary, B=lineage.secondary, bias=lineage.bias;
+  const syncAmount=clamp(cfg.syncopation/100,0,1);
   // ARRANGEMENT-FIRST POLICY:
   // Archetypes provide vocabulary, not bar-by-bar behaviour. One stable A motif is created,
   // then B is a restrained sibling. The same motifs are reused across the song.
   let kickA, kickB;
-  if(!p.breakbeat){kickA=[0,4,8,12];kickB=[0,4,8,12]}
+  if(!p.breakbeat){
+    kickA=[0,4,8,12];kickB=[...kickA];
+    if(syncAmount>.05&&rnd()<syncAmount*.85){
+      const candidate=choose([3,7,10,14,15],rnd);
+      kickB=uniq([...kickB,candidate]).sort((a,b)=>a-b);
+    }
+  }
   else{
     const base=unionWeighted(A.kick.anchor,B.kick.anchor,rnd,bias);
-    const sync=unionWeighted(A.kick.sync,B.kick.sync,rnd,bias).filter(()=>rnd()<.22+p.sync*.12);
+    const sync=unionWeighted(A.kick.sync,B.kick.sync,rnd,bias).filter(()=>rnd()<(.04+syncAmount*.38)*p.sync);
     kickA=uniq([...base,...sync]).sort((a,b)=>a-b);
     kickB=mutateSteps(kickA,rnd,.18,[2,3,6,7,10,11,14,15]);
   }
@@ -63,39 +70,48 @@ function makePatternFamily(p,rnd){
   const backA=!p.breakbeat?[4,12]:unionWeighted(A.back.anchor,B.back.anchor,rnd,bias);
   let backB=[...backA];
   if(p.breakbeat)backB=mutateSteps(backA,rnd,.16,[3,4,7,10,11,12,15]);
-  // Ghosts are selected once for the entire song, and only at restrained variation settings.
-  const ghostPool=unionWeighted(A.back.ghost,B.back.ghost,rnd,bias);
+  // Ghost notes are independent from the fixed backbeat and always remain velocity-limited.
+  const ghostPool=uniq([...A.back.ghost,...B.back.ghost]).sort(()=>rnd()-.5);
   const varAmt=clamp(cfg.variation/100,0,1);
-  if(ghostPool.length&&rnd()<p.ghost*.35*varAmt)backB=uniq([...backB,choose(ghostPool,rnd)]).sort((a,b)=>a-b);
+  const ghostAmount=clamp(cfg.ghostNotes/100,0,1);
+  const ghostCount=ghostAmount<.04?0:Math.max(1,Math.round(ghostAmount*Math.min(4,ghostPool.length)*(.55+p.ghost+varAmt*.2)));
+  const ghostB=uniq(ghostPool.slice(0,ghostCount).map(step=>rnd()<syncAmount*.6?clamp(step+(rnd()<.5?-1:1),1,15):step).filter(step=>![4,12].includes(step))).sort((a,b)=>a-b);
 
   const hatKind=rnd()<bias?A.hats.pulse:B.hats.pulse;
   let hatA=hatTemplate(hatKind,rnd);
+  const hatMotion=clamp(cfg.hatMotion/100,0,1);
+  if(hatMotion<.34)hatA=hatA.filter((_,i)=>i%2===0);
+  if(hatMotion>.62)hatA=uniq([...hatA,...[1,3,5,7,9,11,13,15].filter(()=>rnd()<(hatMotion-.62)*2.15)]).sort((a,b)=>a-b);
   const targetHatDensity=(A.hats.density*bias+B.hats.density*(1-bias))*p.hat;
   // Density is decided once here, not randomly re-decided every bar.
   hatA=hatA.filter((_,i)=>i===0||rnd()<clamp(.62+targetHatDensity*.38,0,1));
   const hatB=mutateSteps(hatA,rnd,.10+varAmt*.16,[1,2,3,5,6,7,9,10,11,13,14,15]);
 
-  const percTrait=rnd()<bias?A.perc.contour:B.perc.contour;
-  let percA=percTemplate(percTrait,rnd);
+  const requestedMotion=cfg.percussionMotion||"Auto";
+  const percTrait=requestedMotion==="Sparse"?"sparse":requestedMotion==="Interlocking"?"interlock":requestedMotion==="Call / Response"?"answer":(rnd()<bias?A.perc.contour:B.perc.contour);
+  let percA=requestedMotion==="Rotating"?[1,6,11,14]:percTemplate(percTrait,rnd);
+  percA=uniq(percA.map(step=>rnd()<syncAmount*.48?clamp(step+(rnd()<.5?-1:1),1,15):step)).sort((a,b)=>a-b);
   // Keep percussion sparse enough to leave room for arrangement.
-  const maxPerc=p.perc>.85?4:p.perc>.65?3:2;
+  const maxPerc=Math.max(1,Math.round(1+clamp(cfg.density/100,0,1)*3));
   percA=percA.slice(0,maxPerc);
-  const percB=mutateSteps(percA,rnd,.10+varAmt*.18);
+  const percB=requestedMotion==="Rotating"?percA.map(step=>(step+2)%16).sort((a,b)=>a-b):mutateSteps(percA,rnd,.10+varAmt*.18);
 
   const openBias=(A.hats.openBias*bias+B.hats.openBias*(1-bias))*p.open;
   const openCandidates=hatA.filter(x=>[2,6,10,14].includes(x));
-  let openA=(openCandidates.length?openCandidates:[6,14]).filter(()=>rnd()<clamp(.18+openBias*.34,0,.65));
-  if(openA.length>2)openA=openA.slice(0,2);
+  let openA=(openCandidates.length?openCandidates:[6,14]).filter(()=>rnd()<clamp((.10+openBias*.34)*(.25+hatMotion*1.25),0,.8));
+  const maxOpen=hatMotion<.3?1:hatMotion>.78?3:2;
+  if(openA.length>maxOpen)openA=openA.slice(0,maxOpen);
   const openB=mutateSteps(openA,rnd,.08+varAmt*.10,[2,6,10,14]);
 
   const accentA=uniq(unionWeighted(A.accents.strong,B.accents.strong,rnd,bias));
   const accentB=uniq([...accentA,...unionWeighted(A.accents.weak,B.accents.weak,rnd,bias).filter(()=>rnd()<.18*varAmt)]);
   // Predictable phrase grammar: A establishes identity; B appears only as a controlled complement.
-  const chain=rnd()<.5?["A","A","B","A","A","A","B","BREAK"]:["A","B","A","A","A","B","A","BREAK"];
+  const phraseBars=[8,16,32].includes(Number(cfg.phraseEvolution))?Number(cfg.phraseEvolution):16;
+  const chain=Array.from({length:phraseBars},(_,i)=>i===phraseBars-1?"BREAK":(i===Math.floor(phraseBars/2)-1||i===phraseBars-2?"B":"A"));
   // Snare owns stick grammar. Hand clap is written independently as an
   // ensemble backbeat layer and never receives rudimental transformations.
   const backRole="snare";
-  return {A:{kick:kickA,back:backA,hat:hatA,perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,hat:hatB,perc:percB,open:openB,accent:accentB},chain,lineage,backRole};
+  return {A:{kick:kickA,back:backA,ghost:[],hat:hatA,perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,ghost:ghostB,hat:hatB,perc:percB,open:openB,accent:accentB},chain,lineage,backRole};
 }
 function addFlam(ev,bar,step,role,velocity,group){const q=step/4,t=beat(bar,q),gap=Math.max(12,Math.round(PPQ/24));ev.push({tick:Math.max(0,t-gap),duration:PPQ/20,role,velocity:clamp(velocity-28,1,127),group});ev.push({tick:t,duration:PPQ/10,role,velocity,group})}
 function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
@@ -123,6 +139,10 @@ function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
       const clapAllowed=["main","drop","build"].includes(kind)||(kind==="soft"&&phase>.2)||(kind==="intro"&&phase>.72)||(kind==="breakdown"&&phase>.84);
       if(clapAllowed)add(ev,bar,st/4,"clap",v(kind==="drop"?105:kind==="build"?99:94,st,3),"backbeat",PPQ/8);
     }
+    for(const st of pattern.ghost||[]){
+      const maxGhost=cfg.velocityCharacter==="Aggressive"?66:cfg.velocityCharacter==="Tight"?52:59;
+      add(ev,bar,st/4,"snare",Math.min(maxGhost,vel(43+cfg.ghostNotes*.12,rnd,5)),"ghost",PPQ/14);
+    }
   }
 
   // HATS: same core line; intro/outro may use mathematically reduced versions (÷2 / ÷4).
@@ -143,7 +163,8 @@ function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
   // narrative but never replaces the closed/open-hat pulse.
   const shakerAllowed=opts.kind==="main"||opts.kind==="drop"||opts.kind==="build"||(opts.kind==="soft"&&phase>.55)||(opts.kind==="intro"&&phase>.72);
   if(shakerAllowed){
-    const shakerDensity=opts.kind==="drop"?.9:opts.kind==="build"?.72:.58;
+    const densityAmount=clamp(cfg.density/100,0,1);
+    const shakerDensity=(opts.kind==="drop"?.9:opts.kind==="build"?.72:.58)*(.35+densityAmount*.85);
     [1,3,5,7,9,11,13,15].forEach((st,i)=>{if(rnd()<shakerDensity)add(ev,bar,st/4,"shaker",vel(57+(i%2?5:0)+Math.round(energy*.05),rnd,5),"shaker",PPQ/14)});
   }
 
@@ -165,7 +186,7 @@ function generate(){
       const bar=sec.start+local, phase=sec.bars<=1?1:local/(sec.bars-1);
       const energy=sec.kind==="build"?55+phase*43:sec.energy;
       const isLast=local===sec.bars-1, b8=(bar+1)%8===0, b16=(bar+1)%16===0;
-      const token=family.chain[bar%8], pattern=token==="B"?family.B:family.A;
+      const token=family.chain[bar%family.chain.length], pattern=token==="B"?family.B:family.A;
       const layers=sectionLayers(sec.kind,phase);
 
       // NARRATIVE RULE: every section renders the same A/B DNA with a layer mask.

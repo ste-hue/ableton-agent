@@ -9,10 +9,13 @@ function makeFillGenome(tomContour,rnd){
   // derives from those SAME measures by truncation / duplication / re-ordering.
   // We do NOT change the perceived tempo of the fill to create hierarchy.
   const type=choose(["RELAXED ARC","CALL RESPONSE","ROLLING CELL","SPARSE PUNCTUATION"],rnd);
-  const primaryRoles=type==="RELAXED ARC"?[tomContour[0],tomContour[1],"rim","snare"]:
+  let primaryRoles=type==="RELAXED ARC"?[tomContour[0],tomContour[1],"rim","snare"]:
     type==="CALL RESPONSE"?["rim","snare",tomContour[1],tomContour[2]]:
     type==="ROLLING CELL"?["snare","rim",tomContour[1],"snare"]:
     ["rim",tomContour[1],"snare",tomContour[2]];
+  if(cfg.fillOrchestration==="Snare / Rim")primaryRoles=["snare","rim","snare","rim"];
+  if(cfg.fillOrchestration==="Toms")primaryRoles=[tomContour[0],tomContour[1],tomContour[2],tomContour[1]];
+  if(cfg.fillOrchestration==="Percussion")primaryRoles=["percLow","percMid","percHigh","percMid"];
   const steps=type==="RELAXED ARC"?[0,4,7,11]:
     type==="CALL RESPONSE"?[0,3,8,11]:
     type==="ROLLING CELL"?[0,2,3,6]:[0,5,9,12];
@@ -31,7 +34,7 @@ function makeFillGenome(tomContour,rnd){
       // Controlled within-genome development. Structural identity remains obvious.
       if(m===1 && i===steps.length-1) step=Math.min(15,step+1);
       if(m===2 && i===1 && type!=="SPARSE PUNCTUATION") step=Math.min(15,step+2);
-      if(m===3 && i===steps.length-1) role="snare";
+      if(m===3 && i===steps.length-1) role=primaryRoles[0];
       events.push({step,role,weight:i<2?.35:i===steps.length-1?.7:.55,vel:i===0?4:i===steps.length-1?10:0});
     }
     // Later source measures may contain ONE optional ornament from the same DNA.
@@ -104,8 +107,9 @@ function makeNarrativePlan(sections,family,rnd){
     }
   }
   const crashRunMode=cfg.build==="Huge"?(rnd()<.7?4:2):cfg.build==="Mid"?(rnd()<.52?4:2):(rnd()<.35?2:0);
-  const tomDirection=rnd()<.5?"DESCENDING":"ASCENDING";
-  const tomContour=tomDirection==="DESCENDING"?["tomHigh","tomMid","tomLow"]:["tomLow","tomMid","tomHigh"];
+  const requestedDirection=cfg.fillDirection||"Auto";
+  const tomDirection=requestedDirection==="Auto"?(rnd()<.5?"DESCENDING":"ASCENDING"):requestedDirection.toUpperCase();
+  const tomContour=tomDirection==="DESCENDING"?["tomHigh","tomMid","tomLow"]:tomDirection==="ASCENDING"?["tomLow","tomMid","tomHigh"]:tomDirection==="ALTERNATING"?["tomLow","tomHigh","tomMid"]:["tomMid","tomLow","tomHigh"];
   const rimMode=choose(["BACKBEAT SHADOW","SYNCOPATED RESPONSE","PHRASE PUNCTUATION"],rnd);
   const fillGenome=makeFillGenome(tomContour,rnd);
   const fillCell={steps:fillGenome.steps.slice(0,3).map(v=>Math.round(v/4)),roles:fillGenome.roles.slice(0,3)};

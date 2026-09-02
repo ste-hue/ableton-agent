@@ -72,7 +72,8 @@ $("#length").onchange=event=>{cfg.length=Number(event.target.value);scheduleRend
 $("#build").onchange=event=>{cfg.build=event.target.value;scheduleRender()};
 function setBpm(value){cfg.bpm=clamp(Number(value)||128,60,200);$("#bpm").value=cfg.bpm;$("#bpmNumber").value=cfg.bpm;scheduleRender()}
 $("#bpm").oninput=event=>setBpm(event.target.value);$("#bpmNumber").onchange=event=>setBpm(event.target.value);
-[["variation","variation","variationVal",""],["fill","fill","fillVal",""],["swing","swing","swingVal","%"]].forEach(([id,key,valueId,suffix])=>{$("#"+id).oninput=event=>{cfg[key]=Number(event.target.value);$("#"+valueId).textContent=cfg[key]+suffix;scheduleRender()}});
+[["variation","variation","variationVal",""],["fill","fill","fillVal",""],["swing","swing","swingVal","%"],["density","density","densityVal",""],["syncopation","syncopation","syncopationVal",""],["hatMotion","hatMotion","hatMotionVal",""],["ghostNotes","ghostNotes","ghostNotesVal",""],["sectionContrast","sectionContrast","sectionContrastVal",""]].forEach(([id,key,valueId,suffix])=>{$("#"+id).oninput=event=>{cfg[key]=Number(event.target.value);$("#"+valueId).textContent=cfg[key]+suffix;scheduleRender()}});
+[["percussionMotion","percussionMotion",false],["fillOrchestration","fillOrchestration",false],["fillDirection","fillDirection",false],["phraseEvolution","phraseEvolution",true],["velocityCharacter","velocityCharacter",false]].forEach(([id,key,numeric])=>{$("#"+id).onchange=event=>{cfg[key]=numeric?Number(event.target.value):event.target.value;scheduleRender()}});
 function bindSwitch(id,key){$(id).onclick=()=>{cfg[key]=!cfg[key];$(id).classList.toggle("active",cfg[key]);render()}}
 bindSwitch("#doubleKick","doubleKick");bindSwitch("#pausona","pausona");
 $$('#kitGrid .kitToggle').forEach(button=>button.onclick=()=>{const key=button.dataset.kit;cfg.kit[key]=!cfg.kit[key];button.classList.toggle("active",cfg.kit[key]);render()});

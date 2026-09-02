@@ -48,6 +48,24 @@ can convert these boundaries to ES modules without changing the music engine.
 - The eight-bar fill viewer shows the four-bar source genome followed by its
   first measure-level derivation.
 
+## Drummer controls
+
+The DRUMMER panel changes expression without replacing the song's core grammar:
+
+- Density adds or removes percussion, shaker and other secondary layers.
+- Syncopation moves only accessory kick, percussion and ghost material; the
+  principal kick and backbeat anchors remain fixed.
+- Hat Motion ranges from reduced eighth-note motion to active sixteenths and
+  controls how much open-hat vocabulary is available.
+- Ghost Notes controls both quantity and a strict low-velocity ceiling.
+- Percussion Motion selects sparse, interlocking, call/response or rotating dialogue.
+- Fill Orchestration and Fill Direction redistribute the same master-fill phrasing
+  vertically across snare/rim, toms or percussion.
+- Phrase Evolution places the controlled B variation every 8, 16 or 32 bars.
+- Velocity Character changes accents and dynamics without moving notes.
+- Section Contrast exaggerates or softens layer subtraction and return across
+  intro, breakdown, build, drop and outro.
+
 ## DAW-ready export
 
 The compact export panel renders one merged arrangement clip or the canonical

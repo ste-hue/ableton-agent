@@ -97,12 +97,16 @@ const sp={
 "Electro":{hat:.72,perc:.62,open:.42,sync:.82,ride:.08,breakbeat:true,heritage:"FUNK/R&B",grid:16,flam:.09,ghost:.28},
 "Breakbeat":{hat:.76,perc:.7,open:.44,sync:.9,ride:.08,breakbeat:true,heritage:"FUNK/ROCK",grid:16,flam:.11,ghost:.34}
 };
-let cfg={bpm:128,style:"Tech House",device:Object.keys(profiles)[0],targetDaw:"ableton-909",build:"Mid",doubleKick:true,swing:30,groove:true,length:96,variation:32,fill:38,seed:20260901,pausona:true,pausonaLength:8,pausonaShape:"Straight",pausonaIntensity:"Mid",kit:{kick:true,snare:true,clap:true,hats:true,shaker:true,perc:true,toms:true,cymbals:true}};
+let cfg={bpm:128,style:"Tech House",device:Object.keys(profiles)[0],targetDaw:"ableton-909",build:"Mid",doubleKick:true,swing:30,groove:true,length:96,variation:32,fill:38,density:52,syncopation:34,hatMotion:56,ghostNotes:28,percussionMotion:"Auto",fillOrchestration:"Auto",fillDirection:"Auto",phraseEvolution:16,velocityCharacter:"Natural",sectionContrast:55,seed:20260901,pausona:true,pausonaLength:8,pausonaShape:"Straight",pausonaIntensity:"Mid",kit:{kick:true,snare:true,clap:true,hats:true,shaker:true,perc:true,toms:true,cymbals:true}};
 let result=null;
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)); const beat=(bar,q)=>((bar*4)+q)*PPQ;
-function vel(base,rnd,spread=8){return clamp(Math.round(base+(rnd()-.5)*spread),1,127)}
+function vel(base,rnd,spread=8){
+  const character=cfg.velocityCharacter||"Natural",scaledSpread=character==="Tight"?spread*.32:character==="Aggressive"?spread*1.28:spread;
+  const lift=character==="Aggressive"?5:0;
+  return clamp(Math.round(base+lift+(rnd()-.5)*scaledSpread),1,127);
+}
 const KIT_DEFS={
   kick:{label:"KICK",roles:["kick"]},
   snare:{label:"SNARE",roles:["snare"]},
@@ -153,13 +157,14 @@ function sectionTemplate(length){
 }
 function sectionLayers(kind,phase){
   // Same song DNA, revealed by addition/subtraction. No section invents a new groove.
-  if(kind==="intro") return {kick:true,back:phase>.38,hat:true,open:false,perc:phase>.62,cym:false};
-  if(kind==="soft") return {kick:true,back:true,hat:true,open:false,perc:false,cym:false};
+  const contrast=clamp((cfg.sectionContrast??50)/100,0,1),density=clamp((cfg.density??50)/100,0,1);
+  if(kind==="intro") return {kick:true,back:phase>(.18+contrast*.42),hat:true,open:phase>(.92-contrast*.12),perc:phase>(.48+contrast*.3-density*.18),cym:false};
+  if(kind==="soft") return {kick:true,back:true,hat:true,open:density>.8&&contrast<.35,perc:density>.78&&contrast<.42,cym:false};
   if(kind==="main") return {kick:true,back:true,hat:true,open:true,perc:true,cym:false};
   if(kind==="drop") return {kick:true,back:true,hat:true,open:true,perc:true,cym:true};
-  if(kind==="breakdown") return {kick:phase>.68,back:phase>.78,hat:true,open:phase>.55,perc:phase<.72,cym:false};
-  if(kind==="build") return {kick:phase<.72,back:true,hat:true,open:phase>.32,perc:phase>.18,cym:phase>.62};
-  if(kind==="outro") return {kick:phase<.72,back:phase<.5,hat:true,open:false,perc:phase<.28,cym:false};
+  if(kind==="breakdown") return {kick:phase>(.48+contrast*.34),back:phase>(.62+contrast*.25),hat:true,open:phase>(.72-contrast*.3),perc:phase<(.9-contrast*.35),cym:false};
+  if(kind==="build") return {kick:phase<(.9-contrast*.28),back:true,hat:true,open:phase>(.5-contrast*.32),perc:phase>(.35-contrast*.24),cym:phase>(.8-contrast*.28)};
+  if(kind==="outro") return {kick:phase<(.9-contrast*.32),back:phase<(.68-contrast*.28),hat:true,open:false,perc:phase<(.48-contrast*.28),cym:false};
   return {kick:true,back:true,hat:true,open:true,perc:true,cym:false};
 }
 function boundaryRank(barNumber){return barNumber%64===0?3:barNumber%32===0?2:barNumber%16===0?1:0}

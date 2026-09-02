@@ -29,6 +29,18 @@
       <label class="sliderRow"><span>VARIATION</span><input id="variation" type="range" min="0" max="100" value="32"><b id="variationVal">32</b></label>
       <label class="sliderRow"><span>FILLS</span><input id="fill" type="range" min="0" max="100" value="38"><b id="fillVal">38</b></label>
       <label class="sliderRow"><span>SWING</span><input id="swing" type="range" min="0" max="100" step="1" value="30"><b id="swingVal">30%</b></label>
+      <label class="sliderRow"><span>DENSITY</span><input id="density" type="range" min="0" max="100" value="52"><b id="densityVal">52</b></label>
+      <label class="sliderRow"><span>SYNCOP.</span><input id="syncopation" type="range" min="0" max="100" value="34"><b id="syncopationVal">34</b></label>
+      <label class="sliderRow"><span>HAT MOTION</span><input id="hatMotion" type="range" min="0" max="100" value="56"><b id="hatMotionVal">56</b></label>
+      <label class="sliderRow"><span>GHOSTS</span><input id="ghostNotes" type="range" min="0" max="100" value="28"><b id="ghostNotesVal">28</b></label>
+      <div class="drummerMenus">
+        <label class="controlBlock"><span>PERCUSSION MOTION</span><select id="percussionMotion"><option>Auto</option><option>Sparse</option><option>Interlocking</option><option>Call / Response</option><option>Rotating</option></select></label>
+        <label class="controlBlock"><span>FILL ORCHESTRATION</span><select id="fillOrchestration"><option>Auto</option><option>Snare / Rim</option><option>Toms</option><option>Percussion</option></select></label>
+        <label class="controlBlock"><span>FILL DIRECTION</span><select id="fillDirection"><option>Auto</option><option>Ascending</option><option>Descending</option><option>Alternating</option><option>Centered</option></select></label>
+        <label class="controlBlock"><span>PHRASE EVOLUTION</span><select id="phraseEvolution"><option value="8">8 bars</option><option value="16" selected>16 bars</option><option value="32">32 bars</option></select></label>
+        <label class="controlBlock"><span>VELOCITY</span><select id="velocityCharacter"><option>Tight</option><option selected>Natural</option><option>Aggressive</option></select></label>
+      </div>
+      <label class="sliderRow"><span>CONTRAST</span><input id="sectionContrast" type="range" min="0" max="100" value="55"><b id="sectionContrastVal">55</b></label>
       <div class="switchRow"><button id="doubleKick" class="switch active" type="button"><i></i> DOUBLE KICK</button><button id="pausona" class="switch active" type="button"><i></i> MAIN ROLL</button></div>
       <div class="sectionLabel">INSTRUMENTS</div>
       <div class="kitGrid" id="kitGrid">
@@ -71,6 +83,6 @@
     </section>
   </div>
 </main>
-<script src="src/engine/core-config.js?v=5"></script><script src="src/engine/theory-rudiment-engine.js"></script><script src="src/engine/fill-engine.js?v=3"></script><script src="src/engine/arrangement-engine.js?v=5"></script><script src="src/engine/timing-velocity-engine.js?v=2"></script><script src="src/midi/midi-renderer.js?v=8"></script><script src="src/audio/synth-preview.js?v=2"></script><script src="src/integrations/ableton-mcp-adapter.js?v=2"></script><script src="src/app/ui.js?v=12"></script>
+<script src="src/engine/core-config.js?v=6"></script><script src="src/engine/theory-rudiment-engine.js"></script><script src="src/engine/fill-engine.js?v=4"></script><script src="src/engine/arrangement-engine.js?v=6"></script><script src="src/engine/timing-velocity-engine.js?v=2"></script><script src="src/midi/midi-renderer.js?v=8"></script><script src="src/audio/synth-preview.js?v=2"></script><script src="src/integrations/ableton-mcp-adapter.js?v=2"></script><script src="src/app/ui.js?v=13"></script>
 </body>
 </html>
