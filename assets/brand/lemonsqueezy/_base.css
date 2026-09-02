@@ -1,0 +1,29 @@
+/* Shared palette and type for the Lemon Squeezy images — same tokens as server/src/site.ts */
+:root {
+  --black: #1b1720; --white: #ded8c7; --paper: #c8c0ac; --soft: #ada994; --mid: #514b53;
+  --line: #878276; --night-line: #4a4352; --night-mid: #a69cab; --sun: #a89b5c; --rust: #a56554;
+  --sage: #879783; --blue: #7f939d; --mauve: #9b8496;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  background: var(--black); color: var(--white);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.mark svg { display: block; }
+.wordmark { display: flex; align-items: center; gap: 22px; font-weight: 600; letter-spacing: -.035em; }
+.wordmark .mark { color: var(--sun); }
+.eyebrow { color: var(--night-mid); font-size: 26px; }
+h1 { font-weight: 600; letter-spacing: -.055em; line-height: .96; }
+.card {
+  border: 1px solid var(--night-line); border-radius: 28px; background: #292433;
+  box-shadow: 0 28px 80px rgba(0,0,0,.28);
+}
+.price { font-weight: 600; letter-spacing: -.05em; line-height: 1; }
+.tag { display: inline-block; padding: 10px 18px; border-radius: 999px; font-size: 22px; }
+.tag-sun { color: var(--black); background: var(--sun); }
+.tag-rust { color: var(--white); background: var(--rust); }
+.rule { height: 1px; background: var(--night-line); }
+.foot { color: var(--night-mid); }
