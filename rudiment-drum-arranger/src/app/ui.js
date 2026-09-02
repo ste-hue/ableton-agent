@@ -13,6 +13,23 @@ function renderFillClip(){
     return `<div class="fillLane" style="--fill-color:${laneColors[(index+1)%laneColors.length]}"><div class="fillLaneName">${roleLabel(role)}</div><div class="fillLaneGrid">${notes}</div></div>`;
   }).join("");
 }
+function arrangementEnergyBars(){
+  const roleWeight={kick:1,snare:.9,clap:.86,rim:.58,closedHat:.34,openHat:.46,shaker:.24,percLow:.48,percMid:.5,percHigh:.52,tomLow:.62,tomMid:.66,tomHigh:.7,crash:.82,ride:.5};
+  const raw=Array.from({length:result.totalBars},(_,bar)=>result.semanticEvents.filter(event=>Math.floor(event.tick/(PPQ*4))===bar).reduce((sum,event)=>sum+event.velocity*(roleWeight[event.role]||.4),0));
+  const peak=Math.max(1,...raw);
+  return raw.map(value=>value/peak);
+}
+function renderSections(){
+  const measured=arrangementEnergyBars();
+  $("#sections").innerHTML=result.sections.map(section=>{
+    const bars=Array.from({length:section.bars},(_,local)=>{
+      const actual=measured[section.start+local]||0,previous=measured[Math.max(section.start,section.start+local-1)]||actual,next=measured[Math.min(section.start+section.bars-1,section.start+local+1)]||actual;
+      const smoothed=actual*.58+previous*.21+next*.21,height=clamp(section.energy*.56+smoothed*38,8,100);
+      return `<i style="height:${height}%"></i>`;
+    }).join("");
+    return `<div class="section ${section.kind}" style="width:${section.bars/result.totalBars*100}%"><b>${section.name}</b><small>${section.bars}</small><div class="energyTrace" style="grid-template-columns:repeat(${section.bars},1fr)">${bars}</div></div>`;
+  }).join("");
+}
 function refreshExportControls(){
   const scope=$("#exportScope").value||"full",instrumentMode=scope==="instrument";
   $("#exportModeField").hidden=instrumentMode;$("#instrumentField").hidden=!instrumentMode;
@@ -28,7 +45,7 @@ function render(){
   result=generate();
   $("#barCount").textContent=result.totalBars;$("#bpmReadout").textContent=cfg.bpm;$("#seedLabel").textContent=`SEED ${cfg.seed}`;
   $("#q1").textContent=Math.max(1,Math.round(result.totalBars*.25));$("#q2").textContent=Math.max(1,Math.round(result.totalBars*.5));$("#q3").textContent=Math.max(1,Math.round(result.totalBars*.75));$("#q4").textContent=result.totalBars;
-  $("#sections").innerHTML=result.sections.map(section=>`<div class="section ${section.kind}" style="width:${section.bars/result.totalBars*100}%"><b>${section.name}</b><small>${section.bars}</small><i style="height:${Math.max(8,section.energy*.72)}%"></i></div>`).join("");
+  renderSections();
   $("#lanes").innerHTML=result.tracks.map((track,index)=>`<div class="lane" style="--lane-color:${laneColors[index%laneColors.length]}"><div class="laneName"><i></i>${track.name.replace("DRUMS — ","")}</div><div class="laneGrid">${track.notes.slice(0,1800).map(note=>`<i style="left:${Math.min(99.8,note.tick/(result.totalBars*4*PPQ)*100)}%;opacity:${.3+note.velocity/175};height:${3+note.velocity/25}px"></i>`).join("")}</div></div>`).join("");
   renderFillClip();
   $("#productionSummary").innerHTML=summaryText();

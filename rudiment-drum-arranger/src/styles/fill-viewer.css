@@ -1,5 +1,14 @@
 .sectionLabel.first{padding-top:0;border-top:0}
 .sliderRow{grid-template-columns:70px 1fr 36px}
+.arrangementCanvas{--lane-label:112px}
+.arrangementCanvas .ruler{padding-left:var(--lane-label)}
+.arrangementCanvas .sections{margin-left:var(--lane-label)}
+.section>b,.section>small{position:relative;z-index:2}
+.section>.energyTrace{position:absolute;inset:0;display:grid;align-items:end;gap:1px;z-index:1}
+.section>.energyTrace i{position:relative;inset:auto;display:block;width:100%;min-width:1px;background:linear-gradient(0deg,rgba(216,255,62,.34),rgba(216,255,62,.035));border-top:1px solid rgba(216,255,62,.5);transition:height .28s ease}
+.section.build>.energyTrace i{background:linear-gradient(0deg,rgba(255,103,92,.38),rgba(255,103,92,.025));border-color:var(--coral)}
+.section.breakdown>.energyTrace i{background:linear-gradient(0deg,rgba(95,229,209,.27),rgba(95,229,209,.02));border-color:var(--cyan)}
+.section.drop>.energyTrace i{background:linear-gradient(0deg,rgba(108,140,255,.4),rgba(108,140,255,.025));border-color:var(--blue)}
 .fillViewer{margin-top:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
 .fillViewerHead{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;border-bottom:1px solid var(--line)}
 .fillViewerHead span,.fillViewerHead small{font:8px ui-monospace,monospace;color:var(--muted);letter-spacing:.1em}
@@ -20,5 +29,5 @@
 .exportOptions select{width:100%;height:42px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:0 10px;outline:0}
 .exportOptions select:focus{border-color:#647327;box-shadow:0 0 0 3px rgba(216,255,62,.06)}
 @media(max-width:1150px){.exportDock{grid-template-columns:1fr 1fr}.exportOptions{grid-column:1/-1}}
-@media(max-width:760px){.fillViewerHead small{display:none}.fillRuler{padding-left:72px}.fillLane{grid-template-columns:72px 1fr}.fillLaneName{padding:0 7px}}
+@media(max-width:760px){.arrangementCanvas{--lane-label:84px}.fillViewerHead small{display:none}.fillRuler{padding-left:72px}.fillLane{grid-template-columns:72px 1fr}.fillLaneName{padding:0 7px}}
 @media(max-width:760px){.exportDock{grid-template-columns:1fr}.exportOptions{grid-column:auto;grid-template-columns:1fr}.exportOptions label{grid-column:auto}}
