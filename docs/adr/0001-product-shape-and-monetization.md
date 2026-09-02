@@ -224,11 +224,18 @@ credit, above the $0.30 line) and changes point 2 of Decision B:
 2. **Default model is gpt-5.6-terra** (`LLM_MODEL`), half of Sol at every
    price point. Sol becomes an opt-in per turn at **×2 credits** (device toggle
    and server parameter: follow-up PR).
-3. **One turn is bounded to 64 model rounds** (`AGENT_STEP_BUDGET`, stated to
-   the model in the system prompt; the device's local cap is only a safety
-   net). Measured: ≈ 60 cached rounds on Terra ≈ $0.30, i.e. the worst case for
-   a 4-credit arrangement (€1.08 of revenue). A turn that hits the budget is
-   still refunded (Decision B point 3); the metering tells us how often.
+3. **One turn is bounded to 64 model rounds** (`AGENT_STEP_BUDGET`; the
+   device's local cap is only a safety net). Measured: ≈ 60 cached rounds on
+   Terra ≈ $0.30, i.e. the worst case for a 4-credit arrangement (€1.08 of
+   revenue). The budget is not a silent cut-off: the model is told its round
+   on every call, the last 8 rounds are reserved for finishing the mutation in
+   flight and *talking* ("Pausa — what is done, what remains; continue or
+   listen?"), and if it still asks for tools past the budget the server spends
+   one last call with tools disabled so the user gets that report anyway. The
+   charge stands — the work is in Live and reported — and
+   `agent.budget_exhausted` counts how often the model had to be forced. The
+   prompt also asks for a compelling, listenable core first, so whatever round
+   a turn ends on, something plays.
 4. **Beta grant drops from 100 to 40 credits** — one Starter pack.
 
 Implementation: `server/src/billing.ts` grants on paid `order_created`

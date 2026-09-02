@@ -619,16 +619,13 @@ export function createApp(config: AppConfig) {
     if (!consumed) {
       return c.json({ error: "continuation_replayed" }, 409);
     }
-    if (continuation.step >= MAX_AGENT_STEPS) {
-      await store.closeAgentRequest(continuation.requestId, userId);
-      await store.addCredits(
-        userId,
-        continuation.creditCost,
-        "refund:agent",
-        continuation.requestId,
-      );
-      return c.json({ error: "agent_step_limit" }, 422);
-    }
+    // Budget exhausted with the model still asking for tools: it has ignored
+    // the wrap-up notices. Rather than going silent (a bare error the device
+    // can only render as "stopped"), spend one last call with tools disabled so
+    // the user hears what exists in Live and what remains. The work is real
+    // and reported, so the charge stands; the event tells us how often the
+    // model has to be forced here.
+    const budgetExhausted = continuation.step >= MAX_AGENT_STEPS;
     try {
       await store.logEvent(
         "agent.tool_results",
@@ -642,13 +639,35 @@ export function createApp(config: AppConfig) {
         },
         userId,
       );
-      const result = await agent.step({
+      const stepResult = await agent.step({
         previousResponseId: continuation.responseId,
         toolOutputs: parsed.data.tool_outputs,
         tools,
         reasoningEffort: "high",
         skillPrompt: skillPromptFor(continuation.skill),
+        budget: { round: continuation.step + 1, total: MAX_AGENT_STEPS },
+        finalOnly: budgetExhausted,
       });
+      let result = stepResult;
+      if (budgetExhausted) {
+        await store.logEvent(
+          "agent.budget_exhausted",
+          {
+            requestId: continuation.requestId,
+            round: continuation.step + 1,
+            skill: continuation.skill,
+            ignoredToolCalls: stepResult.toolCalls.length,
+          },
+          userId,
+        );
+        result = {
+          ...stepResult,
+          toolCalls: [],
+          reply:
+            stepResult.reply.trim() ||
+            "Paused — the round budget for this turn is used up. What is in Live now is what was built and verified so far; say \"continue\" to keep going, or listen first.",
+        };
+      }
       if (result.thinking) {
         await store.logEvent(
           "agent.thinking",

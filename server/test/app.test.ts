@@ -1138,3 +1138,107 @@ test("the pressed skill button's guidance reaches the model", async () => {
   assert.equal(res.status, 200);
   assert.match(String(prompts[0]), /Focus: groove/);
 });
+
+test("each continuation carries the round budget after the tool outputs; the last one disables tools", async () => {
+  const bodies: Record<string, unknown>[] = [];
+  const fakeFetch = (async function (_input: unknown, init?: RequestInit) {
+    bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+    return new Response(
+      JSON.stringify({
+        id: "resp-budget",
+        output: [{ type: "message", content: [{ type: "output_text", text: "ok" }] }],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  }) as typeof fetch;
+  const provider = new HttpResponsesProvider("https://example.test/v1/responses", "k", "m", fakeFetch);
+  const outputs = [{ call_id: "c1", output: "{}" }];
+
+  await provider.step({ previousResponseId: "prev", toolOutputs: outputs, tools: [LIVE_SET_TOOL], budget: { round: 12, total: 64 } });
+  await provider.step({ previousResponseId: "prev", toolOutputs: outputs, tools: [LIVE_SET_TOOL], budget: { round: 60, total: 64 } });
+  await provider.step({ previousResponseId: "prev", toolOutputs: outputs, tools: [LIVE_SET_TOOL], budget: { round: 65, total: 64 }, finalOnly: true });
+  // A fresh turn (no previous response) carries no notice: the prompt states the budget.
+  await provider.step({ messages: [{ role: "user", content: "ciao" }], tools: [LIVE_SET_TOOL], budget: { round: 1, total: 64 } });
+
+  const inputs = bodies.map((b) => b.input as Record<string, unknown>[]);
+  const notice = (i: number) => String(inputs[i]?.[1]?.content);
+  // The notice is the LAST item, after the tool outputs, so the cached prefix is untouched.
+  assert.equal(inputs[0]?.[0]?.type, "function_call_output");
+  assert.deepEqual(inputs[0]?.[1], { role: "developer", content: "[Tembro] Round 12 of 64." });
+  assert.match(notice(1), /Round 60 of 64: 4 left after this one\. Finish the mutation in flight/);
+  assert.match(notice(1), /"Pausa — "/);
+  assert.equal(bodies[1]?.tool_choice, "auto");
+  assert.match(notice(2), /budget exhausted \(64 of 64\)\. No tool calls are possible/);
+  assert.equal(bodies[2]?.tool_choice, "none");
+  assert.equal(inputs[3]?.length, 1);
+  assert.equal(bodies[3]?.tool_choice, "auto");
+
+  assert.match(AGENT_SYSTEM_PROMPT, /begin instead with "Pausa — "/);
+  assert.match(AGENT_SYSTEM_PROMPT, /Build the core first/);
+});
+
+test("a turn that exhausts the round budget ends with a spoken report, not an error", async () => {
+  // A model that never stops asking for tools, but answers when tools are disabled.
+  const seen: { round?: number; finalOnly?: boolean; toolChoiceNone: boolean }[] = [];
+  const agent: AgentProvider = {
+    async step(request) {
+      seen.push({ round: request.budget?.round, finalOnly: request.finalOnly, toolChoiceNone: Boolean(request.finalOnly) });
+      if (request.finalOnly) {
+        return {
+          responseId: "resp-paused",
+          reply: "Pausa — groove, bass and hook are in Live and verified; the breakdown and outro remain. Continue, or listen first?",
+          toolCalls: [
+            // Even a stray tool call here must be dropped by the server.
+            { call_id: "stray", name: "live_set_summary", arguments: {} },
+          ],
+        };
+      }
+      return {
+        responseId: "resp-" + seen.length,
+        reply: "",
+        toolCalls: [{ call_id: "call-" + seen.length, name: "live_set", arguments: { ref: { path: "live_set" }, property: "tempo", value: 120 } }],
+      };
+    },
+  };
+  const { app, store } = makeApp(10, { agent });
+  const { token } = await signin(app, "budget@example.com");
+  const headers = { "content-type": "application/json", authorization: "Bearer " + token };
+  const post = (body: unknown) =>
+    app.request("/v0/agent", { method: "POST", headers, body: JSON.stringify(body) });
+  let step = (await (
+    await post({ kind: "start", protocol_version: "0.2", message: "arrange a full 128-bar track", tools: [LIVE_SET_TOOL] })
+  ).json()) as Record<string, unknown>;
+  assert.equal(step.kind, "tool_calls");
+  assert.equal(step.credits_charged, 4);
+  let rounds = 1;
+  while (step.kind === "tool_calls") {
+    rounds += 1;
+    assert.ok(rounds <= AGENT_STEP_BUDGET + 1, "the loop must end at the budget");
+    const res = await post({
+      kind: "continue",
+      protocol_version: "0.2",
+      conversation_id: step.conversation_id,
+      continuation_token: step.continuation_token,
+      tools: [LIVE_SET_TOOL],
+      tool_outputs: [{ call_id: "call-" + (rounds - 1), output: '{"ok":true}' }],
+    });
+    assert.equal(res.status, 200, `round ${rounds}: ${await res.clone().text()}`);
+    step = (await res.json()) as Record<string, unknown>;
+  }
+  assert.equal(step.kind, "final");
+  assert.equal(rounds, AGENT_STEP_BUDGET + 1);
+  assert.match(String(step.reply), /^Pausa — /);
+  assert.equal(step.continuation_token, undefined);
+  // The model was told its round every time, and only the last call had tools disabled.
+  assert.deepEqual(seen.slice(1, 3).map((s) => s.round), [2, 3]);
+  assert.equal(seen.at(-1)?.round, AGENT_STEP_BUDGET + 1);
+  assert.deepEqual(seen.map((s) => s.finalOnly ?? false).filter(Boolean).length, 1);
+  // The work in Live is real and was reported: no refund, one event to count how often this happens.
+  const user = await store.getUserByEmail("budget@example.com");
+  assert.ok(user);
+  assert.equal(await store.creditBalance(user.id), 6);
+  const exhausted = store.events.filter((e) => e.kind === "agent.budget_exhausted");
+  assert.equal(exhausted.length, 1);
+  assert.equal((exhausted[0]?.payload as { ignoredToolCalls: number }).ignoredToolCalls, 1);
+  assert.equal(store.events.filter((e) => e.kind === "agent.completed").length, 1);
+});

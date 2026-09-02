@@ -48,7 +48,11 @@ is no subscription. The model's input/cached/output token counts are logged per
 model call (`agent.usage`) and per turn (`agent.completed`), so pack sizes can
 be tuned from real usage without exposing the vendor API key or changing the
 customer protocol. One turn is bounded to `AGENT_STEP_BUDGET` model rounds
-(`src/llm.ts`), which is what caps the cost of a single credit charge.
+(`src/llm.ts`), which is what caps the cost of a single credit charge. The
+model is told its round on every call and asked to stop and report ("Pausa —")
+inside the last `AGENT_WRAP_UP_ROUNDS`; past the budget the server makes one
+final call with tools disabled, so a turn always ends with words, never a bare
+error.
 
 V0.1.1 uses `gpt-5.6-luna` with medium reasoning effort through OpenAI's
 Responses endpoint. A sensible launch baseline is 500 turns/month, then
