@@ -39,7 +39,11 @@ can convert these boundaries to ES modules without changing the music engine.
 - Disabled kit families create neither events nor MIDI tracks; compatible fill
   voices may be re-orchestrated, while a disabled kick is simply omitted.
 - Generate always chooses a fresh seed.
-- Pausona is one macro gesture with at most two transformations and a landing silence.
+- Main Roll is one macro gesture with at most two transformations and a landing silence.
+- Swing is circular: 0% and 100% are grid-aligned, while 50% produces the
+  strongest displacement of alternating sixteenths.
+- The eight-bar fill viewer shows the four-bar source genome followed by its
+  first measure-level derivation.
 
 ## DAW-ready export
 

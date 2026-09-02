@@ -6,6 +6,7 @@
   <title>Rudiment — Drum Arranger</title>
   <meta name="description" content="Generate complete electronic drum arrangements and export DAW-ready MIDI.">
   <link rel="stylesheet" href="src/styles/app.css?v=3">
+  <link rel="stylesheet" href="src/styles/fill-viewer.css?v=1">
 </head>
 <body>
 <main class="app">
@@ -16,18 +17,19 @@
   <div class="workspace">
     <aside class="controls">
       <div class="controlHead"><span>NEW ARRANGEMENT</span><b id="seedLabel">SEED</b></div>
+      <div class="sectionLabel first">GENERAL</div>
       <label class="controlBlock"><span>STYLE</span><select id="style"></select></label>
       <div class="controlPair">
         <label class="controlBlock"><span>LENGTH</span><select id="length"><option value="8">8 bars</option><option value="16">16 bars</option><option value="32">32 bars</option><option value="64">64 bars</option><option value="96" selected>96 bars</option><option value="128">128 bars · full track</option></select></label>
         <label class="controlBlock bpmControl"><span>BPM</span><input id="bpmNumber" type="number" min="60" max="200" value="128" inputmode="numeric"></label>
       </div>
       <input id="bpm" class="tempoRange" type="range" min="60" max="200" value="128" aria-label="Tempo">
-      <div class="sectionLabel">SHAPE</div>
+      <div class="sectionLabel">DRUMMER</div>
       <label class="controlBlock"><span>BUILD</span><select id="build"><option>Small</option><option selected>Mid</option><option>Huge</option></select></label>
       <label class="sliderRow"><span>VARIATION</span><input id="variation" type="range" min="0" max="100" value="32"><b id="variationVal">32</b></label>
       <label class="sliderRow"><span>FILLS</span><input id="fill" type="range" min="0" max="100" value="38"><b id="fillVal">38</b></label>
-      <label class="sliderRow"><span>SWING</span><input id="swing" type="range" min="0" max="10" step="1" value="3"><b id="swingVal">3</b></label>
-      <div class="switchRow"><button id="doubleKick" class="switch active" type="button"><i></i> DOUBLE KICK</button><button id="pausona" class="switch active" type="button"><i></i> PAUSONA</button></div>
+      <label class="sliderRow"><span>SWING</span><input id="swing" type="range" min="0" max="100" step="1" value="30"><b id="swingVal">30%</b></label>
+      <div class="switchRow"><button id="doubleKick" class="switch active" type="button"><i></i> DOUBLE KICK</button><button id="pausona" class="switch active" type="button"><i></i> MAIN ROLL</button></div>
       <div class="sectionLabel">INSTRUMENTS</div>
       <div class="kitGrid" id="kitGrid">
         <button class="kitToggle active" data-kit="kick">KICK</button><button class="kitToggle active" data-kit="snare">SNARE + CLAP</button>
@@ -50,6 +52,11 @@
         <div class="ruler"><span>1</span><span id="q1">24</span><span id="q2">48</span><span id="q3">72</span><span id="q4">96</span></div>
         <div class="sections" id="sections"></div><div class="lanes" id="lanes"></div>
       </div>
+      <section class="fillViewer">
+        <div class="fillViewerHead"><div><span>MASTER FILL</span><b id="fillViewerTitle">8-BAR DERIVATION</b></div><small>1–4 SOURCE · 5–8 DERIVED</small></div>
+        <div class="fillRuler"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+        <div class="fillClip" id="fillClip"></div>
+      </section>
       <div class="productionSummary" id="productionSummary">Generating the first arrangement…</div>
       <section class="exportDock">
         <label><span>EXPORT FOR</span><select id="targetDaw"><option value="ableton-909">Ableton Live · 909 Core Kit</option><option value="bitwig-gm">Bitwig Studio · Drum Machine (GM)</option><option value="logic-gm">Logic Pro · Drum Machine Designer (GM)</option></select></label>
@@ -59,6 +66,6 @@
     </section>
   </div>
 </main>
-<script src="src/engine/core-config.js?v=3"></script><script src="src/engine/theory-rudiment-engine.js"></script><script src="src/engine/fill-engine.js?v=2"></script><script src="src/engine/arrangement-engine.js?v=3"></script><script src="src/engine/timing-velocity-engine.js"></script><script src="src/midi/midi-renderer.js?v=6"></script><script src="src/audio/synth-preview.js?v=2"></script><script src="src/integrations/ableton-mcp-adapter.js?v=2"></script><script src="src/app/ui.js?v=7"></script>
+<script src="src/engine/core-config.js?v=4"></script><script src="src/engine/theory-rudiment-engine.js"></script><script src="src/engine/fill-engine.js?v=3"></script><script src="src/engine/arrangement-engine.js?v=4"></script><script src="src/engine/timing-velocity-engine.js?v=2"></script><script src="src/midi/midi-renderer.js?v=6"></script><script src="src/audio/synth-preview.js?v=2"></script><script src="src/integrations/ableton-mcp-adapter.js?v=2"></script><script src="src/app/ui.js?v=8"></script>
 </body>
 </html>

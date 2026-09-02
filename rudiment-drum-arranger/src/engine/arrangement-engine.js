@@ -253,19 +253,20 @@ function generate(){
   const kitFiltered=applyKitPolicy(ev);
   const mapped=kitFiltered.map(e=>({...e,tick:Math.max(0,e.tick+swingOffset(e,rnd))})),map=profiles[cfg.device];
   const fillMasterEvents=applyKitPolicy(buildFillMasterEvents(narrative.fillGenome));
+  const fillPreviewEvents=applyKitPolicy(buildFillPreviewEvents(narrative.fillGenome,8));
   const groups=activeKitKeys().map(key=>{
     const def=KIT_DEFS[key];
     return [`DRUMS — ${def.label}`,r=>def.roles.includes(r)];
   });
   const tracks=groups.map(g=>({name:g[0],notes:mapped.filter(e=>g[1](e.role)).map(e=>({tick:e.tick,duration:e.duration,note:map[e.role],velocity:e.velocity})).sort((a,b)=>a.tick-b.tick)}));
-  return {sections,totalBars,tracks,eventCount:mapped.length,semanticEvents:mapped,fillMasterEvents,patternGrammar:{
+  return {sections,totalBars,tracks,eventCount:mapped.length,semanticEvents:mapped,fillMasterEvents,fillPreviewEvents,patternGrammar:{
     heritage:p.heritage,grid:p.grid,chain:family.chain.join("-"),archetypes:family.lineage.names,lineage:family.lineage.label,
     breakBias:family.lineage.primary.breakBias,kickPolicy:p.breakbeat?"BREAKBEAT CONTROLLED":"4x4 LOCKED",
     architecture:"NARRATIVE FIRST",theoryRole:"STICK CONTROL GRAMMAR · SUBORDINATE VOCABULARY",
     theoryBudget:"INTRO 3% · SOFT 5% · MAIN 10% · BREAKDOWN 5% · BUILD 24% · DROP 12% · OUTRO 4%",
     stickOperators:"single/double/triple/quad groupings · inversion · accent permutation · flam · orchestration symmetry",
-    pausona:pausonaPlan?`ON · ${pausonaPlan.length} bars · ${pausonaPlan.shape.toUpperCase()} · ${pausonaPlan.intensity.toUpperCase()}`:"OFF",
-    pausonaTheory:"single macro gesture · max two transformations · progressive velocity · grid-priority · final landing silence",
+    pausona:pausonaPlan?`MAIN ROLL · ${pausonaPlan.length} bars · ${pausonaPlan.shape.toUpperCase()} · ${pausonaPlan.intensity.toUpperCase()}`:"MAIN ROLL OFF",
+    pausonaTheory:"main roll · max two transformations · progressive velocity · grid-priority · final landing silence",
     narrative:"INTRO → SOFT = CORE − LAYERS → MAIN = SOFT + LAYER → BREAKDOWN = SUBTRACTION → BUILD = TRANSFORMATION → DROP = RETURN + ENERGY",
     fillGenealogy:`${narrative.fillGenome.id} · ${narrative.fillGenome.derivationMode} · master 4 bars → 16:${narrativeFillBars(1)}b / 32:${narrativeFillBars(2)}b / 64:${narrativeFillBars(3)}b`,
     crashLanguage:narrative.crashRunMode?`PRE-DROP ${narrative.crashRunMode}-BAR CRASH RUN + MAJOR ARRIVAL CRASHES`:"MAJOR ARRIVAL CRASHES",

@@ -1,0 +1,15 @@
+.sectionLabel.first{padding-top:0;border-top:0}
+.sliderRow{grid-template-columns:70px 1fr 36px}
+.fillViewer{margin-top:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+.fillViewerHead{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;border-bottom:1px solid var(--line)}
+.fillViewerHead span,.fillViewerHead small{font:8px ui-monospace,monospace;color:var(--muted);letter-spacing:.1em}
+.fillViewerHead b{display:block;font-size:11px;margin-top:3px}
+.fillRuler{display:grid;grid-template-columns:repeat(8,1fr);padding-left:92px;border-bottom:1px solid var(--line);background:#090b0e}
+.fillRuler span{padding:6px;border-left:1px solid #20242d;font:7px ui-monospace,monospace;color:#555b68}
+.fillClip{max-height:220px;overflow:auto}
+.fillLane{height:34px;display:grid;grid-template-columns:92px 1fr;border-bottom:1px solid #1d2028}
+.fillLane:last-child{border:0}
+.fillLaneName{display:flex;align-items:center;padding:0 10px;font:7px ui-monospace,monospace;color:#9196a2;background:#0d0f13}
+.fillLaneGrid{position:relative;background-color:#090b0e;background-image:linear-gradient(to right,transparent calc(12.5% - 1px),#303541 12.5%),linear-gradient(to right,transparent calc(3.125% - 1px),#181b22 3.125%);background-size:12.5% 100%,3.125% 100%}
+.fillNote{position:absolute;top:8px;height:18px;min-width:3px;border-radius:3px;background:var(--fill-color,var(--coral));box-shadow:0 0 9px color-mix(in srgb,var(--fill-color,var(--coral)) 35%,transparent)}
+@media(max-width:760px){.fillViewerHead small{display:none}.fillRuler{padding-left:72px}.fillLane{grid-template-columns:72px 1fr}.fillLaneName{padding:0 7px}}

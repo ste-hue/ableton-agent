@@ -3,12 +3,23 @@ function summaryText(){
   const profile=dawExportProfile(cfg.targetDaw),grammar=result.patternGrammar;
   return `<b>${cfg.style} · ${result.totalBars} bars · ${cfg.bpm} BPM.</b> ${result.tracks.length} instrument layers, ${grammar.kickPolicy.toLowerCase()}, ${String(cfg.build).toLowerCase()} build and a ${grammar.fillGenealogy.split(" · ")[0].toLowerCase()} master fill. Export is mapped for <b>${profile.label} · ${profile.device}</b>.`;
 }
+function roleLabel(role){return role.replace(/([A-Z])/g," $1").toUpperCase()}
+function renderFillClip(){
+  const roleOrder=["snare","rim","tomHigh","tomMid","tomLow","percHigh","percMid","percLow","clap"],events=result.fillPreviewEvents;
+  const roles=roleOrder.filter(role=>events.some(event=>event.role===role));
+  $("#fillViewerTitle").textContent=`${result.patternGrammar.fillGenealogy.split(" · ")[0]} · 8-BAR DERIVATION`;
+  $("#fillClip").innerHTML=roles.map((role,index)=>{
+    const notes=events.filter(event=>event.role===role).map(event=>`<i class="fillNote" style="left:${event.tick/(8*4*PPQ)*100}%;width:${Math.max(.45,event.duration/(8*4*PPQ)*100)}%;opacity:${.45+event.velocity/210}"></i>`).join("");
+    return `<div class="fillLane" style="--fill-color:${laneColors[(index+1)%laneColors.length]}"><div class="fillLaneName">${roleLabel(role)}</div><div class="fillLaneGrid">${notes}</div></div>`;
+  }).join("");
+}
 function render(){
   result=generate();
   $("#barCount").textContent=result.totalBars;$("#bpmReadout").textContent=cfg.bpm;$("#seedLabel").textContent=`SEED ${cfg.seed}`;
   $("#q1").textContent=Math.max(1,Math.round(result.totalBars*.25));$("#q2").textContent=Math.max(1,Math.round(result.totalBars*.5));$("#q3").textContent=Math.max(1,Math.round(result.totalBars*.75));$("#q4").textContent=result.totalBars;
   $("#sections").innerHTML=result.sections.map(section=>`<div class="section ${section.kind}" style="width:${section.bars/result.totalBars*100}%"><b>${section.name}</b><small>${section.bars}</small><i style="height:${Math.max(8,section.energy*.72)}%"></i></div>`).join("");
   $("#lanes").innerHTML=result.tracks.map((track,index)=>`<div class="lane" style="--lane-color:${laneColors[index%laneColors.length]}"><div class="laneName"><i></i>${track.name.replace("DRUMS — ","")}</div><div class="laneGrid">${track.notes.slice(0,1800).map(note=>`<i style="left:${Math.min(99.8,note.tick/(result.totalBars*4*PPQ)*100)}%;opacity:${.3+note.velocity/175};height:${3+note.velocity/25}px"></i>`).join("")}</div></div>`).join("");
+  renderFillClip();
   $("#productionSummary").innerHTML=summaryText();
   resetPreview();
 }
@@ -20,7 +31,7 @@ $("#length").onchange=event=>{cfg.length=Number(event.target.value);scheduleRend
 $("#build").onchange=event=>{cfg.build=event.target.value;scheduleRender()};
 function setBpm(value){cfg.bpm=clamp(Number(value)||128,60,200);$("#bpm").value=cfg.bpm;$("#bpmNumber").value=cfg.bpm;scheduleRender()}
 $("#bpm").oninput=event=>setBpm(event.target.value);$("#bpmNumber").onchange=event=>setBpm(event.target.value);
-[["variation","variation","variationVal"],["fill","fill","fillVal"],["swing","swing","swingVal"]].forEach(([id,key,valueId])=>{$("#"+id).oninput=event=>{cfg[key]=Number(event.target.value);$("#"+valueId).textContent=cfg[key];scheduleRender()}});
+[["variation","variation","variationVal",""],["fill","fill","fillVal",""],["swing","swing","swingVal","%"]].forEach(([id,key,valueId,suffix])=>{$("#"+id).oninput=event=>{cfg[key]=Number(event.target.value);$("#"+valueId).textContent=cfg[key]+suffix;scheduleRender()}});
 function bindSwitch(id,key){$(id).onclick=()=>{cfg[key]=!cfg[key];$(id).classList.toggle("active",cfg[key]);render()}}
 bindSwitch("#doubleKick","doubleKick");bindSwitch("#pausona","pausona");
 $$('#kitGrid .kitToggle').forEach(button=>button.onclick=()=>{const key=button.dataset.kit;cfg.kit[key]=!cfg.kit[key];button.classList.toggle("active",cfg.kit[key]);render()});

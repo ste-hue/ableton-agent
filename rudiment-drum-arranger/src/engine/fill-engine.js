@@ -55,6 +55,16 @@ function buildFillMasterEvents(genome){
     timingLocked:true
   })));
 }
+function buildFillPreviewEvents(genome,bars=8){
+  const stepTicks=PPQ*4/16,sequence=fillMeasureSequence(genome,bars);
+  return sequence.flatMap((sourceBar,bar)=>(genome.masterBars[sourceBar]||genome.masterBars[0]).map((event,index,measure)=>({
+    tick:beat(bar,0)+event.step*stepTicks,
+    duration:PPQ*4/genome.baseSubdivision*(genome.id==="RELAXED ARC"?.75:.55),
+    role:event.role,
+    velocity:clamp(70+event.vel+(index===measure.length-1?6:0),1,116),
+    group:"fill",subdivision:genome.baseSubdivision,timingLocked:true
+  })));
+}
 function fillMeasureSequence(genome,bars){
   // Measure-level derivation. No subdivision acceleration here.
   // Examples: take the first two and duplicate them, take the first and repeat it,
