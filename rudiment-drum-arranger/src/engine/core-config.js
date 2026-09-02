@@ -167,4 +167,36 @@ function sectionLayers(kind,phase){
   if(kind==="outro") return {kick:phase<(.9-contrast*.32),back:phase<(.68-contrast*.28),hat:true,open:false,perc:phase<(.48-contrast*.28),cym:false};
   return {kick:true,back:true,hat:true,open:true,perc:true,cym:false};
 }
+
+// Probabilistic EDM macro-form library. The vocabulary follows research on
+// intro/breakdown/buildup/core/outro grammar; the drop is treated as the
+// destination into a high-energy core. All boundaries remain phrase-locked.
+function probableSectionTemplate(length,rnd){
+  const s=(name,bars,energy,kind)=>[name,bars,energy,kind];
+  const alternatives={
+    32:[
+      {id:"DELAYED PEAK",x:[s("INTRO",4,28,"intro"),s("SOFT",4,46,"soft"),s("MAIN",4,66,"main"),s("BREAK",4,22,"breakdown"),s("BUILD",4,86,"build"),s("DROP",8,100,"drop"),s("OUTRO",4,34,"outro")]},
+      {id:"CORE FIRST",x:[s("INTRO",4,30,"intro"),s("MAIN",8,70,"main"),s("BREAK",4,22,"breakdown"),s("BUILD",4,88,"build"),s("DROP",8,100,"drop"),s("OUTRO",4,32,"outro")]}
+    ],
+    64:[
+      {id:"LONG PLATEAU",x:[s("INTRO",8,28,"intro"),s("MAIN",16,68,"main"),s("BREAK",8,22,"breakdown"),s("BUILD",8,88,"build"),s("DROP",16,100,"drop"),s("OUTRO",8,32,"outro")]},
+      {id:"DOUBLE ROUTINE",x:[s("INTRO",8,28,"intro"),s("MAIN A",8,66,"main"),s("BREAK A",4,26,"breakdown"),s("BUILD A",4,84,"build"),s("DROP A",12,94,"drop"),s("BREAK B",4,22,"breakdown"),s("BUILD B",8,92,"build"),s("DROP B",8,100,"drop"),s("OUTRO",8,32,"outro")]}
+    ],
+    96:[
+      {id:"CLUB PLATEAU",x:[s("INTRO",16,26,"intro"),s("MAIN A",16,68,"main"),s("BREAK",8,22,"breakdown"),s("BUILD",8,86,"build"),s("DROP",24,100,"drop"),s("MAIN B",16,72,"main"),s("OUTRO",8,30,"outro")]},
+      {id:"SECOND PEAK",x:[s("INTRO",8,28,"intro"),s("SOFT",8,46,"soft"),s("MAIN",16,68,"main"),s("BREAK A",8,24,"breakdown"),s("BUILD A",8,84,"build"),s("DROP A",12,94,"drop"),s("BREAK B",4,20,"breakdown"),s("BUILD B",8,92,"build"),s("DROP B",16,100,"drop"),s("OUTRO",8,30,"outro")]}
+    ],
+    128:[
+      {id:"DJ FRIENDLY ARC",x:[s("INTRO",16,26,"intro"),s("MAIN A",24,68,"main"),s("BREAK A",8,24,"breakdown"),s("BUILD A",8,84,"build"),s("DROP A",24,94,"drop"),s("BREAK B",8,20,"breakdown"),s("BUILD B",8,92,"build"),s("DROP B",16,100,"drop"),s("OUTRO",16,30,"outro")]},
+      {id:"LONG CORE JOURNEY",x:[s("INTRO",16,26,"intro"),s("SOFT",8,46,"soft"),s("MAIN A",24,68,"main"),s("BREAK",16,22,"breakdown"),s("BUILD",8,86,"build"),s("DROP",24,100,"drop"),s("MAIN B",16,74,"main"),s("OUTRO",16,30,"outro")]}
+    ]
+  };
+  const base=sectionTemplate(length),baseId=Number(length)>=64?"CLASSIC TWO CORE":"SINGLE PEAK";
+  const candidates=[{id:baseId,x:base.map(q=>[q.name,q.bars,q.energy,q.kind])},...(alternatives[Number(length)]||[])];
+  const plateau=["Techno","Melodic Techno","Minimal / Deep Tech","Hypnotic Techno"],broken=["Electro","Breakbeat"];
+  if(plateau.includes(cfg.style)&&candidates[1])candidates.push(candidates[1],candidates[1]);
+  if(broken.includes(cfg.style)&&candidates[2])candidates.push(candidates[2]);
+  const form=candidates[Math.floor(rnd()*candidates.length)]||candidates[0];
+  let pos=0;return form.x.map((q,index)=>{const section={name:q[0],start:pos,bars:q[1],energy:q[2],kind:q[3],index,formId:form.id};pos+=q[1];return section});
+}
 function boundaryRank(barNumber){return barNumber%64===0?3:barNumber%32===0?2:barNumber%16===0?1:0}

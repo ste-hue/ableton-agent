@@ -245,7 +245,7 @@ function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
   }
 }
 function generate(){
-  const rnd=mulberry32(Number(cfg.seed)||1),sections=sectionTemplate(cfg.length),totalBars=sections.reduce((a,s)=>a+s.bars,0),p=sp[cfg.style],ev=[],family=makePatternFamily(p,rnd);
+  const rnd=mulberry32(Number(cfg.seed)||1),sections=probableSectionTemplate(cfg.length,rnd),totalBars=sections.reduce((a,s)=>a+s.bars,0),p=sp[cfg.style],ev=[],family=makePatternFamily(p,rnd);
   const narrative=makeNarrativePlan(sections,family,rnd);
 
   for(let si=0;si<sections.length;si++){
