@@ -81,7 +81,7 @@ $("#targetDaw").onchange=event=>{cfg.targetDaw=event.target.value;$("#production
 $("#exportScope").onchange=refreshExportControls;$("#exportMode").onchange=refreshExportControls;$("#exportInstrument").onchange=refreshExportControls;
 $("#generate").onclick=()=>{newSeed();render()};
 $("#playBtn").onclick=playPreview;$("#pauseBtn").onclick=pausePreview;$("#stopBtn").onclick=()=>stopPreview(true);
-$("#seek").addEventListener("input",event=>{const dur=durationSec(),wasPlaying=isPlaying;if(wasPlaying)pausePreview();transportOffset=dur*(Number(event.target.value)/1000);updateTransport();if(wasPlaying)playPreview()});
+$("#seek").addEventListener("input",event=>seekPreview(event.target.value));
 $("#exportArrangement").onclick=()=>{
   const profile=dawExportProfile(cfg.targetDaw),base=`rudiment-${slug(cfg.style)}-${result.totalBars}bars-${cfg.bpm}bpm-${profile.slug}`;
   if($("#exportScope").value==="instrument"){
