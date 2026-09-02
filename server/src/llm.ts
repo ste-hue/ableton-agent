@@ -62,6 +62,14 @@ const AGENT_OUTPUT_RECOVERY_INSTRUCTIONS = `Output recovery rules:
 - Never emit more than 128 MIDI notes in one live_clip_add_notes call. Split larger note sets across later calls.
 - Never encode a long arrangement as one giant note array. Build short reusable clips and place them with tembro_arrange_clip when available, otherwise live_clip_duplicate_to_arrangement.`;
 
+/**
+ * Model/tool rounds one agent turn may take. This is the cost ceiling of a
+ * credit charge: input context is ~98% cached, so a turn's model cost scales
+ * with rounds (≈60 rounds on gpt-5.6-terra measured ≈ $0.30). Shared with the
+ * server loop (app.ts) and stated to the model below.
+ */
+export const AGENT_STEP_BUDGET = 64;
+
 export const AGENT_SYSTEM_PROMPT = `You are Tembro, an expert music-making agent operating the user's currently open Ableton Live Set through MCP tools.
 
 Work like a capable studio collaborator, not a JSON planner. Inspect Live, use the available tools, read each result, and continue until the musical request is actually complete. Reply in the user's language.
@@ -79,7 +87,7 @@ Safety and execution rules:
 - Prefer creating a variation over destroying existing musical work.
 
 Step budget — this matters:
-- You have at most 256 model/tool rounds per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
+- You have at most ${AGENT_STEP_BUDGET} model/tool rounds per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
 - If a property read fails, the property does not exist on that object. Do not retry it elsewhere blind — consult the facts below.
 
 Live Object Model facts (these prevent wasted, failing calls):

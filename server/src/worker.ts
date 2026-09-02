@@ -2,6 +2,7 @@ import { createApp } from "./app.js";
 import { LemonSqueezyLicenseProvider } from "./billing.js";
 import { D1Store } from "./d1-store.js";
 import { HttpResponsesProvider } from "./llm.js";
+import { parseCreditPacks } from "./billing.js";
 
 function positiveInteger(value: string, name: string): number {
   const parsed = Number(value);
@@ -31,10 +32,7 @@ export default {
         "LEMON_SQUEEZY_PRODUCT_ID",
       ),
       lemonWebhookSecret: env.LEMON_SQUEEZY_WEBHOOK_SECRET || undefined,
-      subscriptionGrantCredits: optionalPositiveInteger(
-        env.SUBSCRIPTION_GRANT_CREDITS,
-        "SUBSCRIPTION_GRANT_CREDITS",
-      ),
+      creditPacks: parseCreditPacks(env.CREDIT_PACKS),
       chatCostCredits: positiveInteger(env.CHAT_COST_CREDITS, "CHAT_COST_CREDITS"),
       checkoutUrl: env.CHECKOUT_URL || undefined,
       downloadUrl: env.DOWNLOAD_URL || undefined,

@@ -43,7 +43,7 @@ export function landingPage(options: LandingPageOptions = {}): string {
     : '<span class="button button-primary button-disabled" aria-disabled="true">Early access soon</span>';
   const firstStep = freeBeta
     ? '<article class="step"><span class="num">01</span><h3>Download</h3><p>One DMG. No card, checkout, or little subscription surprise while the beta is free.</p></article>'
-    : '<article class="step"><span class="num">01</span><h3>Buy</h3><p>Check out securely and receive your personal license key.</p></article>';
+    : '<article class="step"><span class="num">01</span><h3>Buy</h3><p>One credit pack, one payment. No subscription. Your personal license key arrives by email.</p></article>';
   const activationStep = freeBeta
     ? '<article class="step"><span class="num">03</span><h3>Connect</h3><p>Email and beta code once. That is it. No OpenAI account or API key.</p></article>'
     : '<article class="step"><span class="num">03</span><h3>Activate</h3><p>Enter your purchase email and license key once. No OpenAI account or API key required.</p></article>';
@@ -437,21 +437,21 @@ export function landingPage(options: LandingPageOptions = {}): string {
         <div class="pricing-copy">
           <p class="kicker mono">04 / The tab</p>
           <h2>Credits. Nothing mysterious.</h2>
-          <p>They are Tembro credits, not OpenAI tokens. They sit on your Tembro account and cover the model${freeBeta ? " while the beta is free" : " as part of the product"}.</p>
+          <p>They are Tembro credits, not OpenAI tokens. They sit on your Tembro account and cover the model${freeBeta ? " while the beta is free" : ". Buy a pack when you need one; credits never expire"}.</p>
           <p>A quick move costs less than a full arrangement. You see the estimate before sending; if the server cannot complete it, the charge goes back. Fair enough.</p>
           <div class="credit-menu" aria-label="Estimated Tembro credits by skill">${skillMenu}</div>
         </div>
         <div class="price-card" id="get-tembro">
-          <div class="price-title"><strong>${freeBeta ? "Tembro free beta" : "Tembro early access"}</strong><span>macOS / Live 12</span></div>
+          <div class="price-title"><strong>${freeBeta ? "Tembro free beta" : "Tembro credit packs"}</strong><span>macOS / Live 12</span></div>
           <ul class="features">
             <li>Tembro Max for Live device</li>
             <li>Guided local bridge installation</li>
             <li>${accessFeature}</li>
-            <li>Included usage credits</li>
+            <li>${freeBeta ? "Included usage credits" : "40 or 120 credits, one-time, never expiring"}</li>
             <li>Early-access updates</li>
           </ul>
           ${primaryCta}
-          <p class="fine">${freeBeta ? "Free during beta. An access code is required to use the AI service." : "Secure checkout and license delivery by LemonSqueezy."}</p>
+          <p class="fine">${freeBeta ? "Free during beta. An access code is required to use the AI service." : "Packs from €12. No subscription. Secure checkout and license delivery by Lemon Squeezy."}</p>
         </div>
       </div>
     </section>

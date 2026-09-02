@@ -41,11 +41,14 @@ Credits are product units, not raw model tokens. A focused clip edit costs the
 `CHAT_COST_CREDITS` base amount; beat making and harmony/melody use 2×; a full
 arrangement uses 4×. The server infers at least the same tier from the message,
 so choosing a cheaper UI skill cannot underprice a large request.
-`BETA_GRANT_CREDITS` controls the one-time free-beta allowance and
-`SUBSCRIPTION_GRANT_CREDITS` controls the future monthly allowance. The model's
-input/output/total token counts are logged with each completed request,
-so the commercial allowance can be tuned from real usage without exposing the
-vendor API key or changing the customer protocol.
+`BETA_GRANT_CREDITS` controls the one-time free-beta allowance. Paid credits
+are sold as one-time, non-expiring packs: `CREDIT_PACKS` maps each Lemon
+Squeezy variant id to the credits it grants (`"id:credits,id:credits"`). There
+is no subscription. The model's input/cached/output token counts are logged per
+model call (`agent.usage`) and per turn (`agent.completed`), so pack sizes can
+be tuned from real usage without exposing the vendor API key or changing the
+customer protocol. One turn is bounded to `AGENT_STEP_BUDGET` model rounds
+(`src/llm.ts`), which is what caps the cost of a single credit charge.
 
 V0.1.1 uses `gpt-5.6-luna` with medium reasoning effort through OpenAI's
 Responses endpoint. A sensible launch baseline is 500 turns/month, then
@@ -53,11 +56,12 @@ review p50/p95 token usage before
 adding a higher-cost “deep” mode. The server currently caps model output at
 2,000 tokens and sends at most 30 stored messages.
 
-For V0, use a dedicated Lemon Squeezy store (or keep only this one subscription
-product in the store). Subscription invoice webhook payloads reliably identify
-the store and customer, but may omit the original product ID; the Worker rejects
-an explicit mismatched product ID and relies on the dedicated-store boundary
-when it is absent.
+Use a dedicated Lemon Squeezy store with one product ("Tembro credits") and
+one variant per pack. `order_created` webhooks identify the store, customer and
+variant; the Worker rejects a mismatched store or product, and a paid order for
+a variant missing from `CREDIT_PACKS` is answered with 400 so Lemon Squeezy
+retries it after the config is fixed. Grants are keyed by order id, so a
+redelivered webhook cannot grant twice.
 
 ## API
 
@@ -66,7 +70,7 @@ when it is absent.
 | `GET /` | no | public Tembro product page and free download or paid checkout link |
 | `GET /v0/health` | no | liveness and protocol version |
 | `POST /v0/auth/license` | no | activate a beta access code or Lemon Squeezy license |
-| `POST /v0/webhooks/lemonsqueezy` | HMAC | grant subscription credits exactly once per invoice |
+| `POST /v0/webhooks/lemonsqueezy` | HMAC | grant a credit pack exactly once per paid order |
 | `GET /v0/credits` | bearer | current balance |
 | `GET /v0/skills` | no | public skill menu and server-authoritative credit estimates |
 | `POST /v0/agent` | bearer | start/continue the distributed Responses ↔ local MCP loop |
@@ -128,16 +132,18 @@ The production implementation is `src/d1-store.ts`.
 This is optional during the free beta and can be completed later without a
 client update.
 
-1. Create one subscription product and its paid variant.
+1. Create one product ("Tembro credits") with one variant per pack (e.g. 40
+   and 120 credits), single payment, no subscription.
 2. Enable license keys, choose an activation limit, and attach the versioned `.dmg` as a
-   downloadable file.
+   downloadable file. The first purchase's key activates the device; later
+   packs only add credits to the same email.
 3. Use the hosted checkout/product URL as the public buy link. A custom store
    domain can be added later without changing the API.
 4. Create a webhook pointing to
    `https://<api-domain>/v0/webhooks/lemonsqueezy` and subscribe to
-   `subscription_payment_success`.
+   `order_created`.
 5. Copy the numeric store ID, product ID, and webhook signing secret into the
-   Worker secrets. Complete an end-to-end purchase in Lemon Squeezy test mode
+   Worker secrets, and the variant ids into `CREDIT_PACKS` in `wrangler.jsonc`. Complete an end-to-end purchase in Lemon Squeezy test mode
    before switching the product live.
 
 ## Cloudflare deploy
