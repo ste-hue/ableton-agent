@@ -53,7 +53,8 @@ DAW changes only pad notes—not rhythm, velocity or timing.
 
 - Ableton Live: verified `909 Core Kit` pad layout
 - Bitwig Studio: `Drum Machine` with a GM-compatible layout
-- Logic Pro: `Drum Machine Designer` with a GM-compatible layout
+- Logic Pro: `Drum Kit Designer`, `Default Preset`, input mapping `GM` (MIDI
+  channel 1; shaker on GM note 82)
 
 Arrangement lengths are locked to 8, 16, 32, 64, 96 or 128 bars. Each choice
 uses a dedicated narrative form whose section lengths add up exactly to the
