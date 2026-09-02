@@ -19,12 +19,24 @@ function arrangementEnergyBars(){
   const peak=Math.max(1,...raw);
   return raw.map(value=>value/peak);
 }
+function visualEnergyShape(section,local){
+  const phase=section.bars<=1?1:local/(section.bars-1),pulse=Math.sin(phase*Math.PI*3)*.055;
+  if(section.kind==="intro")return .18+phase*.58+pulse;
+  if(section.kind==="soft")return .42+phase*.14+pulse;
+  if(section.kind==="main")return .62+phase*.13+pulse;
+  if(section.kind==="breakdown")return .42-phase*.22+Math.sin(phase*Math.PI)*.08;
+  if(section.kind==="build")return .24+Math.pow(phase,1.35)*.72;
+  if(section.kind==="drop")return .83+pulse;
+  if(section.kind==="outro")return .62-phase*.48+pulse;
+  return .5+pulse;
+}
 function renderSections(){
   const measured=arrangementEnergyBars();
   $("#sections").innerHTML=result.sections.map(section=>{
     const bars=Array.from({length:section.bars},(_,local)=>{
       const actual=measured[section.start+local]||0,previous=measured[Math.max(section.start,section.start+local-1)]||actual,next=measured[Math.min(section.start+section.bars-1,section.start+local+1)]||actual;
-      const smoothed=actual*.58+previous*.21+next*.21,height=clamp(section.energy*.56+smoothed*38,8,100);
+      const smoothed=actual*.58+previous*.21+next*.21,narrative=visualEnergyShape(section,local);
+      const height=clamp(8+narrative*82+(smoothed-.5)*12,7,98);
       return `<i style="height:${height}%"></i>`;
     }).join("");
     return `<div class="section ${section.kind}" style="width:${section.bars/result.totalBars*100}%"><b>${section.name}</b><small>${section.bars}</small><div class="energyTrace" style="grid-template-columns:repeat(${section.bars},1fr)">${bars}</div></div>`;
