@@ -1,6 +1,6 @@
 # Tembro — Max for Live device (V0)
 
-The Tembro v0.1.3 loop:
+The Tembro v0.1.5 loop:
 
 ```text
 Tembro.amxd
