@@ -1,3 +1,5 @@
 node_modules/
 .dev.vars
 .wrangler/
+# session files produced by grant-family-beta.mjs (bearer credentials)
+out/
