@@ -70,7 +70,6 @@ when it is absent.
 | `GET /v0/credits` | bearer | current balance |
 | `GET /v0/skills` | no | public skill menu and server-authoritative credit estimates |
 | `POST /v0/agent` | bearer | start/continue the distributed Responses ↔ local MCP loop |
-| `POST /v0/chat` | bearer | legacy v0.1.0 JSON planner compatibility |
 | `POST /v0/events` | bearer | client action/readback/error telemetry |
 | `GET /v0/version` | no | current app version, download URL, and update availability |
 
@@ -122,8 +121,7 @@ npx wrangler d1 migrations apply tembro --remote
 
 The production implementation is `src/d1-store.ts`.
 `users.credit_balance` is the atomic runtime balance; `credit_ledger`,
-`chat_charges`, and `billing_events` are the audit and idempotency records. The
-Postgres adapter remains available for a later data-plane migration.
+`chat_charges`, and `billing_events` are the audit and idempotency records.
 
 ## Lemon Squeezy setup
 
@@ -154,7 +152,7 @@ npx wrangler secret put BETA_ACCESS_CODE
 npm run deploy
 ```
 
-Public non-secret values (`LLM_ENDPOINT`, `LLM_MODEL`, credit amounts, download
+Public non-secret values (`LLM_RESPONSES_ENDPOINT`, `LLM_MODEL`, credit amounts, download
 URL, checkout URL, and support email) live in `wrangler.jsonc`. Lemon Squeezy
 IDs and webhook secret are only required once paid access is enabled.
 

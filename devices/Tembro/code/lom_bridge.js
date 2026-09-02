@@ -1,11 +1,11 @@
 "use strict";
 
-// LOM bridge — maps the V0 action surface and context reads onto the pinned
-// upstream `ableton-live-mcp` MCP tools (live_get / live_set / live_call /
-// live_clip_add_notes / live_clip_notes / live_browser_search /
-// live_browser_load / live_set_summary / live_ping). This is the ONLY
-// Ableton-control path in Tembro: no second control stack, no direct port
-// 8765 access.
+// LOM bridge — read-side helpers over the pinned upstream `ableton-live-mcp`
+// MCP tools (live_ping / live_set_summary / live_get / live_clip_notes) used
+// to build the Live context sent with each agent turn. Mutations are not
+// issued from here: the server-driven agent loop calls MCP tools directly
+// (agent_loop.js). This is the ONLY Ableton path in Tembro: no second control
+// stack, no direct port 8765 access.
 //
 // Canonical LOM paths are space-separated, e.g.
 //   live_set tracks 2 clip_slots 0 clip
@@ -193,154 +193,6 @@ class LomBridge {
       if (Array.isArray(list)) result.notes = list.map(normalizeNote);
     }
     return result;
-  }
-
-  // --- Mutations (all signature-guarded where the upstream tool supports it) --
-
-  async setTempo(bpm, sig) {
-    await this.call("live_set", {
-      ref: { path: "live_set" },
-      property: "tempo",
-      value: bpm,
-      expected_set_signature: sig,
-    });
-  }
-
-  async createMidiTrack(index, name, sig) {
-    await this.call("live_call", {
-      ref: { path: "live_set" },
-      method: "create_midi_track",
-      args: [index],
-      expected_set_signature: sig,
-    });
-    // The creation changed the signature; refresh before renaming.
-    const fresh = await this._signature();
-    await this.call("live_set", {
-      ref: { path: "live_set tracks " + index },
-      property: "name",
-      value: name,
-      expected_set_signature: fresh,
-    });
-  }
-
-  async loadDevice(track, query, sig) {
-    const search = await this.call("live_browser_search", {
-      query,
-      roots: ["instruments", "sounds", "drums", "audio_effects", "midi_effects", "plugins"],
-      loadable_only: true,
-      limit: 8,
-    });
-    const items = Array.isArray(search) ? search : findKey(search, "items") || findKey(search, "results");
-    const item = Array.isArray(items)
-      ? items.find((it) => it && (it.uri || it.id !== undefined || it.path))
-      : undefined;
-    if (!item) throw new Error('no loadable browser item found for "' + query + '"');
-    const itemRef = {};
-    if (item.uri !== undefined) itemRef.uri = item.uri;
-    if (item.id !== undefined) itemRef.id = item.id;
-    if (item.path !== undefined) itemRef.path = item.path;
-    await this.call("live_browser_load", {
-      item: itemRef,
-      target_track: { path: "live_set tracks " + track },
-      expected_set_signature: sig,
-    });
-  }
-
-  async createClip(track, slot, lengthBeats, name, sig) {
-    const slotPath = "live_set tracks " + track + " clip_slots " + slot;
-    await this.call("live_call", {
-      ref: { path: slotPath },
-      method: "create_clip",
-      args: [lengthBeats],
-      expected_set_signature: sig,
-    });
-    if (name) {
-      const fresh = await this._signature();
-      await this.call("live_set", {
-        ref: { path: slotPath + " clip" },
-        property: "name",
-        value: name,
-        expected_set_signature: fresh,
-      });
-    }
-  }
-
-  async replaceNotes(track, slot, notes, sig) {
-    const clipPath = "live_set tracks " + track + " clip_slots " + slot + " clip";
-    await this.call("live_clip_add_notes", {
-      ref: { path: clipPath },
-      clear: true,
-      notes: notes.map((n) => {
-        const out = {
-          pitch: n.pitch,
-          start_time: n.start,
-          duration: n.duration,
-          velocity: n.velocity,
-        };
-        if (n.mute !== undefined) out.mute = n.mute;
-        return out;
-      }),
-      expected_set_signature: sig,
-    });
-
-    // probability / velocity_deviation are update-only in the upstream note
-    // API: apply them in a second pass keyed by exact readback note identity.
-    const extended = notes.filter(
-      (n) => n.probability !== undefined || n.velocity_deviation !== undefined,
-    );
-    if (extended.length === 0) return;
-    const clip = await this.readClip(track, slot);
-    const updates = [];
-    const unmatched = [...(clip.notes || [])];
-    for (const n of extended) {
-      const matchIndex = unmatched.findIndex(
-        (a) =>
-          a.note_id !== undefined &&
-          a.pitch === n.pitch &&
-          Math.abs(a.start - n.start) <= 1e-6 &&
-          Math.abs(a.duration - n.duration) <= 1e-6 &&
-          a.velocity === n.velocity &&
-          (n.mute === undefined || a.mute === n.mute),
-      );
-      const match = matchIndex >= 0 ? unmatched.splice(matchIndex, 1)[0] : undefined;
-      if (!match) throw new Error("cannot locate written note for extended-field update");
-      const u = { note_id: match.note_id };
-      if (n.probability !== undefined) u.probability = n.probability;
-      if (n.velocity_deviation !== undefined) u.velocity_deviation = n.velocity_deviation;
-      updates.push(u);
-    }
-    const fresh = await this._signature();
-    await this.call("live_clip_update_notes", {
-      ref: { path: clipPath },
-      updates,
-      expected_set_signature: fresh,
-    });
-  }
-
-  async fireClip(track, slot) {
-    await this.call("live_call", {
-      ref: { path: "live_set tracks " + track + " clip_slots " + slot },
-      method: "fire",
-    });
-  }
-
-  async fireScene(scene) {
-    await this.call("live_call", {
-      ref: { path: "live_set scenes " + scene },
-      method: "fire",
-    });
-  }
-
-  async stopAll() {
-    await this.call("live_call", { ref: { path: "live_set" }, method: "stop_all_clips" });
-  }
-
-  async undo(sig) {
-    await this.call("live_call", {
-      ref: { path: "live_set" },
-      method: "undo",
-      expected_set_signature: sig,
-    });
   }
 }
 

@@ -55,7 +55,7 @@ Env overrides: `TEMBRO_API_BASE`, `TEMBRO_MCP_COMMAND`.
 
 ```bash
 cd devices/Tembro
-npm test        # agent loop, API, executor compatibility, readback, context
+npm test        # agent loop, API, MCP bridge integration, context, UI
 ```
 
 The full developer run path and the two real-Ableton acceptance tests are in
