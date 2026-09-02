@@ -97,7 +97,7 @@ const sp={
 "Electro":{hat:.72,perc:.62,open:.42,sync:.82,ride:.08,breakbeat:true,heritage:"FUNK/R&B",grid:16,flam:.09,ghost:.28},
 "Breakbeat":{hat:.76,perc:.7,open:.44,sync:.9,ride:.08,breakbeat:true,heritage:"FUNK/ROCK",grid:16,flam:.11,ghost:.34}
 };
-let cfg={bpm:128,style:"Tech House",device:Object.keys(profiles)[0],build:"Mid",doubleKick:true,swing:3,groove:true,length:"Standard",variation:32,fill:38,seed:20260901,pausona:true,pausonaLength:8,pausonaShape:"Straight",pausonaIntensity:"Mid",kit:{kick:true,snare:true,hats:true,shaker:true,perc:true,toms:true,cymbals:true}};
+let cfg={bpm:128,style:"Tech House",device:Object.keys(profiles)[0],targetDaw:"ableton-909",build:"Mid",doubleKick:true,swing:3,groove:true,length:96,variation:32,fill:38,seed:20260901,pausona:true,pausonaLength:8,pausonaShape:"Straight",pausonaIntensity:"Mid",kit:{kick:true,snare:true,hats:true,shaker:true,perc:true,toms:true,cymbals:true}};
 let result=null;
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
@@ -136,11 +136,15 @@ function compatibleRole(role){
 function applyKitPolicy(events){return events.map(e=>{const role=compatibleRole(e.role);return role?{...e,role}:null}).filter(Boolean)}
 function sectionTemplate(length){
   // Narrative-first forms. Every section is derived from the same core groove by addition/subtraction.
-  const raw=length==="Short"?
-    [["INTRO",8,28,"intro"],["SOFT LOOP",8,48,"soft"],["MAIN LOOP",8,64,"main"],["BREAKDOWN",8,24,"breakdown"],["BUILD",4,82,"build"],["DROP",12,96,"drop"],["BUILD 2",4,88,"build"],["DROP 2",8,100,"drop"],["OUTRO",4,30,"outro"]]:
-    length==="Standard"?
-    [["INTRO",8,28,"intro"],["SOFT LOOP",8,48,"soft"],["MAIN LOOP",16,66,"main"],["BREAKDOWN",8,24,"breakdown"],["BUILD",8,84,"build"],["DROP A",16,96,"drop"],["BREAKDOWN 2",8,28,"breakdown"],["BUILD 2",8,92,"build"],["DROP B",8,100,"drop"],["OUTRO",8,32,"outro"]]:
-    [["INTRO",16,26,"intro"],["SOFT LOOP",16,46,"soft"],["MAIN LOOP",16,66,"main"],["BREAKDOWN",16,22,"breakdown"],["BUILD",8,84,"build"],["DROP A",24,95,"drop"],["BREAKDOWN 2",8,26,"breakdown"],["BUILD 2",8,92,"build"],["DROP B",16,100,"drop"],["OUTRO",8,30,"outro"]];
+  const forms={
+    8:[["INTRO",1,30,"intro"],["MAIN",2,66,"main"],["BUILD",1,86,"build"],["DROP",3,100,"drop"],["OUTRO",1,34,"outro"]],
+    16:[["INTRO",2,28,"intro"],["SOFT",2,48,"soft"],["MAIN",4,66,"main"],["BREAK",2,24,"breakdown"],["BUILD",2,86,"build"],["DROP",4,100,"drop"]],
+    32:[["INTRO",4,28,"intro"],["SOFT",4,48,"soft"],["MAIN",8,66,"main"],["BREAK",4,24,"breakdown"],["BUILD",4,86,"build"],["DROP",8,100,"drop"]],
+    64:[["INTRO",8,28,"intro"],["SOFT",8,48,"soft"],["MAIN",12,66,"main"],["BREAK",8,24,"breakdown"],["BUILD",4,86,"build"],["DROP A",12,96,"drop"],["BUILD 2",4,92,"build"],["DROP B",8,100,"drop"]],
+    96:[["INTRO",8,28,"intro"],["SOFT",8,48,"soft"],["MAIN",16,66,"main"],["BREAK",8,24,"breakdown"],["BUILD",8,84,"build"],["DROP A",16,96,"drop"],["BREAK 2",8,28,"breakdown"],["BUILD 2",8,92,"build"],["DROP B",8,100,"drop"],["OUTRO",8,32,"outro"]],
+    128:[["INTRO",16,26,"intro"],["SOFT",16,46,"soft"],["MAIN",16,66,"main"],["BREAK",16,22,"breakdown"],["BUILD",8,84,"build"],["DROP A",16,95,"drop"],["BREAK 2",8,26,"breakdown"],["BUILD 2",8,92,"build"],["DROP B",16,100,"drop"],["OUTRO",8,30,"outro"]]
+  };
+  const raw=forms[Number(length)]||forms[96];
   let pos=0;return raw.map((x,i)=>{const sec={name:x[0],start:pos,bars:x[1],energy:x[2],kind:x[3],index:i};pos+=x[1];return sec})
 }
 function sectionLayers(kind,phase){

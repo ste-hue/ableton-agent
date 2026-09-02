@@ -252,12 +252,13 @@ function generate(){
   // Disabled families do not create tracks. Fill/rudiment voices are re-orchestrated only onto compatible enabled families.
   const kitFiltered=applyKitPolicy(ev);
   const mapped=kitFiltered.map(e=>({...e,tick:Math.max(0,e.tick+swingOffset(e,rnd))})),map=profiles[cfg.device];
+  const fillMasterEvents=applyKitPolicy(buildFillMasterEvents(narrative.fillGenome));
   const groups=activeKitKeys().map(key=>{
     const def=KIT_DEFS[key];
     return [`DRUMS — ${def.label}`,r=>def.roles.includes(r)];
   });
   const tracks=groups.map(g=>({name:g[0],notes:mapped.filter(e=>g[1](e.role)).map(e=>({tick:e.tick,duration:e.duration,note:map[e.role],velocity:e.velocity})).sort((a,b)=>a.tick-b.tick)}));
-  return {sections,totalBars,tracks,eventCount:mapped.length,patternGrammar:{
+  return {sections,totalBars,tracks,eventCount:mapped.length,semanticEvents:mapped,fillMasterEvents,patternGrammar:{
     heritage:p.heritage,grid:p.grid,chain:family.chain.join("-"),archetypes:family.lineage.names,lineage:family.lineage.label,
     breakBias:family.lineage.primary.breakBias,kickPolicy:p.breakbeat?"BREAKBEAT CONTROLLED":"4x4 LOCKED",
     architecture:"NARRATIVE FIRST",theoryRole:"STICK CONTROL GRAMMAR · SUBORDINATE VOCABULARY",

@@ -41,6 +41,20 @@ can convert these boundaries to ES modules without changing the music engine.
 - Generate always chooses a fresh seed.
 - Pausona is one macro gesture with at most two transformations and a landing silence.
 
+## DAW-ready export
+
+The compact export panel renders one merged arrangement clip or the canonical
+four-bar master fill. Musical events remain semantic until export, so choosing a
+DAW changes only pad notes—not rhythm, velocity or timing.
+
+- Ableton Live: verified `909 Core Kit` pad layout
+- Bitwig Studio: `Drum Machine` with a GM-compatible layout
+- Logic Pro: `Drum Machine Designer` with a GM-compatible layout
+
+Arrangement lengths are locked to 8, 16, 32, 64, 96 or 128 bars. Each choice
+uses a dedicated narrative form whose section lengths add up exactly to the
+selected total.
+
 ## Baseline
 
 `reference/rudiment-drum-arranger-baseline.html` is the exact latest prototype
