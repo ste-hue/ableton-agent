@@ -172,10 +172,13 @@ before Live works (issue #43 keeps the format portable so that door stays open).
    first placement that plays — and (b) when a track is finished, i.e. when
    the free counters run out or the user marks the track done. Nothing is
    asked before value is shown (the Baymard/NN/g evidence in ADR-0002). The
-   Discord is where testers post finished tracks and where feedback and the
-   library ranking signal (thumbs, "which one did you keep") are gathered; it
-   is not a support desk replacing email. The invite is shown once per moment,
-   never as a wall.
+   Discord is for community, support and promotion: testers post finished
+   tracks, ask for help, and feedback and the library ranking signal (thumbs,
+   "which one did you keep") are gathered there. It is not the release
+   channel: a new version is announced by the device itself — the "update"
+   pill that appears when `/v0/version` reports a newer `APP_VERSION` and
+   opens `DOWNLOAD_URL` (already built, `tembro_main.js:373`). The invite is
+   shown once per moment, never as a wall.
 
 8. **The source repository goes private; the ADRs stay inside it.**
    `docs/product-analysis.md` chose "closed consumer product" on 2026-08-30 but
