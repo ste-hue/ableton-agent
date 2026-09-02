@@ -61,10 +61,28 @@ The DRUMMER panel changes expression without replacing the song's core grammar:
 - Percussion Motion selects sparse, interlocking, call/response or rotating dialogue.
 - Fill Orchestration and Fill Direction redistribute the same master-fill phrasing
   vertically across snare/rim, toms or percussion.
-- Phrase Evolution places the controlled B variation every 8, 16 or 32 bars.
+- Phrase Evolution develops the reusable A/B/C family across 8, 16 or 32 bars.
 - Velocity Character changes accents and dynamics without moving notes.
 - Section Contrast exaggerates or softens layer subtraction and return across
   intro, breakdown, build, drop and outro.
+
+The collapsible Creative Pattern Engine adds a composed development layer:
+
+- Creativity controls the musical distance from identity pattern A through
+  response B to developed pattern C.
+- Variation Scope confines development to Detail, Groove or full Phrase level.
+- Phrase Shape selects Stable, Evolving, Call/Response or Progressive A/B/C grammar.
+- Kick Vocabulary uses anticipation, afterbeat, double-pickup or recovery gestures
+  while preserving the principal anchors.
+- Backbeat Detail provides clean, ghost-pickup, drag, flam, response and mini-roll
+  writing on the snare only; hand clap remains an independent backbeat layer.
+- Hat Phrasing supplies intentional gaps, open arcs, three/five-step accents or
+  crescendos instead of changing density alone.
+- Motif Memory controls how closely C inherits the established B material.
+- Controlled Displacement moves an accessory group together by one sixteenth;
+  foundation anchors are protected.
+- Section Mutation assigns development roles to intro, main, breakdown, build,
+  drop and outro, with Off, Subtle, Auto and Expressive modes.
 
 ## DAW-ready export
 

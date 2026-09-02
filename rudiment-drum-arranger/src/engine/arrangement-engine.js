@@ -46,6 +46,54 @@ function fill(ev,bar,importance,rnd,breakBias="cell-mutation"){
 // The source book's idea is used as compositional grammar, not as a literal pattern transcription.
 function uniq(a){return [...new Set(a.filter(x=>x>=0&&x<16).map(x=>Math.round(x)))]}
 function mutateSteps(src,rnd,amount=.22,allowed=[1,2,3,5,6,7,9,10,11,13,14,15]){let out=[...src];if(rnd()<amount&&out.length>2)out.splice(Math.floor(rnd()*out.length),1);if(rnd()<amount){const x=allowed[Math.floor(rnd()*allowed.length)];if(!out.includes(x))out.push(x)}return uniq(out).sort((a,b)=>a-b)}
+function developedSteps(source,rnd,amount,allowed){if(amount<.05)return [...source];let out=[...source];const passes=amount>.78?3:amount>.4?2:1;for(let i=0;i<passes;i++)out=mutateSteps(out,rnd,.08+amount*.76,allowed);return out}
+function displaceAccessoryGroup(steps,rnd,protectedSteps=[]){
+  const amount=clamp(cfg.controlledDisplacement/100,0,1);if(amount<.05||rnd()>amount)return [...steps];
+  const protectedSet=new Set(protectedSteps),direction=rnd()<.5?-1:1,pivot=Math.floor(steps.length/2);
+  return uniq(steps.map((step,index)=>index>=pivot&&!protectedSet.has(step)?clamp(step+direction,0,15):step)).sort((a,b)=>a-b);
+}
+function selectedKickVocabulary(rnd){return cfg.kickVocabulary==="Auto"?choose(["Anticipation","Afterbeat","Double Pickup","Recovery"],rnd):cfg.kickVocabulary}
+function kickDevelopment(anchor,rnd,amount){
+  const vocabulary=selectedKickVocabulary(rnd),pools={Anticipation:[3,7,11,15],Afterbeat:[1,5,9,13],"Double Pickup":[14,15],Recovery:[7,9,14]};
+  const count=amount<.12?0:amount>.72?2:1,extras=(pools[vocabulary]||pools.Anticipation).slice(0).sort(()=>rnd()-.5).slice(0,count);
+  return {steps:uniq([...anchor,...extras]).sort((a,b)=>a-b),vocabulary};
+}
+function selectBackbeatDetail(rnd){return cfg.backbeatEmbellishment==="Auto"?choose(["Ghost Pickup","Drag","Flam","Response","Mini Roll"],rnd):cfg.backbeatEmbellishment}
+function backbeatDevelopment(rnd,amount){
+  const detail=selectBackbeatDetail(rnd);if(detail==="Clean"||amount<.12)return {detail:amount<.12?"Clean":detail,ghost:[],ornaments:[]};
+  if(detail==="Ghost Pickup")return {detail,ghost:amount>.65?[3,7,11,15]:[3,11],ornaments:[]};
+  if(detail==="Drag")return {detail,ghost:[],ornaments:[{step:3.5,type:"hit"},{step:11.5,type:"hit"}]};
+  if(detail==="Flam")return {detail,ghost:[],ornaments:[{step:12,type:"flam"}]};
+  if(detail==="Response")return {detail,ghost:[],ornaments:[{step:5,type:"hit"},{step:13,type:"hit"}]};
+  return {detail,ghost:[],ornaments:(amount>.65?[9,10,11,13,14,15]:[10,11,13,14]).map(step=>({step,type:"hit"}))};
+}
+function applyHatPhrase(source,rnd,amount){
+  const phrase=cfg.hatPhrasing==="Auto"?choose(["Minimal Gaps","Open Arc","3-Step Accents","5-Step Accents","Crescendo"],rnd):cfg.hatPhrasing;
+  let steps=[...source],accent=[],curve="flat";
+  if(amount<.12)return {steps,accent,curve,phrase:"Core Pulse"};
+  if(phrase==="Minimal Gaps")steps=steps.filter((_,i)=>i%3!==2);
+  if(phrase==="Open Arc")steps=uniq([...steps,2,6,10,14]).sort((a,b)=>a-b);
+  if(phrase==="3-Step Accents")accent=steps.filter((_,i)=>i%3===0);
+  if(phrase==="5-Step Accents")accent=steps.filter((_,i)=>i%5===0);
+  if(phrase==="Crescendo")curve="up";
+  if(amount>.55)steps=developedSteps(steps,rnd,amount,[1,3,5,7,9,11,13,15]);
+  return {steps,accent,curve,phrase};
+}
+function phraseChain(shape,bars){
+  const cells={Stable:["A","A","A","B"],Evolving:["A","A","B","C"],"Call / Response":["A","B","A","C"],Progressive:["A","B","B","C"]};
+  const cell=cells[shape]||cells.Evolving,chain=Array.from({length:bars},(_,i)=>cell[i%cell.length]);chain[chain.length-1]="BREAK";return chain;
+}
+function sectionPatternToken(token,sec,local,phase){
+  const mode=cfg.sectionMutation||"Auto";if(mode==="Off")return token;
+  if(sec.kind==="intro")return phase<.72?"A":(mode==="Expressive"?"B":token);
+  if(sec.kind==="outro")return phase<.3&&mode==="Expressive"?"B":"A";
+  if(mode==="Subtle")return local===sec.bars-1?"C":token;
+  if(sec.kind==="build"&&phase>(mode==="Expressive"?.38:.62))return "C";
+  if(sec.kind==="drop"&&(local%(mode==="Expressive"?4:8)===0||mode==="Expressive"&&local%4===3))return "C";
+  if(sec.kind==="breakdown"&&mode==="Expressive")return local%2?"C":"B";
+  if(sec.kind==="main"&&mode==="Expressive"&&local%4===3)return local%8===7?"C":"B";
+  return token;
+}
 function makePatternFamily(p,rnd){
   const lineage=buildArchetypeLineage(p,rnd), A=lineage.primary, B=lineage.secondary, bias=lineage.bias;
   const syncAmount=clamp(cfg.syncopation/100,0,1);
@@ -105,13 +153,20 @@ function makePatternFamily(p,rnd){
 
   const accentA=uniq(unionWeighted(A.accents.strong,B.accents.strong,rnd,bias));
   const accentB=uniq([...accentA,...unionWeighted(A.accents.weak,B.accents.weak,rnd,bias).filter(()=>rnd()<.18*varAmt)]);
-  // Predictable phrase grammar: A establishes identity; B appears only as a controlled complement.
+  // A establishes identity, B answers it, C develops it while retaining motif memory.
+  const creativity=clamp(cfg.creativity/100,0,1),memory=clamp(cfg.motifMemory/100,0,1),scope=cfg.variationScope||"Groove";
+  const kickIdea=kickDevelopment(kickA,rnd,creativity),kickC=scope==="Detail"?[...kickA]:displaceAccessoryGroup(kickIdea.steps,rnd,[0,4,8,12]);
+  const backIdea=backbeatDevelopment(rnd,creativity),ghostC=uniq([...ghostB,...backIdea.ghost]).sort((a,b)=>a-b);
+  const hatSource=creativity<.12?hatA:memory>.45?hatB:hatTemplate(rnd()<bias?B.hats.pulse:A.hats.pulse,rnd),hatIdea=applyHatPhrase(hatSource,rnd,creativity);
+  const hatC=displaceAccessoryGroup(hatIdea.steps,rnd,scope==="Detail"?[0]:[]);
+  const percSource=creativity<.12?percA:memory>.45?percB:percTemplate(percTrait,rnd),percC=displaceAccessoryGroup(developedSteps(percSource,rnd,creativity,[1,2,3,5,6,7,9,10,11,13,14,15]),rnd);
+  let openC=hatIdea.phrase==="Open Arc"?[2,6,10,14]:uniq([...openB,...openA]);if(openC.length>3)openC=openC.slice(-3);
   const phraseBars=[8,16,32].includes(Number(cfg.phraseEvolution))?Number(cfg.phraseEvolution):16;
-  const chain=Array.from({length:phraseBars},(_,i)=>i===phraseBars-1?"BREAK":(i===Math.floor(phraseBars/2)-1||i===phraseBars-2?"B":"A"));
+  const chain=phraseChain(cfg.phraseShape||"Evolving",phraseBars);
   // Snare owns stick grammar. Hand clap is written independently as an
   // ensemble backbeat layer and never receives rudimental transformations.
   const backRole="snare";
-  return {A:{kick:kickA,back:backA,ghost:[],hat:hatA,perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,ghost:ghostB,hat:hatB,perc:percB,open:openB,accent:accentB},chain,lineage,backRole};
+  return {A:{kick:kickA,back:backA,ghost:[],ornaments:[],hat:hatA,hatAccent:[],hatCurve:"flat",perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,ghost:ghostB,ornaments:[],hat:hatB,hatAccent:[],hatCurve:"flat",perc:percB,open:openB,accent:accentB},C:{kick:kickC,back:backA,ghost:ghostC,ornaments:scope==="Phrase"?backIdea.ornaments:[],hat:hatC,hatAccent:hatIdea.accent,hatCurve:hatIdea.curve,perc:percC,open:openC,accent:uniq([...accentB,...hatIdea.accent])},chain,lineage,backRole,creativeLanguage:{kick:kickIdea.vocabulary,backbeat:backIdea.detail,hats:hatIdea.phrase,scope,shape:cfg.phraseShape}};
 }
 function addFlam(ev,bar,step,role,velocity,group){const q=step/4,t=beat(bar,q),gap=Math.max(12,Math.round(PPQ/24));ev.push({tick:Math.max(0,t-gap),duration:PPQ/20,role,velocity:clamp(velocity-28,1,127),group});ev.push({tick:t,duration:PPQ/10,role,velocity,group})}
 function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
@@ -143,6 +198,10 @@ function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
       const maxGhost=cfg.velocityCharacter==="Aggressive"?66:cfg.velocityCharacter==="Tight"?52:59;
       add(ev,bar,st/4,"snare",Math.min(maxGhost,vel(43+cfg.ghostNotes*.12,rnd,5)),"ghost",PPQ/14);
     }
+    for(const ornament of pattern.ornaments||[]){
+      if(ornament.type==="flam")addFlam(ev,bar,ornament.step,"snare",Math.min(96,v(84,ornament.step,4)),"backbeat-detail");
+      else add(ev,bar,ornament.step/4,"snare",Math.min(82,v(67,ornament.step,5)),"backbeat-detail",PPQ/14);
+    }
   }
 
   // HATS: same core line; intro/outro may use mathematically reduced versions (÷2 / ÷4).
@@ -152,7 +211,8 @@ function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
     else if(opts.kind==="intro"&&phase<.7)hats=hats.filter((_,i)=>i%2===0);
     if(opts.kind==="breakdown")hats=hats.filter((_,i)=>i%2===0);
     if(opts.kind==="outro"&&phase>.5)hats=hats.filter((_,i)=>i%2===0);
-    for(const st of hats)add(ev,bar,st/4,"closedHat",v(st%4===2?82:70,st,5),"hat",PPQ/12);
+    const hatAccents=new Set(pattern.hatAccent||[]);
+    hats.forEach((st,index)=>{const curveLift=pattern.hatCurve==="up"?Math.round(index/Math.max(1,hats.length-1)*17):0;add(ev,bar,st/4,"closedHat",v((st%4===2?82:70)+(hatAccents.has(st)?12:0)+curveLift,st,5),"hat",PPQ/12)});
   }
 
   if(layers.open){
@@ -171,7 +231,7 @@ function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
   if(layers.perc){
     const roles=["percLow","percMid","rim","percHigh"];
     pattern.perc.forEach((st,i)=>{
-      const role=roles[(i+(pattern===opts.familyB?1:0))%roles.length];
+      const role=roles[(i+(opts.variant==="B"?1:opts.variant==="C"?2:0))%roles.length];
       add(ev,bar,st/4,role,v(76+i*2,st,5),"perc",PPQ/10);
     });
   }
@@ -186,14 +246,15 @@ function generate(){
       const bar=sec.start+local, phase=sec.bars<=1?1:local/(sec.bars-1);
       const energy=sec.kind==="build"?55+phase*43:sec.energy;
       const isLast=local===sec.bars-1, b8=(bar+1)%8===0, b16=(bar+1)%16===0;
-      const token=family.chain[bar%family.chain.length], pattern=token==="B"?family.B:family.A;
+      const phraseToken=family.chain[bar%family.chain.length],token=sectionPatternToken(phraseToken,sec,local,phase),variant=token==="BREAK"?"C":token;
+      const pattern=variant==="C"?family.C:variant==="B"?family.B:family.A;
       const layers=sectionLayers(sec.kind,phase);
 
       // NARRATIVE RULE: every section renders the same A/B DNA with a layer mask.
       // No section gets a fresh groove. Difference = add, subtract, x2 or ÷2.
       renderPatternBar(ev,bar,pattern,p,rnd,energy,{
         kind:sec.kind,layers,build:sec.kind==="build",isLast,local,sectionBars:sec.bars,
-        familyB:family.B,backRole:family.backRole,
+        familyB:family.B,familyC:family.C,variant,backRole:family.backRole,
         allowOrnament:(b16||isLast)&&cfg.variation>58&&sec.kind!=="breakdown"
       });
       // Dedicated tom/rim grammar: phrase punctuation, contour, call-response and build cascades.
@@ -297,6 +358,7 @@ function generate(){
     fillGenealogy:`${narrative.fillGenome.id} · ${narrative.fillGenome.derivationMode} · master 4 bars → 16:${narrativeFillBars(1)}b / 32:${narrativeFillBars(2)}b / 64:${narrativeFillBars(3)}b`,
     crashLanguage:narrative.crashRunMode?`PRE-DROP ${narrative.crashRunMode}-BAR CRASH RUN + MAJOR ARRIVAL CRASHES`:"MAJOR ARRIVAL CRASHES",
     tomRimLanguage:`${narrative.tomDirection} TOM CONTOUR · ${narrative.rimMode}`,
+    creativeLanguage:`${family.creativeLanguage.shape} · ${family.creativeLanguage.scope} · KICK ${family.creativeLanguage.kick} · BACKBEAT ${family.creativeLanguage.backbeat} · HATS ${family.creativeLanguage.hats}`,
     activeKit:activeKitKeys().map(k=>KIT_DEFS[k].label)
   }};
 }

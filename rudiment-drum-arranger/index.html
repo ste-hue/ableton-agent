@@ -33,8 +33,22 @@
       <label class="sliderRow"><span>SYNCOP.</span><input id="syncopation" type="range" min="0" max="100" value="34"><b id="syncopationVal">34</b></label>
       <label class="sliderRow"><span>HAT MOTION</span><input id="hatMotion" type="range" min="0" max="100" value="56"><b id="hatMotionVal">56</b></label>
       <label class="sliderRow"><span>GHOSTS</span><input id="ghostNotes" type="range" min="0" max="100" value="28"><b id="ghostNotesVal">28</b></label>
+      <details class="creativePanel" open>
+        <summary>CREATIVE PATTERN ENGINE <i>⌄</i></summary>
+        <label class="sliderRow"><span>CREATIVITY</span><input id="creativity" type="range" min="0" max="100" value="58"><b id="creativityVal">58</b></label>
+        <label class="sliderRow"><span>MOTIF MEMORY</span><input id="motifMemory" type="range" min="0" max="100" value="72"><b id="motifMemoryVal">72</b></label>
+        <label class="sliderRow"><span>DISPLACEMENT</span><input id="controlledDisplacement" type="range" min="0" max="100" value="28"><b id="controlledDisplacementVal">28</b></label>
+        <div class="drummerMenus creativeMenus">
+          <label class="controlBlock"><span>VARIATION SCOPE</span><select id="variationScope"><option>Detail</option><option selected>Groove</option><option>Phrase</option></select></label>
+          <label class="controlBlock"><span>PHRASE SHAPE</span><select id="phraseShape"><option>Stable</option><option selected>Evolving</option><option>Call / Response</option><option>Progressive</option></select></label>
+          <label class="controlBlock"><span>KICK VOCABULARY</span><select id="kickVocabulary"><option>Auto</option><option>Anticipation</option><option>Afterbeat</option><option>Double Pickup</option><option>Recovery</option></select></label>
+          <label class="controlBlock"><span>BACKBEAT DETAIL</span><select id="backbeatEmbellishment"><option>Auto</option><option>Clean</option><option>Ghost Pickup</option><option>Drag</option><option>Flam</option><option>Response</option><option>Mini Roll</option></select></label>
+          <label class="controlBlock"><span>HAT PHRASING</span><select id="hatPhrasing"><option>Auto</option><option>Minimal Gaps</option><option>Open Arc</option><option>3-Step Accents</option><option>5-Step Accents</option><option>Crescendo</option></select></label>
+          <label class="controlBlock"><span>SECTION MUTATION</span><select id="sectionMutation"><option>Off</option><option>Subtle</option><option selected>Auto</option><option>Expressive</option></select></label>
+        </div>
+      </details>
       <div class="drummerMenus">
-        <label class="controlBlock"><span>PERCUSSION MOTION</span><select id="percussionMotion"><option>Auto</option><option>Sparse</option><option>Interlocking</option><option>Call / Response</option><option>Rotating</option></select></label>
+        <label class="controlBlock"><span>PERC CONVERSATION</span><select id="percussionMotion"><option>Auto</option><option>Sparse</option><option>Interlocking</option><option>Call / Response</option><option>Rotating</option></select></label>
         <label class="controlBlock"><span>FILL ORCHESTRATION</span><select id="fillOrchestration"><option>Auto</option><option>Snare / Rim</option><option>Toms</option><option>Percussion</option></select></label>
         <label class="controlBlock"><span>FILL DIRECTION</span><select id="fillDirection"><option>Auto</option><option>Ascending</option><option>Descending</option><option>Alternating</option><option>Centered</option></select></label>
         <label class="controlBlock"><span>PHRASE EVOLUTION</span><select id="phraseEvolution"><option value="8">8 bars</option><option value="16" selected>16 bars</option><option value="32">32 bars</option></select></label>
@@ -83,6 +97,6 @@
     </section>
   </div>
 </main>
-<script src="src/engine/core-config.js?v=6"></script><script src="src/engine/theory-rudiment-engine.js"></script><script src="src/engine/fill-engine.js?v=4"></script><script src="src/engine/arrangement-engine.js?v=6"></script><script src="src/engine/timing-velocity-engine.js?v=2"></script><script src="src/midi/midi-renderer.js?v=8"></script><script src="src/audio/synth-preview.js?v=3"></script><script src="src/integrations/ableton-mcp-adapter.js?v=2"></script><script src="src/app/ui.js?v=14"></script>
+<script src="src/engine/core-config.js?v=7"></script><script src="src/engine/theory-rudiment-engine.js"></script><script src="src/engine/fill-engine.js?v=4"></script><script src="src/engine/arrangement-engine.js?v=7"></script><script src="src/engine/timing-velocity-engine.js?v=2"></script><script src="src/midi/midi-renderer.js?v=8"></script><script src="src/audio/synth-preview.js?v=3"></script><script src="src/integrations/ableton-mcp-adapter.js?v=2"></script><script src="src/app/ui.js?v=15"></script>
 </body>
 </html>
