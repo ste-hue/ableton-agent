@@ -22,13 +22,18 @@
     "LLM_RESPONSES_ENDPOINT": "https://api.openai.com/v1/responses",
     "LLM_MODEL": "gpt-5.6-terra",
     "APP_VERSION": "0.1.5-beta",
-    // Lemon Squeezy variant id → credits, "id:credits,id:credits". Empty until
-    // the packs exist in the store; the webhook stays disabled meanwhile.
-    "CREDIT_PACKS": "",
+    // Lemon Squeezy store "tembro", product "Tembro credits". The ids are public
+    // (visible on the checkout page); only LEMON_SQUEEZY_WEBHOOK_SECRET is a secret.
+    "LEMON_SQUEEZY_STORE_ID": "463641",
+    "LEMON_SQUEEZY_PRODUCT_ID": "1334039",
+    // Variant id → credits: Starter · 40 credits €12, Studio · 120 credits €29.
+    "CREDIT_PACKS": "2084611:40,2084627:120",
     "CHAT_COST_CREDITS": "1",
     "BETA_GRANT_CREDITS": "40",
+    // Empty keeps the landing page on the free-beta journey; set to the hosted
+    // checkout URL to switch it to the paid journey.
     "CHECKOUT_URL": "",
-    "DOWNLOAD_URL": "https://github.com/ste-hue/ableton-agent/releases/download/v0.1.5-beta/Tembro-0.1.5-beta.dmg",
+    "DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/v0.1.5-beta/Tembro-0.1.5-beta.dmg",
     "SUPPORT_EMAIL": "support@gettembro.com"
   },
   "observability": {
