@@ -92,7 +92,9 @@ function makePatternFamily(p,rnd){
   const accentB=uniq([...accentA,...unionWeighted(A.accents.weak,B.accents.weak,rnd,bias).filter(()=>rnd()<.18*varAmt)]);
   // Predictable phrase grammar: A establishes identity; B appears only as a controlled complement.
   const chain=rnd()<.5?["A","A","B","A","A","A","B","BREAK"]:["A","B","A","A","A","B","A","BREAK"];
-  const backRole=p.breakbeat?"snare":(rnd()<.55?"clap":"snare");
+  // Snare owns stick grammar. Hand clap is written independently as an
+  // ensemble backbeat layer and never receives rudimental transformations.
+  const backRole="snare";
   return {A:{kick:kickA,back:backA,hat:hatA,perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,hat:hatB,perc:percB,open:openB,accent:accentB},chain,lineage,backRole};
 }
 function addFlam(ev,bar,step,role,velocity,group){const q=step/4,t=beat(bar,q),gap=Math.max(12,Math.round(PPQ/24));ev.push({tick:Math.max(0,t-gap),duration:PPQ/20,role,velocity:clamp(velocity-28,1,127),group});ev.push({tick:t,duration:PPQ/10,role,velocity,group})}
@@ -113,10 +115,13 @@ function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
   // BACKBEAT: same motif across sections, only removed/reintroduced by arrangement.
   if(layers.back){
     for(const st of pattern.back){
-      const role=opts.backRole||"clap";
+      const role="snare";
       const tb=theoryBudget(opts.kind||"main",energy);
       if(opts.allowOrnament&&tb>.08&&rnd()<Math.min(.10,p.flam*.16*tb*4)&&st>=8)addFlam(ev,bar,st,role,v(102,st,4),"backbeat");
       else add(ev,bar,st/4,role,v(102,st,4),"backbeat",PPQ/9);
+      const kind=opts.kind||"main";
+      const clapAllowed=["main","drop","build"].includes(kind)||(kind==="soft"&&phase>.2)||(kind==="intro"&&phase>.72)||(kind==="breakdown"&&phase>.84);
+      if(clapAllowed)add(ev,bar,st/4,"clap",v(kind==="drop"?105:kind==="build"?99:94,st,3),"backbeat",PPQ/8);
     }
   }
 

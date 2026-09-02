@@ -97,7 +97,7 @@ const sp={
 "Electro":{hat:.72,perc:.62,open:.42,sync:.82,ride:.08,breakbeat:true,heritage:"FUNK/R&B",grid:16,flam:.09,ghost:.28},
 "Breakbeat":{hat:.76,perc:.7,open:.44,sync:.9,ride:.08,breakbeat:true,heritage:"FUNK/ROCK",grid:16,flam:.11,ghost:.34}
 };
-let cfg={bpm:128,style:"Tech House",device:Object.keys(profiles)[0],targetDaw:"ableton-909",build:"Mid",doubleKick:true,swing:30,groove:true,length:96,variation:32,fill:38,seed:20260901,pausona:true,pausonaLength:8,pausonaShape:"Straight",pausonaIntensity:"Mid",kit:{kick:true,snare:true,hats:true,shaker:true,perc:true,toms:true,cymbals:true}};
+let cfg={bpm:128,style:"Tech House",device:Object.keys(profiles)[0],targetDaw:"ableton-909",build:"Mid",doubleKick:true,swing:30,groove:true,length:96,variation:32,fill:38,seed:20260901,pausona:true,pausonaLength:8,pausonaShape:"Straight",pausonaIntensity:"Mid",kit:{kick:true,snare:true,clap:true,hats:true,shaker:true,perc:true,toms:true,cymbals:true}};
 let result=null;
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
@@ -105,7 +105,8 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)); const beat=(bar,q)=>((bar*4)+q)*
 function vel(base,rnd,spread=8){return clamp(Math.round(base+(rnd()-.5)*spread),1,127)}
 const KIT_DEFS={
   kick:{label:"KICK",roles:["kick"]},
-  snare:{label:"SNARE / CLAP",roles:["snare","clap"]},
+  snare:{label:"SNARE",roles:["snare"]},
+  clap:{label:"HAND CLAP",roles:["clap"]},
   hats:{label:"HATS",roles:["closedHat","openHat"]},
   shaker:{label:"SHAKER",roles:["shaker"]},
   perc:{label:"PERCUSSION",roles:["percLow","percMid","percHigh"]},
@@ -120,7 +121,10 @@ function compatibleRole(role){
   // Foundation material is omitted rather than fabricated when its family is disabled.
   if(role==="kick")return null;
   // Backbeat can become a rim/tom articulation only if SNARE/CLAP is disabled and TOMS/RIMS is active.
-  if(["snare","clap"].includes(role))return cfg.kit.toms?"rim":null;
+  // Snare rudiments may move to a rim when the snare is disabled. A hand clap
+  // is never used as a substitute for a roll, flam or ghost-note phrase.
+  if(role==="snare")return cfg.kit.toms?"rim":null;
+  if(role==="clap")return null;
   // Rims prefer snare, then percussion; toms prefer percussion, then snare. This keeps fill direction intelligible.
   if(role==="rim")return cfg.kit.snare?"snare":cfg.kit.perc?"percHigh":null;
   if(["tomLow","tomMid","tomHigh"].includes(role)){

@@ -35,7 +35,10 @@ can convert these boundaries to ES modules without changing the music engine.
 - The core groove remains recognizable through add/subtract transformations.
 - One four-bar fill master supplies all 16/32/64-bar derivations.
 - Stick Control and rudiments are budgeted detail, never the form generator.
-- Seven independent kit families include a dedicated Shaker motion layer.
+- Eight independent kit families include separate Snare and Hand Clap tracks,
+  plus a dedicated Shaker motion layer.
+- Snare owns ghost notes, flams, rudiments and roll vocabulary. Hand Clap is an
+  ensemble backbeat layer only and is never substituted into technical fills.
 - Disabled kit families create neither events nor MIDI tracks; compatible fill
   voices may be re-orchestrated, while a disabled kick is simply omitted.
 - Generate always chooses a fresh seed.
