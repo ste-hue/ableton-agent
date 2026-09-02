@@ -190,6 +190,58 @@ before Live works (issue #43 keeps the format portable so that door stays open).
    private repository require authentication) and moves to a public host
    before the flip — see Consequences.
 
+### Amendment A1 (2026-09-02) — credit packs instead of a subscription; Terra; 64-step budget
+
+Decided the same day as the ADR, after reading the per-call metering (`agent.usage`
+events in production D1) against the current OpenAI price list (gpt-5.6-sol
+$4 / $0.40 cached / $20 per M tokens; gpt-5.6-terra exactly half; gpt-5.6-luna
+$0.20 / $0.02 / $1.20). Four fully-metered `song_from_scratch` turns on Sol:
+
+| Rounds | Input tokens | cached | Output | Cost on Sol | Cost on Terra |
+|---|---|---|---|---|---|
+| 2 | 13k | 48% | 95 | $0.03 | $0.02 |
+| 61 | 1.0M | 98.5% | 3.7k | $0.53 | $0.27 |
+| 97 | 2.6M | 98.5% | 9.5k | $1.37 | $0.68 |
+| 97 | 4.5M | 97.5% | 20k | $2.64 | $1.32 |
+
+The cache does its job; cost scales with **rounds**, and 97-round turns were
+already happening. At the then-configured 500 credits for €12 (€0.022 per
+credit) a 4-credit composition cost 6–30× what it earned. This answers the
+first open question below (measured cost per edit on Sol: $0.13–0.66 per
+credit, above the $0.30 line) and changes point 2 of Decision B:
+
+1. **Credits are sold as one-time, non-expiring packs, not a subscription:**
+   **Starter €12 → 40 credits, Studio €29 → 120 credits.** Per-skill prices
+   are unchanged (tweak 1, beat / harmony 2, arrangement 4), so a credit is
+   worth ≈ €0.27 net after Lemon Squeezy fees. No pack under €12: the $0.50
+   fixed fee is 13% of a €6 pack. The subscription is not ruled out — it can be
+   added as a discounted recurring pack once repeat purchases exist — but with
+   zero customers a second way to pay optimises retention we do not have yet.
+   The "credit burn" objection to pure credits (Options considered) is met by
+   what already ships: the cost estimate before sending, the refund on any
+   turn the server cannot complete, and (with the library, point 1) a free
+   deterministic path for drums.
+2. **Default model is gpt-5.6-terra** (`LLM_MODEL`), half of Sol at every
+   price point. Sol becomes an opt-in per turn at **×2 credits** (device toggle
+   and server parameter: follow-up PR).
+3. **One turn is bounded to 64 model rounds** (`AGENT_STEP_BUDGET`; the
+   device's local cap is only a safety net). Measured: ≈ 60 cached rounds on
+   Terra ≈ $0.30, i.e. the worst case for a 4-credit arrangement (€1.08 of
+   revenue). The budget is not a silent cut-off: the model is told its round
+   on every call, the last 8 rounds are reserved for finishing the mutation in
+   flight and *talking* ("Pausa — what is done, what remains; continue or
+   listen?"), and if it still asks for tools past the budget the server spends
+   one last call with tools disabled so the user gets that report anyway. The
+   charge stands — the work is in Live and reported — and
+   `agent.budget_exhausted` counts how often the model had to be forced. The
+   prompt also asks for a compelling, listenable core first, so whatever round
+   a turn ends on, something plays.
+4. **Beta grant drops from 100 to 40 credits** — one Starter pack.
+
+Implementation: `server/src/billing.ts` grants on paid `order_created`
+webhooks by variant (`CREDIT_PACKS` = `"variantId:credits,…"`), idempotent per
+order id; `subscription_payment_success` is no longer handled.
+
 ### Unit economics
 
 € and $ are treated at par (error < 15% at 2026 rates). Fees are Lemon Squeezy
@@ -198,9 +250,10 @@ before Live works (issue #43 keeps the format portable so that door stays open).
 | SKU | Price | Marginal cost to us | Fees | Gross margin |
 |---|---|---|---|---|
 | Library licence (perpetual) | €59 | ≈ €0 (D1 read + static MIDI; Workers paid plan $5/mo flat) | ≈ €3.45 | ≈ 94% |
-| Editor subscription, all 40 edits used | €12/mo | 40 × $0.15 ≈ €6.00 *(estimate, see note)* | ≈ €1.16 | ≈ 40% worst case |
-| Editor subscription, typical (15 edits) | €12/mo | ≈ €2.25 | ≈ €1.16 | ≈ 72% |
-| Top-up 20 edits | €6 | ≤ €3.00 | ≈ €0.80 | ≥ 37% |
+| ~~Editor subscription, all 40 edits used~~ (superseded by A1) | €12/mo | 40 × $0.15 ≈ €6.00 | ≈ €1.16 | ≈ 40% worst case |
+| Starter pack, 40 credits, worst case (10 arrangements × 64 rounds on Terra) | €12 | 10 × $0.30 ≈ €3.00 | ≈ €1.10 | ≈ 66% |
+| Starter pack, typical mix (4 arrangements, 12 beats, 8 tweaks) | €12 | ≈ €1.20 + €1.80 + €0.40 ≈ €3.40 | ≈ €1.10 | ≈ 62% |
+| Studio pack, 120 credits, worst case (30 arrangements) | €29 | ≈ €9.00 | ≈ €1.95 | ≈ 62% |
 | Free tier, fully used (20 placements + 12 edits) | €0 | 12 × $0.15 ≈ €1.80 | — | acquisition cost |
 
 At ≈ €1.80 per free user who finishes a track, one licence (€59 net ≈ €55.55)
@@ -268,9 +321,11 @@ Concrete edits, in the order they unblock each other:
 
 ## Open questions — what would change this decision
 
-- **Measured cost per edit** on gpt-5.6-sol. Above $0.30 the Editor tier is
-  loss-making at 40 edits and the allowance must fall to 20 or the model route
-  to Luna for simple edits (ADR-0002).
+- ~~**Measured cost per edit** on gpt-5.6-sol.~~ Answered in Amendment A1:
+  $0.13–0.66 per credit on Sol, hence Terra + the 64-round budget. Next
+  question: the **rate of budget-limited (refunded) arrangements** on Terra.
+  Above 1 in 5, either the prompt must plan shorter turns or the arrangement
+  skill moves to 6 credits.
 - **Windows share of the addressable base.** No producer survey splits
   macOS/Windows [R3]. If a maxforlive.com listing shows > 40% Windows enquiries,
   the Windows build moves ahead of the Editor tier.

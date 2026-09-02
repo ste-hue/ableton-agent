@@ -186,9 +186,6 @@ class TembroApi {
       const required = res.json && res.json.credits_required;
       throw new Error(required ? "this needs " + required + " credits" : "out of credits");
     }
-    if (res.status === 422 && res.json && res.json.error === "agent_step_limit") {
-      throw new Error("agent stopped after too many Live steps");
-    }
     if (res.status === 502 && res.json && res.json.error === "agent_provider_error") {
       const balance =
         typeof res.json.credits_remaining === "number"

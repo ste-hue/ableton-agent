@@ -24,9 +24,10 @@ at 5ffd552):
   `POST /v0/agent` → execute each returned call locally, one at a time → send
   results back with a continuation token → repeat until `kind: "final"`. No
   streaming; plain JSON round-trips with 300 s per request (`code/api.js:162`).
-  Caps: 264 local steps (`agent_loop.js:38`), soft/hard turn timeouts 840 s /
+  Caps: 72 local steps as a safety net (`agent_loop.js`; 264 when written), soft/hard turn timeouts 840 s /
   900 s (`tembro_main.js:127-128`).
-- **Server** (`server/src/app.ts`): `MAX_AGENT_STEPS = 256` (`:75`); reasoning
+- **Server** (`server/src/app.ts`): `MAX_AGENT_STEPS = AGENT_STEP_BUDGET` = 64 (256 when
+  written; lowered in ADR-0001 A1 from measured cost); reasoning
   effort hardcoded `"high"` at `:564` and `:653`; a turn ends only when the
   model returns no tool calls (`:513-521`) — there is no explicit completion
   signal; credits charged on start, refunded on provider error; every model

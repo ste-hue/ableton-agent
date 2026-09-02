@@ -22,6 +22,10 @@ export interface AgentStepRequest {
   reasoningEffort?: "medium" | "high";
   /** The skill button the user pressed, as concrete musical guidance. */
   skillPrompt?: string;
+  /** Where this call sits in the turn's round budget (continuations only). */
+  budget?: { round: number; total: number };
+  /** Budget exhausted: no tool calls allowed, the model must report and stop. */
+  finalOnly?: boolean;
 }
 
 export interface AgentStepResult {
@@ -62,6 +66,38 @@ const AGENT_OUTPUT_RECOVERY_INSTRUCTIONS = `Output recovery rules:
 - Never emit more than 128 MIDI notes in one live_clip_add_notes call. Split larger note sets across later calls.
 - Never encode a long arrangement as one giant note array. Build short reusable clips and place them with tembro_arrange_clip when available, otherwise live_clip_duplicate_to_arrangement.`;
 
+/**
+ * Model/tool rounds one agent turn may take. This is the cost ceiling of a
+ * credit charge: input context is ~98% cached, so a turn's model cost scales
+ * with rounds (≈60 rounds on gpt-5.6-terra measured ≈ $0.30). Shared with the
+ * server loop (app.ts) and stated to the model below.
+ */
+export const AGENT_STEP_BUDGET = 64;
+
+/**
+ * Rounds kept back for the model to stop on its own and tell the user where
+ * things stand. From here the per-round notice switches from a counter to an
+ * instruction to wrap up; the loop only forces a close if that is ignored.
+ */
+export const AGENT_WRAP_UP_ROUNDS = 8;
+
+/**
+ * The per-round notice appended to the END of each continuation input — after
+ * the tool outputs, never inside `instructions` — so the cached prefix of the
+ * conversation is untouched (input is ~98% cached; that is what keeps a turn
+ * affordable).
+ */
+export function budgetNotice(round: number, total: number): string {
+  const left = total - round;
+  if (round > total) {
+    return `[Tembro] Round budget exhausted (${total} of ${total}). No tool calls are possible any more. Reply now to the user: what is done and was verified in Live, what remains, and offer to continue in a new turn or to listen to what exists so far. If the request is not complete, begin with "Pausa — " (Italian) or "Paused — ".`;
+  }
+  if (left <= AGENT_WRAP_UP_ROUNDS) {
+    return `[Tembro] Round ${round} of ${total}: ${left} left after this one. Finish the mutation in flight and its readback, then stop and report — do not start a new section or part. If the request is not complete, begin with "Pausa — " (Italian) or "Paused — ", say what is done and verified and what remains, and offer: continue, or listen to what exists so far.`;
+  }
+  return `[Tembro] Round ${round} of ${total}.`;
+}
+
 export const AGENT_SYSTEM_PROMPT = `You are Tembro, an expert music-making agent operating the user's currently open Ableton Live Set through MCP tools.
 
 Work like a capable studio collaborator, not a JSON planner. Inspect Live, use the available tools, read each result, and continue until the musical request is actually complete. Reply in the user's language.
@@ -78,8 +114,12 @@ Safety and execution rules:
 - Do not save, close, replace, or discard a Set. Do not click through modal dialogs.
 - Prefer creating a variation over destroying existing musical work.
 
-Step budget — this matters:
-- You have at most 256 model/tool rounds per turn. Plan them: one live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
+Round budget — this matters:
+- A turn has at most ${AGENT_STEP_BUDGET} model/tool rounds. Every round you are told which round you are in. The last ${AGENT_WRAP_UP_ROUNDS} rounds are for finishing the mutation in flight, reading it back, and talking to the user — never for starting something new.
+- Size the plan to the request: a tweak takes a handful of rounds; a beat or a chord part ten to twenty; a full arrangement must deliver a compelling, listenable first pass well inside the budget, with refinements left for later turns. When a request cannot fit, say so up front and propose the first pass you will deliver now.
+- Build the core first — the groove, the bass, the one idea that makes it a track — verify it, and only then add layers, variations and fills. Whatever round the turn ends on, what exists in Live must already sound like something.
+- One live_set_summary tells you almost everything; do not poll state in a loop, and never repeat a call that just failed with the same arguments.
+- Stopping with work remaining is a good outcome when done on purpose: report it (see completion language) and let the user choose to continue or to listen first. Going silent is never acceptable.
 - If a property read fails, the property does not exist on that object. Do not retry it elsewhere blind — consult the facts below.
 
 Live Object Model facts (these prevent wasted, failing calls):
@@ -109,6 +149,7 @@ Completion language is strict:
 - While tool calls remain, describe work as in progress and never claim that the task is done.
 - Emit a final answer only after the request is complete and the required readbacks pass.
 - In Italian, the final answer must begin exactly with "Ho finito — ". In another language, begin with the natural equivalent of "I have finished — ". Then state concisely what changed and what was verified.
+- When you stop with work remaining (budget nearly used, or a musical decision only the user can take), begin instead with "Pausa — " in Italian or "Paused — " in another language. State what is done and verified, what remains, and offer the two ways forward: continue in a new turn, or listen to what exists so far. Never use "Ho finito" / "I have finished" for a partial result.
 
 ${MUSICAL_KNOWLEDGE}`;
 
@@ -153,7 +194,7 @@ export class HttpResponsesProvider implements AgentProvider {
     if (request.skillPrompt) {
       instructions += `\n\nThe user pressed a skill button for this turn. Its focus:\n${request.skillPrompt}`;
     }
-    const input = request.previousResponseId
+    const input: Record<string, unknown>[] = request.previousResponseId
       ? (request.toolOutputs ?? []).map((item) => ({
           type: "function_call_output",
           call_id: item.call_id,
@@ -163,6 +204,13 @@ export class HttpResponsesProvider implements AgentProvider {
           role: message.role,
           content: message.content,
         }));
+    if (request.previousResponseId && (request.budget || request.finalOnly)) {
+      const { round, total } = request.budget ?? { round: 0, total: 0 };
+      input.push({
+        role: "developer",
+        content: request.finalOnly ? budgetNotice(total + 1, total) : budgetNotice(round, total),
+      });
+    }
     const tools = request.tools.map((tool) => ({
       type: "function",
       name: tool.name,
@@ -175,7 +223,7 @@ export class HttpResponsesProvider implements AgentProvider {
       instructions,
       input,
       tools,
-      tool_choice: "auto",
+      tool_choice: request.finalOnly ? "none" : "auto",
       parallel_tool_calls: false,
       reasoning: { effort: request.reasoningEffort ?? "medium", summary: "auto" },
       max_output_tokens:

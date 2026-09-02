@@ -36,7 +36,9 @@ const SAFE_TOOL_NAMES = new Set([
   "tembro_arrange_clip",
 ]);
 
-const MAX_LOCAL_AGENT_STEPS = 264;
+// Safety net only: the server ends a turn at its own step budget (64) with a
+// refund; this cap just keeps a misbehaving server from running the device forever.
+const MAX_LOCAL_AGENT_STEPS = 72;
 const MAX_ARRANGEMENT_DESTINATIONS = 32;
 // A user's stop must land within this interval even while a server round or a
 // Live call is in flight — the in-flight work is abandoned, like the watchdog.

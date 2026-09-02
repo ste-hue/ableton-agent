@@ -4,9 +4,15 @@ import { createHmac } from "node:crypto";
 import { createApp } from "../src/app.js";
 import type { AppConfig } from "../src/app.js";
 import { MemoryStore } from "../src/store.js";
-import { HttpResponsesProvider, StubAgentProvider, AGENT_SYSTEM_PROMPT } from "../src/llm.js";
+import {
+  HttpResponsesProvider,
+  StubAgentProvider,
+  AGENT_SYSTEM_PROMPT,
+  AGENT_STEP_BUDGET,
+} from "../src/llm.js";
 import type { AgentProvider } from "../src/llm.js";
 import type { LicenseProvider } from "../src/billing.js";
+import { parseCreditPacks } from "../src/billing.js";
 import { estimateCreditCost } from "../src/skills.js";
 
 function makeApp(credits = 100, extra: Partial<AppConfig> = {}) {
@@ -106,6 +112,8 @@ test("landing page explains the complete customer journey", async () => {
   assert.match(body, /Chat/);
   assert.match(body, /https:\/\/tembro\.lemonsqueezy\.com\/buy\/test-product/);
   assert.match(body, /They are Tembro credits, not OpenAI tokens/);
+  assert.match(body, /No subscription/);
+  assert.match(body, /credits never expire/);
   assert.match(body, /Liveworks/);
   assert.match(body, /docs\.cycling74\.com\/apiref\/lom\/song/);
 });
@@ -601,7 +609,7 @@ test("Responses provider emits MCP function calls and continues with tool output
   assert.match(AGENT_SYSTEM_PROMPT, /at most 128 notes/);
   assert.match(AGENT_SYSTEM_PROMPT, /live_clip_duplicate_to_arrangement/);
   assert.match(AGENT_SYSTEM_PROMPT, /tembro_arrange_clip/);
-  assert.match(AGENT_SYSTEM_PROMPT, /at most 256 model\/tool rounds/);
+  assert.match(AGENT_SYSTEM_PROMPT, new RegExp(`at most ${AGENT_STEP_BUDGET} model\\/tool rounds`));
   assert.match(AGENT_SYSTEM_PROMPT, /kick and snare must not run mechanically through all 128 bars/);
   assert.match(AGENT_SYSTEM_PROMPT, /complete Arrangement from first bar to last/);
   assert.match(AGENT_SYSTEM_PROMPT, /final half-bar or bar before a meaningful section boundary/);
@@ -851,40 +859,112 @@ test("license activation rejects a purchase for another customer", async () => {
   assert.equal(response.status, 403);
 });
 
-test("signed subscription payment webhook grants credits exactly once", async () => {
+function paidOrder(overrides: Record<string, unknown> = {}, item: Record<string, unknown> = {}) {
+  return {
+    meta: { event_name: "order_created" },
+    data: {
+      type: "orders",
+      id: "order-1",
+      attributes: {
+        store_id: 10,
+        customer_id: 40,
+        user_email: "buyer@example.com",
+        status: "paid",
+        first_order_item: { product_id: 20, variant_id: 30, quantity: 1, ...item },
+        ...overrides,
+      },
+    },
+  };
+}
+
+function signedWebhook(app: ReturnType<typeof makeApp>["app"], secret: string, body: unknown) {
+  const payload = JSON.stringify(body);
+  const signature = createHmac("sha256", secret).update(payload).digest("hex");
+  return app.request("/v0/webhooks/lemonsqueezy", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-signature": signature },
+    body: payload,
+  });
+}
+
+const PACKS = new Map([
+  [30, 40],
+  [31, 120],
+]);
+
+test("signed paid order webhook grants the pack's credits exactly once", async () => {
   const secret = "webhook-test-secret";
   const { app, store } = makeApp(0, {
     lemonStoreId: 10,
     lemonProductId: 20,
     lemonWebhookSecret: secret,
-    subscriptionGrantCredits: 500,
+    creditPacks: PACKS,
   });
-  const payload = JSON.stringify({
-    meta: { event_name: "subscription_payment_success" },
-    data: {
-      type: "subscription-invoices",
-      id: "invoice-1",
-      attributes: {
-        store_id: 10,
-        product_id: 20,
-        variant_id: 30,
-        customer_id: 40,
-        user_email: "buyer@example.com",
-      },
-    },
-  });
-  const signature = createHmac("sha256", secret).update(payload).digest("hex");
-  const send = () =>
-    app.request("/v0/webhooks/lemonsqueezy", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-signature": signature },
-      body: payload,
-    });
-  assert.equal((await send()).status, 200);
-  assert.equal((await send()).status, 200);
+  assert.equal((await signedWebhook(app, secret, paidOrder())).status, 200);
+  assert.equal((await signedWebhook(app, secret, paidOrder())).status, 200);
   const user = await store.getUserByEmail("buyer@example.com");
   assert.ok(user);
-  assert.equal(await store.creditBalance(user.id), 500);
+  assert.equal(await store.creditBalance(user.id), 40);
+
+  // A second, distinct order for the bigger pack adds to the same account.
+  const bigger = paidOrder({}, { variant_id: 31, quantity: 2 });
+  bigger.data.id = "order-2";
+  assert.equal((await signedWebhook(app, secret, bigger)).status, 200);
+  assert.equal(await store.creditBalance(user.id), 40 + 2 * 120);
+});
+
+test("orders that are not paid, or subscription events, grant nothing", async () => {
+  const secret = "webhook-test-secret";
+  const { app, store } = makeApp(0, {
+    lemonStoreId: 10,
+    lemonProductId: 20,
+    lemonWebhookSecret: secret,
+    creditPacks: PACKS,
+  });
+  const pending = await signedWebhook(app, secret, paidOrder({ status: "pending" }));
+  assert.equal(pending.status, 200);
+  assert.deepEqual(await pending.json(), { ok: true, ignored: true });
+  const subscription = await signedWebhook(app, secret, {
+    meta: { event_name: "subscription_payment_success" },
+    data: { type: "subscription-invoices", id: "invoice-1", attributes: { store_id: 10 } },
+  });
+  assert.deepEqual(await subscription.json(), { ok: true, ignored: true });
+  assert.equal(await store.getUserByEmail("buyer@example.com"), null);
+});
+
+test("a paid order for an unconfigured variant is refused so Lemon Squeezy retries", async () => {
+  const secret = "webhook-test-secret";
+  const { app, store } = makeApp(0, {
+    lemonStoreId: 10,
+    lemonProductId: 20,
+    lemonWebhookSecret: secret,
+    creditPacks: PACKS,
+  });
+  const response = await signedWebhook(app, secret, paidOrder({}, { variant_id: 999 }));
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { error: "billing_unknown_variant" });
+  assert.equal(await store.getUserByEmail("buyer@example.com"), null);
+});
+
+test("the webhook route is disabled until credit packs are configured", async () => {
+  const secret = "webhook-test-secret";
+  const { app } = makeApp(0, {
+    lemonStoreId: 10,
+    lemonProductId: 20,
+    lemonWebhookSecret: secret,
+  });
+  assert.equal((await signedWebhook(app, secret, paidOrder())).status, 404);
+});
+
+test("CREDIT_PACKS parses variant→credits pairs and rejects garbage", () => {
+  assert.deepEqual([...parseCreditPacks("1001:40, 1002:120")], [
+    [1001, 40],
+    [1002, 120],
+  ]);
+  assert.equal(parseCreditPacks("").size, 0);
+  assert.equal(parseCreditPacks(undefined).size, 0);
+  assert.throws(() => parseCreditPacks("1001:0"), /invalid_env:CREDIT_PACKS/);
+  assert.throws(() => parseCreditPacks("abc"), /invalid_env:CREDIT_PACKS/);
 });
 
 test("unsigned billing webhook is rejected", async () => {
@@ -892,6 +972,7 @@ test("unsigned billing webhook is rejected", async () => {
     lemonStoreId: 10,
     lemonProductId: 20,
     lemonWebhookSecret: "secret",
+    creditPacks: PACKS,
   });
   const response = await app.request("/v0/webhooks/lemonsqueezy", {
     method: "POST",
@@ -906,16 +987,19 @@ test("signed billing webhook for another store is rejected without a grant", asy
     lemonStoreId: 10,
     lemonProductId: 20,
     lemonWebhookSecret: secret,
+    creditPacks: PACKS,
   });
   const payload = JSON.stringify({
-    meta: { event_name: "subscription_payment_success" },
+    meta: { event_name: "order_created" },
     data: {
-      type: "subscription-invoices",
-      id: "foreign-invoice",
+      type: "orders",
+      id: "foreign-order",
       attributes: {
         store_id: 999,
         customer_id: 40,
         user_email: "buyer@example.com",
+        status: "paid",
+        first_order_item: { product_id: 20, variant_id: 30 },
       },
     },
   });
@@ -1053,4 +1137,108 @@ test("the pressed skill button's guidance reaches the model", async () => {
   });
   assert.equal(res.status, 200);
   assert.match(String(prompts[0]), /Focus: groove/);
+});
+
+test("each continuation carries the round budget after the tool outputs; the last one disables tools", async () => {
+  const bodies: Record<string, unknown>[] = [];
+  const fakeFetch = (async function (_input: unknown, init?: RequestInit) {
+    bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+    return new Response(
+      JSON.stringify({
+        id: "resp-budget",
+        output: [{ type: "message", content: [{ type: "output_text", text: "ok" }] }],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  }) as typeof fetch;
+  const provider = new HttpResponsesProvider("https://example.test/v1/responses", "k", "m", fakeFetch);
+  const outputs = [{ call_id: "c1", output: "{}" }];
+
+  await provider.step({ previousResponseId: "prev", toolOutputs: outputs, tools: [LIVE_SET_TOOL], budget: { round: 12, total: 64 } });
+  await provider.step({ previousResponseId: "prev", toolOutputs: outputs, tools: [LIVE_SET_TOOL], budget: { round: 60, total: 64 } });
+  await provider.step({ previousResponseId: "prev", toolOutputs: outputs, tools: [LIVE_SET_TOOL], budget: { round: 65, total: 64 }, finalOnly: true });
+  // A fresh turn (no previous response) carries no notice: the prompt states the budget.
+  await provider.step({ messages: [{ role: "user", content: "ciao" }], tools: [LIVE_SET_TOOL], budget: { round: 1, total: 64 } });
+
+  const inputs = bodies.map((b) => b.input as Record<string, unknown>[]);
+  const notice = (i: number) => String(inputs[i]?.[1]?.content);
+  // The notice is the LAST item, after the tool outputs, so the cached prefix is untouched.
+  assert.equal(inputs[0]?.[0]?.type, "function_call_output");
+  assert.deepEqual(inputs[0]?.[1], { role: "developer", content: "[Tembro] Round 12 of 64." });
+  assert.match(notice(1), /Round 60 of 64: 4 left after this one\. Finish the mutation in flight/);
+  assert.match(notice(1), /"Pausa — "/);
+  assert.equal(bodies[1]?.tool_choice, "auto");
+  assert.match(notice(2), /budget exhausted \(64 of 64\)\. No tool calls are possible/);
+  assert.equal(bodies[2]?.tool_choice, "none");
+  assert.equal(inputs[3]?.length, 1);
+  assert.equal(bodies[3]?.tool_choice, "auto");
+
+  assert.match(AGENT_SYSTEM_PROMPT, /begin instead with "Pausa — "/);
+  assert.match(AGENT_SYSTEM_PROMPT, /Build the core first/);
+});
+
+test("a turn that exhausts the round budget ends with a spoken report, not an error", async () => {
+  // A model that never stops asking for tools, but answers when tools are disabled.
+  const seen: { round?: number; finalOnly?: boolean; toolChoiceNone: boolean }[] = [];
+  const agent: AgentProvider = {
+    async step(request) {
+      seen.push({ round: request.budget?.round, finalOnly: request.finalOnly, toolChoiceNone: Boolean(request.finalOnly) });
+      if (request.finalOnly) {
+        return {
+          responseId: "resp-paused",
+          reply: "Pausa — groove, bass and hook are in Live and verified; the breakdown and outro remain. Continue, or listen first?",
+          toolCalls: [
+            // Even a stray tool call here must be dropped by the server.
+            { call_id: "stray", name: "live_set_summary", arguments: {} },
+          ],
+        };
+      }
+      return {
+        responseId: "resp-" + seen.length,
+        reply: "",
+        toolCalls: [{ call_id: "call-" + seen.length, name: "live_set", arguments: { ref: { path: "live_set" }, property: "tempo", value: 120 } }],
+      };
+    },
+  };
+  const { app, store } = makeApp(10, { agent });
+  const { token } = await signin(app, "budget@example.com");
+  const headers = { "content-type": "application/json", authorization: "Bearer " + token };
+  const post = (body: unknown) =>
+    app.request("/v0/agent", { method: "POST", headers, body: JSON.stringify(body) });
+  let step = (await (
+    await post({ kind: "start", protocol_version: "0.2", message: "arrange a full 128-bar track", tools: [LIVE_SET_TOOL] })
+  ).json()) as Record<string, unknown>;
+  assert.equal(step.kind, "tool_calls");
+  assert.equal(step.credits_charged, 4);
+  let rounds = 1;
+  while (step.kind === "tool_calls") {
+    rounds += 1;
+    assert.ok(rounds <= AGENT_STEP_BUDGET + 1, "the loop must end at the budget");
+    const res = await post({
+      kind: "continue",
+      protocol_version: "0.2",
+      conversation_id: step.conversation_id,
+      continuation_token: step.continuation_token,
+      tools: [LIVE_SET_TOOL],
+      tool_outputs: [{ call_id: "call-" + (rounds - 1), output: '{"ok":true}' }],
+    });
+    assert.equal(res.status, 200, `round ${rounds}: ${await res.clone().text()}`);
+    step = (await res.json()) as Record<string, unknown>;
+  }
+  assert.equal(step.kind, "final");
+  assert.equal(rounds, AGENT_STEP_BUDGET + 1);
+  assert.match(String(step.reply), /^Pausa — /);
+  assert.equal(step.continuation_token, undefined);
+  // The model was told its round every time, and only the last call had tools disabled.
+  assert.deepEqual(seen.slice(1, 3).map((s) => s.round), [2, 3]);
+  assert.equal(seen.at(-1)?.round, AGENT_STEP_BUDGET + 1);
+  assert.deepEqual(seen.map((s) => s.finalOnly ?? false).filter(Boolean).length, 1);
+  // The work in Live is real and was reported: no refund, one event to count how often this happens.
+  const user = await store.getUserByEmail("budget@example.com");
+  assert.ok(user);
+  assert.equal(await store.creditBalance(user.id), 6);
+  const exhausted = store.events.filter((e) => e.kind === "agent.budget_exhausted");
+  assert.equal(exhausted.length, 1);
+  assert.equal((exhausted[0]?.payload as { ignoredToolCalls: number }).ignoredToolCalls, 1);
+  assert.equal(store.events.filter((e) => e.kind === "agent.completed").length, 1);
 });

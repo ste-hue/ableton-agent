@@ -11,7 +11,8 @@ import { z } from "zod";
 import type { Store } from "./store.js";
 import { hashToken } from "./store.js";
 import type { AgentProvider, AgentStepResult, AgentStepUsage } from "./llm.js";
-import type { LicenseProvider } from "./billing.js";
+import { AGENT_STEP_BUDGET } from "./llm.js";
+import type { CreditPacks, LicenseProvider } from "./billing.js";
 import { billingGrantFromWebhook, verifyLemonSignature } from "./billing.js";
 import { ClientEventSchema, AgentRequestSchema, LicenseAuthRequestSchema } from "./types.js";
 import type { AgentStepResponse, McpTool } from "./types.js";
@@ -45,7 +46,8 @@ export interface AppConfig {
   lemonStoreId?: number;
   lemonProductId?: number;
   lemonWebhookSecret?: string;
-  subscriptionGrantCredits?: number;
+  /** Lemon Squeezy variant id → credits per unit; empty disables the webhook. */
+  creditPacks?: CreditPacks;
   allowDevSignin?: boolean;
   signupGrantCredits?: number;
   chatCostCredits?: number;
@@ -62,9 +64,9 @@ type Env = { Variables: { userId: string } };
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const AGENT_TOKEN_TTL_MS = 30 * 60 * 1000;
-// Full-throttle beta: effectively unlimited within the device's 15-minute
-// turn watchdogs, while still bounding what a modified client can bill.
-const MAX_AGENT_STEPS = 256;
+// The step budget bounds what one credit charge can cost us in model calls
+// (measured: ~60 cached Terra steps ≈ $0.30); the prompt states the same number.
+const MAX_AGENT_STEPS = AGENT_STEP_BUDGET;
 
 const SAFE_MCP_TOOLS = new Set([
   "live_ping",
@@ -205,7 +207,7 @@ export function createApp(config: AppConfig) {
     lemonStoreId,
     lemonProductId,
     lemonWebhookSecret,
-    subscriptionGrantCredits = 500,
+    creditPacks = new Map<number, number>(),
     allowDevSignin = false,
     signupGrantCredits = 100,
     chatCostCredits = 1,
@@ -214,7 +216,7 @@ export function createApp(config: AppConfig) {
     downloadUrl,
     supportEmail,
     betaAccessCode,
-    betaGrantCredits = 100,
+    betaGrantCredits = 40,
     appVersion = "0.1.5-beta",
   } = config;
 
@@ -333,7 +335,7 @@ export function createApp(config: AppConfig) {
     });
   }
 
-  if (lemonWebhookSecret && lemonStoreId && lemonProductId) {
+  if (lemonWebhookSecret && lemonStoreId && lemonProductId && creditPacks.size > 0) {
     app.post("/v0/webhooks/lemonsqueezy", async (c) => {
       const rawBody = await c.req.text();
       const signature = c.req.header("x-signature") ?? "";
@@ -352,19 +354,24 @@ export function createApp(config: AppConfig) {
           payload,
           lemonStoreId,
           lemonProductId,
-          subscriptionGrantCredits,
+          creditPacks,
         );
       } catch (error) {
-        if (error instanceof Error && error.message === "billing_product_mismatch") {
-          return c.json({ error: "billing_product_mismatch" }, 400);
+        if (
+          error instanceof Error &&
+          (error.message === "billing_product_mismatch" ||
+            error.message === "billing_unknown_variant")
+        ) {
+          await store.logEvent("billing.rejected", { reason: error.message });
+          return c.json({ error: error.message }, 400);
         }
         throw error;
       }
       if (!grant) return c.json({ ok: true, ignored: true });
       const result = await store.processBillingGrant(grant);
       await store.logEvent(
-        "billing.subscription_payment_success",
-        { eventKey: grant.eventKey, processed: result.processed },
+        "billing.order_created",
+        { eventKey: grant.eventKey, credits: grant.credits, processed: result.processed },
         result.userId,
       );
       return c.json({ ok: true, processed: result.processed });
@@ -612,16 +619,13 @@ export function createApp(config: AppConfig) {
     if (!consumed) {
       return c.json({ error: "continuation_replayed" }, 409);
     }
-    if (continuation.step >= MAX_AGENT_STEPS) {
-      await store.closeAgentRequest(continuation.requestId, userId);
-      await store.addCredits(
-        userId,
-        continuation.creditCost,
-        "refund:agent",
-        continuation.requestId,
-      );
-      return c.json({ error: "agent_step_limit" }, 422);
-    }
+    // Budget exhausted with the model still asking for tools: it has ignored
+    // the wrap-up notices. Rather than going silent (a bare error the device
+    // can only render as "stopped"), spend one last call with tools disabled so
+    // the user hears what exists in Live and what remains. The work is real
+    // and reported, so the charge stands; the event tells us how often the
+    // model has to be forced here.
+    const budgetExhausted = continuation.step >= MAX_AGENT_STEPS;
     try {
       await store.logEvent(
         "agent.tool_results",
@@ -635,13 +639,35 @@ export function createApp(config: AppConfig) {
         },
         userId,
       );
-      const result = await agent.step({
+      const stepResult = await agent.step({
         previousResponseId: continuation.responseId,
         toolOutputs: parsed.data.tool_outputs,
         tools,
         reasoningEffort: "high",
         skillPrompt: skillPromptFor(continuation.skill),
+        budget: { round: continuation.step + 1, total: MAX_AGENT_STEPS },
+        finalOnly: budgetExhausted,
       });
+      let result = stepResult;
+      if (budgetExhausted) {
+        await store.logEvent(
+          "agent.budget_exhausted",
+          {
+            requestId: continuation.requestId,
+            round: continuation.step + 1,
+            skill: continuation.skill,
+            ignoredToolCalls: stepResult.toolCalls.length,
+          },
+          userId,
+        );
+        result = {
+          ...stepResult,
+          toolCalls: [],
+          reply:
+            stepResult.reply.trim() ||
+            "Paused — the round budget for this turn is used up. What is in Live now is what was built and verified so far; say \"continue\" to keep going, or listen first.",
+        };
+      }
       if (result.thinking) {
         await store.logEvent(
           "agent.thinking",
