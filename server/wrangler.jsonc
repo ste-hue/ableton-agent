@@ -27,7 +27,7 @@
     "CHAT_COST_CREDITS": "1",
     "BETA_GRANT_CREDITS": "100",
     "CHECKOUT_URL": "",
-    "DOWNLOAD_URL": "https://github.com/ste-hue/ableton-agent/releases/download/v0.1.5-beta/Tembro-0.1.5-beta.dmg",
+    "DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/v0.1.5-beta/Tembro-0.1.5-beta.dmg",
     "SUPPORT_EMAIL": ""
   },
   "observability": {
