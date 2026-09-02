@@ -2,7 +2,7 @@ function add(ev,bar,q,role,velocity,group,duration=PPQ/8){ev.push({tick:beat(bar
 function pushFill(ev,tick,duration,role,velocity,subdivision){
   // Fill events are grid-priority: never stack the same voice on the same tick.
   const minGap=Math.max(1,Math.round(PPQ*4/64));
-  const collision=ev.some(e=>e.group==="fill"&&e.role===role&&Math.abs(e.tick-tick)<minGap*.45);
+  const collision=ev.some(e=>(e.role===role||(["snare","clap"].includes(role)&&["snare","clap"].includes(e.role)))&&Math.abs(e.tick-tick)<minGap*.45);
   if(collision)return;
   ev.push({tick:Math.round(tick),duration:Math.max(4,Math.round(duration)),role,velocity:clamp(Math.round(velocity),1,127),group:"fill",subdivision,timingLocked:true});
 }
@@ -153,6 +153,11 @@ function makePatternFamily(p,rnd){
 
   const accentA=uniq(unionWeighted(A.accents.strong,B.accents.strong,rnd,bias));
   const accentB=uniq([...accentA,...unionWeighted(A.accents.weak,B.accents.weak,rnd,bias).filter(()=>rnd()<.18*varAmt)]);
+  // One voice owns the backbeat; the other answers it. This relationship is
+  // chosen once per song and never turns into automatic snare/clap layering.
+  const bothBackbeatVoices=cfg.kit.snare&&cfg.kit.clap;
+  const backbeatLead=bothBackbeatVoices?(rnd()<.68?"snare":"clap"):(cfg.kit.snare?"snare":cfg.kit.clap?"clap":"snare");
+  const backbeatResponse=bothBackbeatVoices?(backbeatLead==="snare"?"clap":"snare"):null;
   // A establishes identity, B answers it, C develops it while retaining motif memory.
   const creativity=clamp(cfg.creativity/100,0,1),memory=clamp(cfg.motifMemory/100,0,1),scope=cfg.variationScope||"Groove";
   const kickIdea=kickDevelopment(kickA,rnd,creativity),kickC=scope==="Detail"?[...kickA]:displaceAccessoryGroup(kickIdea.steps,rnd,[0,4,8,12]);
@@ -166,7 +171,10 @@ function makePatternFamily(p,rnd){
   // Snare owns stick grammar. Hand clap is written independently as an
   // ensemble backbeat layer and never receives rudimental transformations.
   const backRole="snare";
-  return {A:{kick:kickA,back:backA,ghost:[],ornaments:[],hat:hatA,hatAccent:[],hatCurve:"flat",perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,ghost:ghostB,ornaments:[],hat:hatB,hatAccent:[],hatCurve:"flat",perc:percB,open:openB,accent:accentB},C:{kick:kickC,back:backA,ghost:ghostC,ornaments:scope==="Phrase"?backIdea.ornaments:[],hat:hatC,hatAccent:hatIdea.accent,hatCurve:hatIdea.curve,perc:percC,open:openC,accent:uniq([...accentB,...hatIdea.accent])},chain,lineage,backRole,creativeLanguage:{kick:kickIdea.vocabulary,backbeat:backIdea.detail,hats:hatIdea.phrase,scope,shape:cfg.phraseShape}};
+  const occupiedB=new Set(ghostB),occupiedC=new Set([...ghostC,...backIdea.ornaments.map(item=>Math.round(item.step))]);
+  const responseA=backbeatResponse?[7]:[],responseB=backbeatResponse?[3,7,10,15,2,6,14].filter(step=>!occupiedB.has(step)).slice(0,2):[];
+  const responseC=backbeatResponse?[1,5,9,13,14,2,6,10].filter(step=>!occupiedC.has(step)).slice(0,creativity>.7?4:3):[];
+  return {A:{kick:kickA,back:backA,response:responseA,ghost:[],ornaments:[],hat:hatA,hatAccent:[],hatCurve:"flat",perc:percA,open:openA,accent:accentA},B:{kick:kickB,back:backB,response:responseB,ghost:ghostB,ornaments:[],hat:hatB,hatAccent:[],hatCurve:"flat",perc:percB,open:openB,accent:accentB},C:{kick:kickC,back:backA,response:responseC,ghost:ghostC,ornaments:scope==="Phrase"?backIdea.ornaments:[],hat:hatC,hatAccent:hatIdea.accent,hatCurve:hatIdea.curve,perc:percC,open:openC,accent:uniq([...accentB,...hatIdea.accent])},chain,lineage,backRole,backbeatLead,backbeatResponse,creativeLanguage:{kick:kickIdea.vocabulary,backbeat:backIdea.detail,hats:hatIdea.phrase,scope,shape:cfg.phraseShape}};
 }
 function addFlam(ev,bar,step,role,velocity,group){const q=step/4,t=beat(bar,q),gap=Math.max(12,Math.round(PPQ/24));ev.push({tick:Math.max(0,t-gap),duration:PPQ/20,role,velocity:clamp(velocity-28,1,127),group});ev.push({tick:t,duration:PPQ/10,role,velocity,group})}
 function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
@@ -186,21 +194,19 @@ function renderPatternBar(ev,bar,pattern,p,rnd,energy,opts={}){
   // BACKBEAT: same motif across sections, only removed/reintroduced by arrangement.
   if(layers.back){
     for(const st of pattern.back){
-      const role="snare";
+      const role=opts.backbeatLead||"snare";
       const tb=theoryBudget(opts.kind||"main",energy);
       if(opts.allowOrnament&&tb>.08&&rnd()<Math.min(.10,p.flam*.16*tb*4)&&st>=8)addFlam(ev,bar,st,role,v(102,st,4),"backbeat");
       else add(ev,bar,st/4,role,v(102,st,4),"backbeat",PPQ/9);
-      const kind=opts.kind||"main";
-      const clapAllowed=["main","drop","build"].includes(kind)||(kind==="soft"&&phase>.2)||(kind==="intro"&&phase>.72)||(kind==="breakdown"&&phase>.84);
-      if(clapAllowed)add(ev,bar,st/4,"clap",v(kind==="drop"?105:kind==="build"?99:94,st,3),"backbeat",PPQ/8);
     }
+    if(opts.backbeatResponse){for(const st of pattern.response||[])add(ev,bar,st/4,opts.backbeatResponse,Math.min(91,v(72+(opts.variant==="C"?7:0),st,5)),"backbeat-response",PPQ/11)}
     for(const st of pattern.ghost||[]){
       const maxGhost=cfg.velocityCharacter==="Aggressive"?66:cfg.velocityCharacter==="Tight"?52:59;
       add(ev,bar,st/4,"snare",Math.min(maxGhost,vel(43+cfg.ghostNotes*.12,rnd,5)),"ghost",PPQ/14);
     }
     for(const ornament of pattern.ornaments||[]){
-      if(ornament.type==="flam")addFlam(ev,bar,ornament.step,"snare",Math.min(96,v(84,ornament.step,4)),"backbeat-detail");
-      else add(ev,bar,ornament.step/4,"snare",Math.min(82,v(67,ornament.step,5)),"backbeat-detail",PPQ/14);
+      const ornamentStep=ornament.type==="flam"?ornament.step-.4:ornament.step;
+      add(ev,bar,ornamentStep/4,"snare",Math.min(ornament.type==="flam"?76:82,v(ornament.type==="flam"?62:67,ornamentStep,5)),"backbeat-detail",PPQ/14);
     }
   }
 
@@ -254,7 +260,7 @@ function generate(){
       // No section gets a fresh groove. Difference = add, subtract, x2 or ÷2.
       renderPatternBar(ev,bar,pattern,p,rnd,energy,{
         kind:sec.kind,layers,build:sec.kind==="build",isLast,local,sectionBars:sec.bars,
-        familyB:family.B,familyC:family.C,variant,backRole:family.backRole,
+        familyB:family.B,familyC:family.C,variant,backRole:family.backRole,backbeatLead:family.backbeatLead,backbeatResponse:family.backbeatResponse,
         allowOrnament:(b16||isLast)&&cfg.variation>58&&sec.kind!=="breakdown"
       });
       // Dedicated tom/rim grammar: phrase punctuation, contour, call-response and build cascades.
@@ -359,6 +365,7 @@ function generate(){
     crashLanguage:narrative.crashRunMode?`PRE-DROP ${narrative.crashRunMode}-BAR CRASH RUN + MAJOR ARRIVAL CRASHES`:"MAJOR ARRIVAL CRASHES",
     tomRimLanguage:`${narrative.tomDirection} TOM CONTOUR · ${narrative.rimMode}`,
     creativeLanguage:`${family.creativeLanguage.shape} · ${family.creativeLanguage.scope} · KICK ${family.creativeLanguage.kick} · BACKBEAT ${family.creativeLanguage.backbeat} · HATS ${family.creativeLanguage.hats}`,
+    backbeatLanguage:family.backbeatResponse?`${family.backbeatLead.toUpperCase()} LEADS · ${family.backbeatResponse.toUpperCase()} RESPONDS`:`${family.backbeatLead.toUpperCase()} LEADS`,
     activeKit:activeKitKeys().map(k=>KIT_DEFS[k].label)
   }};
 }

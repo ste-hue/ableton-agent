@@ -37,8 +37,10 @@ can convert these boundaries to ES modules without changing the music engine.
 - Stick Control and rudiments are budgeted detail, never the form generator.
 - Eight independent kit families include separate Snare and Hand Clap tracks,
   plus a dedicated Shaker motion layer.
-- Snare owns ghost notes, flams, rudiments and roll vocabulary. Hand Clap is an
-  ensemble backbeat layer only and is never substituted into technical fills.
+- Snare and Hand Clap are never automatically layered on the same hit. One owns
+  the anchor backbeat for the song while the other writes off-anchor responses.
+- Snare owns ghost notes, flams, rudiments and roll vocabulary. Hand Clap may
+  lead or answer, but is never substituted into technical fills.
 - Disabled kit families create neither events nor MIDI tracks; compatible fill
   voices may be re-orchestrated, while a disabled kick is simply omitted.
 - Generate always chooses a fresh seed.

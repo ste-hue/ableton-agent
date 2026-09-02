@@ -1,7 +1,7 @@
 const laneColors=["#d8ff3e","#ff675c","#5fe5d1","#f5b85c","#c285ff","#6c8cff","#ff7eb6"];
 function summaryText(){
   const profile=dawExportProfile(cfg.targetDaw),grammar=result.patternGrammar;
-  return `<b>${cfg.style} · ${result.totalBars} bars · ${cfg.bpm} BPM.</b> ${result.tracks.length} layers, ${grammar.kickPolicy.toLowerCase()} and ${grammar.creativeLanguage.toLowerCase()}. ${String(cfg.build).toLowerCase()} build with a ${grammar.fillGenealogy.split(" · ")[0].toLowerCase()} master fill. Export: <b>${profile.label} · ${profile.device}</b>.`;
+  return `<b>${cfg.style} · ${result.totalBars} bars · ${cfg.bpm} BPM.</b> ${result.tracks.length} layers, ${grammar.kickPolicy.toLowerCase()}; ${grammar.backbeatLanguage.toLowerCase()}. ${grammar.creativeLanguage.toLowerCase()}. ${String(cfg.build).toLowerCase()} build with a ${grammar.fillGenealogy.split(" · ")[0].toLowerCase()} master fill. Export: <b>${profile.label} · ${profile.device}</b>.`;
 }
 function roleLabel(role){return role.replace(/([A-Z])/g," $1").toUpperCase()}
 function renderFillClip(){
