@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Rudiment — Drum Arranger</title>
   <meta name="description" content="Generate complete electronic drum arrangements and export DAW-ready MIDI.">
-  <link rel="stylesheet" href="src/styles/app.css?v=3">
-  <link rel="stylesheet" href="src/styles/fill-viewer.css?v=6">
+  <link rel="stylesheet" href="src/styles/app.css?v=4">
+  <link rel="stylesheet" href="src/styles/fill-viewer.css?v=7">
 </head>
 <body>
 <main class="app">
@@ -26,18 +26,18 @@
       <input id="bpm" class="tempoRange" type="range" min="60" max="200" value="128" aria-label="Tempo">
       <div class="sectionLabel">DRUMMER</div>
       <label class="controlBlock"><span>BUILD</span><select id="build"><option>Small</option><option selected>Mid</option><option>Huge</option></select></label>
-      <label class="sliderRow"><span>VARIATION</span><input id="variation" type="range" min="0" max="100" value="32"><b id="variationVal">32</b></label>
-      <label class="sliderRow"><span>FILLS</span><input id="fill" type="range" min="0" max="100" value="38"><b id="fillVal">38</b></label>
-      <label class="sliderRow"><span>SWING</span><input id="swing" type="range" min="0" max="100" step="1" value="30"><b id="swingVal">30%</b></label>
-      <label class="sliderRow"><span>DENSITY</span><input id="density" type="range" min="0" max="100" value="52"><b id="densityVal">52</b></label>
-      <label class="sliderRow"><span>SYNCOP.</span><input id="syncopation" type="range" min="0" max="100" value="34"><b id="syncopationVal">34</b></label>
-      <label class="sliderRow"><span>HAT MOTION</span><input id="hatMotion" type="range" min="0" max="100" value="56"><b id="hatMotionVal">56</b></label>
-      <label class="sliderRow"><span>GHOSTS</span><input id="ghostNotes" type="range" min="0" max="100" value="28"><b id="ghostNotesVal">28</b></label>
+      <label class="sliderRow stepped"><span>VARIATION RATE</span><input id="variation" type="range" min="0" max="100" step="20" value="40"><b id="variationVal">MED</b></label>
+      <label class="sliderRow stepped"><span>FILL FREQUENCY</span><input id="fill" type="range" min="0" max="100" step="20" value="40"><b id="fillVal">MED</b></label>
+      <label class="sliderRow fluid"><span>SWING TIMING</span><input id="swing" type="range" min="0" max="100" step="1" value="30"><b id="swingVal">30%</b></label>
+      <label class="sliderRow stepped"><span>LAYER DENSITY</span><input id="density" type="range" min="0" max="100" step="20" value="60"><b id="densityVal">HIGH</b></label>
+      <label class="sliderRow stepped"><span>ACCESSORY SYNCOP.</span><input id="syncopation" type="range" min="0" max="100" step="20" value="40"><b id="syncopationVal">MED</b></label>
+      <label class="sliderRow stepped"><span>HI-HAT ACTIVITY</span><input id="hatMotion" type="range" min="0" max="100" step="20" value="60"><b id="hatMotionVal">HIGH</b></label>
+      <label class="sliderRow stepped"><span>SNARE GHOSTS</span><input id="ghostNotes" type="range" min="0" max="100" step="20" value="20"><b id="ghostNotesVal">LOW</b></label>
       <details class="creativePanel" open>
         <summary>CREATIVE PATTERN ENGINE <i>⌄</i></summary>
-        <label class="sliderRow"><span>CREATIVITY</span><input id="creativity" type="range" min="0" max="100" value="58"><b id="creativityVal">58</b></label>
-        <label class="sliderRow"><span>MOTIF MEMORY</span><input id="motifMemory" type="range" min="0" max="100" value="72"><b id="motifMemoryVal">72</b></label>
-        <label class="sliderRow"><span>DISPLACEMENT</span><input id="controlledDisplacement" type="range" min="0" max="100" value="28"><b id="controlledDisplacementVal">28</b></label>
+        <label class="sliderRow stepped"><span>PATTERN CREATIVITY</span><input id="creativity" type="range" min="0" max="100" step="20" value="60"><b id="creativityVal">HIGH</b></label>
+        <label class="sliderRow stepped"><span>MOTIF RETENTION</span><input id="motifMemory" type="range" min="0" max="100" step="20" value="80"><b id="motifMemoryVal">V.HIGH</b></label>
+        <label class="sliderRow stepped"><span>GROUP SHIFT CHANCE</span><input id="controlledDisplacement" type="range" min="0" max="100" step="20" value="20"><b id="controlledDisplacementVal">LOW</b></label>
         <div class="drummerMenus creativeMenus">
           <label class="controlBlock"><span>VARIATION SCOPE</span><select id="variationScope"><option>Detail</option><option selected>Groove</option><option>Phrase</option></select></label>
           <label class="controlBlock"><span>PHRASE SHAPE</span><select id="phraseShape"><option>Stable</option><option>Alternating ABAB</option><option>Paired AABB</option><option selected>Evolving</option><option>Call / Response</option><option>Progressive</option></select></label>
@@ -54,7 +54,7 @@
         <label class="controlBlock"><span>PHRASE EVOLUTION</span><select id="phraseEvolution"><option value="8">8 bars</option><option value="16" selected>16 bars</option><option value="32">32 bars</option></select></label>
         <label class="controlBlock"><span>VELOCITY</span><select id="velocityCharacter"><option>Tight</option><option selected>Natural</option><option>Aggressive</option></select></label>
       </div>
-      <label class="sliderRow"><span>CONTRAST</span><input id="sectionContrast" type="range" min="0" max="100" value="55"><b id="sectionContrastVal">55</b></label>
+      <label class="sliderRow stepped"><span>SECTION CONTRAST</span><input id="sectionContrast" type="range" min="0" max="100" step="20" value="60"><b id="sectionContrastVal">HIGH</b></label>
       <div class="switchRow"><button id="doubleKick" class="switch active" type="button"><i></i> DOUBLE KICK</button><button id="pausona" class="switch active" type="button"><i></i> MAIN ROLL</button></div>
       <div class="sectionLabel">INSTRUMENTS</div>
       <div class="kitGrid" id="kitGrid">
@@ -97,6 +97,6 @@
     </section>
   </div>
 </main>
-<script src="src/engine/core-config.js?v=7"></script><script src="src/engine/drum-machine-theory-engine.js?v=1"></script><script src="src/engine/theory-rudiment-engine.js"></script><script src="src/engine/fill-engine.js?v=5"></script><script src="src/engine/arrangement-engine.js?v=9"></script><script src="src/engine/timing-velocity-engine.js?v=2"></script><script src="src/midi/midi-renderer.js?v=8"></script><script src="src/audio/synth-preview.js?v=3"></script><script src="src/integrations/ableton-mcp-adapter.js?v=2"></script><script src="src/app/ui.js?v=17"></script>
+<script src="src/engine/core-config.js?v=8"></script><script src="src/engine/drum-machine-theory-engine.js?v=1"></script><script src="src/engine/theory-rudiment-engine.js"></script><script src="src/engine/fill-engine.js?v=5"></script><script src="src/engine/arrangement-engine.js?v=9"></script><script src="src/engine/timing-velocity-engine.js?v=2"></script><script src="src/midi/midi-renderer.js?v=8"></script><script src="src/audio/synth-preview.js?v=3"></script><script src="src/integrations/ableton-mcp-adapter.js?v=2"></script><script src="src/app/ui.js?v=18"></script>
 </body>
 </html>
