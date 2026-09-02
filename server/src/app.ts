@@ -10,16 +10,11 @@ import {
 import { z } from "zod";
 import type { Store } from "./store.js";
 import { hashToken } from "./store.js";
-import type { AgentProvider, AgentStepResult, AgentStepUsage, LlmProvider } from "./llm.js";
+import type { AgentProvider, AgentStepResult, AgentStepUsage } from "./llm.js";
 import type { LicenseProvider } from "./billing.js";
 import { billingGrantFromWebhook, verifyLemonSignature } from "./billing.js";
-import {
-  ChatRequestSchema,
-  ClientEventSchema,
-  AgentRequestSchema,
-  LicenseAuthRequestSchema,
-} from "./types.js";
-import type { AgentStepResponse, ChatResponse, McpTool } from "./types.js";
+import { ClientEventSchema, AgentRequestSchema, LicenseAuthRequestSchema } from "./types.js";
+import type { AgentStepResponse, McpTool } from "./types.js";
 import { landingPage } from "./site.js";
 import {
   estimateCreditCost,
@@ -40,11 +35,10 @@ import type { TembroSkillId } from "./skills.js";
 //
 // Credit invariant: the credit policy is server-side and
 // replaceable — the client only ever sees a balance. Credits are not chats
-// and are not provider tokens. /v0/chat remains for v0.1.0.
+// and are not provider tokens.
 // ---------------------------------------------------------------------------
 export interface AppConfig {
   store: Store;
-  llm: LlmProvider;
   agent?: AgentProvider;
   agentTokenSecret?: string;
   licenseProvider?: LicenseProvider;
@@ -205,7 +199,6 @@ function verifyAgentToken(secret: string, token: string): AgentTokenPayload | nu
 export function createApp(config: AppConfig) {
   const {
     store,
-    llm,
     agent,
     agentTokenSecret,
     licenseProvider,
@@ -699,69 +692,6 @@ export function createApp(config: AppConfig) {
         },
         502,
       );
-    }
-  });
-
-  app.post("/v0/chat", requireAuth, async (c) => {
-    const userId = c.get("userId");
-    const parsed = ChatRequestSchema.safeParse(await c.req.json().catch(() => null));
-    if (!parsed.success) return c.json({ error: "invalid_request" }, 400);
-    const request = parsed.data;
-    const requestId = request.request_id ?? randomUUID();
-    const skill = request.skill ?? null;
-    const creditCost = estimateCreditCost(chatCostCredits, request.message, request.skill);
-
-    let conversationId = request.conversation_id ?? null;
-    if (conversationId) {
-      const owned = await store.conversationBelongsTo(conversationId, userId);
-      if (!owned) return c.json({ error: "not_found" }, 404);
-    }
-
-    const charge = await store.chargeCredits(userId, creditCost, requestId);
-    if (charge.duplicate) {
-      return c.json({ error: "duplicate_request", request_id: requestId }, 409);
-    }
-    if (!charge.charged) {
-      return c.json(
-        { error: "insufficient_credits", credits: charge.balance, credits_required: creditCost },
-        402,
-      );
-    }
-
-    try {
-      conversationId ??= await store.createConversation(userId);
-      await store.appendMessage(conversationId, { role: "user", content: request.message });
-      const history = await store.getMessages(conversationId, userId, historyLimit);
-      await store.logEvent(
-        "chat.request",
-        { conversationId, requestId, creditCost, skill },
-        userId,
-      );
-      const result = await llm.complete(history, request.live_context);
-      await store.appendMessage(conversationId, {
-        role: "assistant",
-        content: result.reply,
-        actions: result.actions,
-      });
-      await store.logEvent(
-        "chat.completed",
-        { conversationId, requestId, usage: result.usage ?? null },
-        userId,
-      );
-      const response: ChatResponse = {
-        request_id: requestId,
-        protocol_version: "0.1",
-        conversation_id: conversationId,
-        reply: result.reply,
-        actions: result.actions,
-        credits_remaining: charge.balance,
-        credits_charged: creditCost,
-        skill,
-      };
-      return c.json(response);
-    } catch (error) {
-      await store.addCredits(userId, creditCost, "refund:chat", requestId);
-      throw error;
     }
   });
 

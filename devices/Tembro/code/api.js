@@ -132,32 +132,6 @@ class TembroApi {
     return res.json;
   }
 
-  /** POST /v0/chat → { conversation_id, reply, actions, credits_remaining } */
-  async chat(message, liveContext, conversationId, skill) {
-    if (!this.token) throw new Error("not signed in");
-    const body = {
-      protocol_version: "0.1",
-      request_id: crypto.randomUUID(),
-      message,
-    };
-    if (skill) body.skill = skill;
-    if (liveContext) body.live_context = liveContext;
-    if (conversationId) body.conversation_id = conversationId;
-    const res = await this.request(this.baseUrl, "POST", "/v0/chat", body, this.token);
-    if (res.status === 401) {
-      this.clearSession();
-      throw new Error("session expired — sign in again");
-    }
-    if (res.status === 402) {
-      const required = res.json && res.json.credits_required;
-      throw new Error(required ? "this needs " + required + " credits" : "out of credits");
-    }
-    if (res.status !== 200 || !res.json) {
-      throw new Error("chat failed (" + res.status + ")");
-    }
-    return res.json;
-  }
-
   /** Start one V0.2 agent turn. The server charges exactly once here. */
   async agentStart(message, liveContext, tools, conversationId, skill) {
     if (!this.token) throw new Error("not signed in");
@@ -260,7 +234,7 @@ class TembroApi {
     return res.json;
   }
 
-  /** POST /v0/events — executor outcomes / readback mismatches / client errors. */
+  /** POST /v0/events — agent outcomes / readback mismatches / client errors. */
   async reportEvent(kind, payload) {
     if (!this.token) return;
     try {

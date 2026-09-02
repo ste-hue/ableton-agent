@@ -2,7 +2,7 @@
   "name": "tembro-server",
   "version": "0.0.1",
   "private": true,
-  "description": "Tembro backend: auth, agentic MCP chat, credits, billing, and logging",
+  "description": "Tembro backend: auth, agentic MCP loop, credits, billing, and logging",
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -12,7 +12,6 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.0",
     "hono": "^4.9.5",
     "zod": "^3.25.76"
   },

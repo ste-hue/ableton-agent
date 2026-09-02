@@ -1,8 +1,7 @@
 import { createApp } from "./app.js";
 import { LemonSqueezyLicenseProvider } from "./billing.js";
 import { D1Store } from "./d1-store.js";
-import { HttpChatProvider, HttpResponsesProvider } from "./llm.js";
-import { PostgresStore } from "./postgres-store.js";
+import { HttpResponsesProvider } from "./llm.js";
 
 function positiveInteger(value: string, name: string): number {
   const parsed = Number(value);
@@ -16,10 +15,9 @@ function optionalPositiveInteger(value: string | undefined, name: string): numbe
 
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
-    const store = env.DB ? new D1Store(env.DB) : new PostgresStore(env.DATABASE_URL);
+    if (!env.DB) throw new Error("invalid_env:DB");
     const app = createApp({
-      store,
-      llm: new HttpChatProvider(env.LLM_ENDPOINT, env.LLM_API_KEY, env.LLM_MODEL),
+      store: new D1Store(env.DB),
       agent: new HttpResponsesProvider(
         env.LLM_RESPONSES_ENDPOINT,
         env.LLM_API_KEY,

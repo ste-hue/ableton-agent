@@ -1,34 +1,16 @@
 import type {
-  ActionPlan,
   AgentToolCall,
   AgentToolOutput,
   LiveContext,
   McpTool,
   Message,
 } from "./types.js";
-import { ActionPlanSchema } from "./types.js";
 import { MUSICAL_KNOWLEDGE } from "./knowledge.js";
 
 // ---------------------------------------------------------------------------
-// LLM gateway — the product is not tied to one model. The current agent uses
-// Responses function calls in a bounded server ↔ local MCP loop. The legacy
-// JSON planner stays available only for v0.1.0 clients during the beta upgrade.
+// LLM gateway — the product is not tied to one model. The agent uses Responses
+// function calls in a bounded server ↔ local MCP loop.
 // ---------------------------------------------------------------------------
-
-export interface LlmResult {
-  reply: string;
-  actions: ActionPlan;
-  usage?: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-    model: string;
-  };
-}
-
-export interface LlmProvider {
-  complete(messages: Message[], liveContext?: LiveContext): Promise<LlmResult>;
-}
 
 export interface AgentStepRequest {
   messages?: Message[];
@@ -80,23 +62,6 @@ const AGENT_OUTPUT_RECOVERY_INSTRUCTIONS = `Output recovery rules:
 - Never emit more than 128 MIDI notes in one live_clip_add_notes call. Split larger note sets across later calls.
 - Never encode a long arrangement as one giant note array. Build short reusable clips and place them with tembro_arrange_clip when available, otherwise live_clip_duplicate_to_arrangement.`;
 
-export const SYSTEM_PROMPT = `You are Tembro, a music agent operating Ableton Live for a musician.
-You receive the current Live Set context and the conversation. Respond with:
-1. "reply": one short sentence in the user's language describing what you are doing.
-2. "actions": a JSON array of LOM operations from the allowed set
-   (set_tempo, create_midi_track, load_device, create_clip, replace_notes,
-   fire_clip, fire_scene, stop_all, undo).
-Rules: new MIDI tracks are silent until a device is loaded — always load an
-instrument before adding notes to a new track. Notes use beats, pitches 0-127.
-Clip lengths use Ableton's quarter-note beat unit: N bars = N x numerator x
-(4 / denominator) beats (e.g. 4 bars in 4/4 = 16 beats; 4 bars in 6/8 = 12
-beats). When the context includes a
-selected clip (selection.clip with its notes), modification requests target
-that exact clip: emit replace_notes for selection.track/selection.slot and do
-NOT create a new track or clip. Preserve the clip's role and length unless
-asked otherwise. Prefer modifying what exists over creating duplicates. Keep
-plans short.`;
-
 export const AGENT_SYSTEM_PROMPT = `You are Tembro, an expert music-making agent operating the user's currently open Ableton Live Set through MCP tools.
 
 Work like a capable studio collaborator, not a JSON planner. Inspect Live, use the available tools, read each result, and continue until the musical request is actually complete. Reply in the user's language.
@@ -146,96 +111,6 @@ Completion language is strict:
 - In Italian, the final answer must begin exactly with "Ho finito — ". In another language, begin with the natural equivalent of "I have finished — ". Then state concisely what changed and what was verified.
 
 ${MUSICAL_KNOWLEDGE}`;
-
-/**
- * Parse the model's raw JSON output into a validated LlmResult.
- * Anything that fails validation is rejected — invalid plans never reach Live.
- */
-export function parseLlmOutput(raw: string): LlmResult {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new Error("LLM output is not valid JSON");
-  }
-  const obj = parsed as { reply?: unknown; actions?: unknown };
-  if (typeof obj.reply !== "string") throw new Error("LLM output missing reply");
-  const actions = ActionPlanSchema.parse(obj.actions ?? []);
-  return { reply: obj.reply, actions };
-}
-
-/**
- * HTTP provider for OpenAI-compatible chat-completion APIs (works for several
- * vendors). Model/endpoint/key come from environment configuration at deploy.
- */
-export class HttpChatProvider implements LlmProvider {
-  private readonly fetchImpl: typeof fetch;
-
-  constructor(
-    private readonly endpoint: string,
-    private readonly apiKey: string,
-    private readonly model: string,
-    fetchImpl: typeof fetch = fetch,
-    private readonly timeoutMs = 30_000,
-  ) {
-    // Cloudflare's native fetch rejects calls whose receiver is an arbitrary
-    // object. Keeping it as a class method and calling `this.fetchImpl(...)`
-    // would therefore throw "Illegal invocation" before any network request.
-    this.fetchImpl = fetchImpl.bind(globalThis);
-  }
-
-  async complete(messages: Message[], liveContext?: LiveContext): Promise<LlmResult> {
-    const contextMsg = liveContext
-      ? [{ role: "system" as const, content: `Live Set context: ${JSON.stringify(liveContext)}` }]
-      : [];
-    const res = await this.fetchImpl(this.endpoint, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: "Bearer " + this.apiKey,
-      },
-      signal: AbortSignal.timeout(this.timeoutMs),
-      body: JSON.stringify({
-        model: this.model,
-        max_completion_tokens: 2_000,
-        reasoning_effort: "low",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...contextMsg,
-          ...messages.map((m) => ({ role: m.role, content: m.content })),
-        ],
-      }),
-    });
-    if (!res.ok) {
-      throw new Error(`LLM provider error: ${res.status}`);
-    }
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-      usage?: {
-        prompt_tokens?: number;
-        completion_tokens?: number;
-        total_tokens?: number;
-      };
-    };
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) throw new Error("LLM provider returned no content");
-    const result = parseLlmOutput(content);
-    return {
-      ...result,
-      ...(data.usage
-        ? {
-            usage: {
-              inputTokens: data.usage.prompt_tokens ?? 0,
-              outputTokens: data.usage.completion_tokens ?? 0,
-              totalTokens: data.usage.total_tokens ?? 0,
-              model: this.model,
-            },
-          }
-        : {}),
-    };
-  }
-}
 
 /**
  * OpenAI Responses provider for the distributed agent loop. Function calls are
@@ -437,26 +312,7 @@ function parseAgentResponse(data: ResponsesApiData, model: string): AgentStepRes
   };
 }
 
-/** Deterministic provider for tests and local development without API keys. */
-export class StubProvider implements LlmProvider {
-  async complete(messages: Message[]): Promise<LlmResult> {
-    const last = messages[messages.length - 1]?.content ?? "";
-    const tempoMatch = last.match(/\b(?:set\s+)?tempo(?:\s+to)?\s+(\d{2,3}(?:\.\d+)?)\b/i);
-    const bpm = tempoMatch ? Number(tempoMatch[1]) : null;
-    if (bpm !== null && bpm >= 20 && bpm <= 999) {
-      return {
-        reply: `Setting tempo to ${bpm} BPM.`,
-        actions: [{ op: "set_tempo", bpm }],
-      };
-    }
-    return {
-      reply: `stub: ${last.slice(0, 60)}`,
-      actions: [],
-    };
-  }
-}
-
-/** Deterministic distributed-agent provider used by local tests. */
+/** Deterministic agent provider for tests and local development without API keys. */
 export class StubAgentProvider implements AgentProvider {
   async step(request: AgentStepRequest): Promise<AgentStepResult> {
     if (request.previousResponseId) {

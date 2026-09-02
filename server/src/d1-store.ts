@@ -271,24 +271,19 @@ export class D1Store implements Store {
     return Boolean(row?.owned);
   }
 
+  // The legacy v0.1 planner stored its action plans in messages.actions; the
+  // column is kept in the schema (append-only migrations) but no longer used.
   async appendMessage(conversationId: string, message: Message): Promise<void> {
     await this.db
-      .prepare(
-        "INSERT INTO messages (conversation_id, role, content, actions) VALUES (?, ?, ?, ?)",
-      )
-      .bind(
-        conversationId,
-        message.role,
-        message.content,
-        message.actions ? JSON.stringify(message.actions) : null,
-      )
+      .prepare("INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)")
+      .bind(conversationId, message.role, message.content)
       .run();
   }
 
   async getMessages(conversationId: string, userId: string, limit: number): Promise<Message[]> {
     const result = await this.db
       .prepare(
-        `SELECT m.role, m.content, m.actions
+        `SELECT m.role, m.content
          FROM messages m
          JOIN conversations c ON c.id = m.conversation_id
          WHERE c.id = ? AND c.user_id = ?
@@ -300,9 +295,6 @@ export class D1Store implements Store {
     return (result.results ?? []).reverse().map((row) => ({
       role: row.role as Message["role"],
       content: String(row.content),
-      ...(row.actions
-        ? { actions: JSON.parse(String(row.actions)) as Message["actions"] }
-        : {}),
     }));
   }
 
