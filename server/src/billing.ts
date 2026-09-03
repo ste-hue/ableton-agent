@@ -48,30 +48,49 @@ export class LemonSqueezyLicenseProvider implements LicenseProvider {
     instanceName: string;
     instanceId?: string;
   }): Promise<LicenseActivation> {
-    const validating = Boolean(input.instanceId);
-    const body = new URLSearchParams({ license_key: input.licenseKey });
-    if (input.instanceId) body.set("instance_id", input.instanceId);
-    else body.set("instance_name", input.instanceName);
+    // The device remembers the instance id of its last session, which may
+    // belong to a free-beta session or to another license. Lemon Squeezy
+    // answers a validate call for such an id with "instance_id not found",
+    // so a failed validation falls back to a fresh activation of this key.
+    if (input.instanceId) {
+      try {
+        return await this.call("validate", input.licenseKey, { instance_id: input.instanceId });
+      } catch {
+        /* fall through to activate */
+      }
+    }
+    return this.call("activate", input.licenseKey, { instance_name: input.instanceName });
+  }
 
-    const response = await this.fetchImpl(
-      `https://api.lemonsqueezy.com/v1/licenses/${validating ? "validate" : "activate"}`,
-      {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/x-www-form-urlencoded",
-        },
-        body,
+  private async call(
+    action: "validate" | "activate",
+    licenseKey: string,
+    extra: Record<string, string>,
+  ): Promise<LicenseActivation> {
+    const body = new URLSearchParams({ license_key: licenseKey, ...extra });
+    const response = await this.fetchImpl(`https://api.lemonsqueezy.com/v1/licenses/${action}`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
       },
-    );
-    const parsed = LicenseResponseSchema.safeParse(await response.json().catch(() => null));
-    if (!response.ok || !parsed.success) throw new Error("license_provider_error");
+      body,
+    });
+    const raw: unknown = await response.json().catch(() => null);
+    const parsed = LicenseResponseSchema.safeParse(raw);
+    if (!response.ok || !parsed.success) {
+      const error =
+        raw && typeof raw === "object" && typeof (raw as { error?: unknown }).error === "string"
+          ? (raw as { error: string }).error
+          : "license_provider_error";
+      throw new Error(error);
+    }
     const data = parsed.data;
-    const accepted = validating ? data.valid : data.activated;
+    const accepted = action === "validate" ? data.valid : data.activated;
     if (!accepted || data.license_key.status !== "active") {
       throw new Error(data.error ?? "license_inactive");
     }
-    const instanceId = input.instanceId ?? data.instance?.id;
+    const instanceId = extra.instance_id ?? data.instance?.id;
     if (!instanceId) throw new Error("license_instance_missing");
     return {
       licenseKeyId: data.license_key.id,
