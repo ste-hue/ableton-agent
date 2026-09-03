@@ -292,7 +292,22 @@ export function createApp(config: AppConfig) {
         });
       }
 
-      if (!paidLicense) return c.json({ error: "license_invalid" }, 401);
+      // Failed activations are logged with their cause: the device only shows
+      // the HTTP status, so this is the one place a support question can be
+      // answered from. The key itself is never stored, only its prefix.
+      const licenseFailed = (reason: string, extra: Record<string, unknown> = {}) =>
+        store.logEvent("auth.license_failed", {
+          reason,
+          email: request.email,
+          keyPrefix: request.license_key.slice(0, 8),
+          instanceName: request.instance_name,
+          hasInstanceId: Boolean(request.instance_id),
+          ...extra,
+        });
+      if (!paidLicense) {
+        await licenseFailed("paid_license_not_configured");
+        return c.json({ error: "license_invalid" }, 401);
+      }
       let activation;
       try {
         activation = await paidLicense.provider.activateOrValidate({
@@ -300,7 +315,10 @@ export function createApp(config: AppConfig) {
           instanceName: request.instance_name,
           instanceId: request.instance_id,
         });
-      } catch {
+      } catch (error) {
+        await licenseFailed("provider_rejected", {
+          providerError: error instanceof Error ? error.message : String(error),
+        });
         return c.json({ error: "license_invalid" }, 401);
       }
       if (
@@ -308,6 +326,11 @@ export function createApp(config: AppConfig) {
         activation.productId !== paidLicense.productId ||
         activation.customerEmail !== request.email
       ) {
+        await licenseFailed("product_or_email_mismatch", {
+          licenseStoreId: activation.storeId,
+          licenseProductId: activation.productId,
+          licenseEmail: activation.customerEmail,
+        });
         return c.json({ error: "license_product_or_email_mismatch" }, 403);
       }
 
