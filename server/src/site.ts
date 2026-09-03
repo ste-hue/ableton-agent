@@ -2,6 +2,8 @@ import { TEMBRO_SKILLS } from "./skills.js";
 
 export interface LandingPageOptions {
   checkoutUrl?: string;
+  /** Lemon Squeezy discount code that makes the first Starter pack free; pre-applied at checkout. */
+  freeFirstPackCode?: string;
   downloadUrl?: string;
   supportEmail?: string;
   baseCreditCost?: number;
@@ -15,6 +17,18 @@ function safeHttpsUrl(value?: string): string | null {
   } catch {
     return null;
   }
+}
+
+function safeDiscountCode(value?: string): string | null {
+  if (!value) return null;
+  const code = value.trim().toUpperCase();
+  return /^[A-Z0-9]{2,40}$/.test(code) ? code : null;
+}
+
+function withDiscountCode(checkoutUrl: string, code: string): string {
+  const url = new URL(checkoutUrl);
+  url.searchParams.set("checkout[discount_code]", code);
+  return url.toString();
 }
 
 function safeEmail(value?: string): string | null {
@@ -36,14 +50,18 @@ export function landingPage(options: LandingPageOptions = {}): string {
   const downloadUrl = safeHttpsUrl(options.downloadUrl);
   const supportEmail = safeEmail(options.supportEmail);
   const baseCreditCost = Math.max(1, Math.floor(options.baseCreditCost ?? 1));
-  const primaryUrl = checkoutUrl ?? downloadUrl;
+  const freeCode = checkoutUrl ? safeDiscountCode(options.freeFirstPackCode) : null;
+  const primaryUrl = checkoutUrl && freeCode ? withDiscountCode(checkoutUrl, freeCode) : (checkoutUrl ?? downloadUrl);
   const freeBeta = !checkoutUrl && Boolean(downloadUrl);
+  const ctaLabel = freeBeta ? "Download free beta" : freeCode ? "Get 40 credits free" : "Get Tembro";
   const primaryCta = primaryUrl
-    ? `<a class="button button-primary" href="${escapeAttribute(primaryUrl)}">${freeBeta ? "Download free beta" : "Get Tembro"}<span aria-hidden="true">↗</span></a>`
+    ? `<a class="button button-primary" href="${escapeAttribute(primaryUrl)}">${ctaLabel}<span aria-hidden="true">↗</span></a>`
     : '<span class="button button-primary button-disabled" aria-disabled="true">Early access soon</span>';
   const firstStep = freeBeta
     ? '<article class="step"><span class="num">01</span><h3>Download</h3><p>One DMG. No card, checkout, or little subscription surprise while the beta is free.</p></article>'
-    : '<article class="step"><span class="num">01</span><h3>Buy</h3><p>One credit pack, one payment. No subscription. Your personal license key arrives by email.</p></article>';
+    : freeCode
+      ? `<article class="step"><span class="num">01</span><h3>Claim</h3><p>Your first Starter pack is free with code ${freeCode}, already applied at checkout. No card. Your personal license key arrives by email.</p></article>`
+      : '<article class="step"><span class="num">01</span><h3>Buy</h3><p>One credit pack, one payment. No subscription. Your personal license key arrives by email.</p></article>';
   const activationStep = freeBeta
     ? '<article class="step"><span class="num">03</span><h3>Connect</h3><p>Email and beta code once. That is it. No OpenAI account or API key.</p></article>'
     : '<article class="step"><span class="num">03</span><h3>Activate</h3><p>Enter your purchase email and license key once. No OpenAI account or API key required.</p></article>';
@@ -451,7 +469,7 @@ export function landingPage(options: LandingPageOptions = {}): string {
             <li>Early-access updates</li>
           </ul>
           ${primaryCta}
-          <p class="fine">${freeBeta ? "Free during beta. An access code is required to use the AI service." : "Packs from €12. No subscription. Secure checkout and license delivery by Lemon Squeezy."}</p>
+          <p class="fine">${freeBeta ? "Free during beta. An access code is required to use the AI service." : freeCode ? `First 40 credits free with code ${freeCode}. Studio · 120 credits €29. No subscription. Secure checkout and license delivery by Lemon Squeezy.` : "Packs from €12. No subscription. Secure checkout and license delivery by Lemon Squeezy."}</p>
         </div>
       </div>
     </section>

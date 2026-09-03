@@ -35,6 +35,7 @@ export default {
       creditPacks: parseCreditPacks(env.CREDIT_PACKS),
       chatCostCredits: positiveInteger(env.CHAT_COST_CREDITS, "CHAT_COST_CREDITS"),
       checkoutUrl: env.CHECKOUT_URL || undefined,
+      freeFirstPackCode: env.FREE_FIRST_PACK_CODE || undefined,
       downloadUrl: env.DOWNLOAD_URL || undefined,
       supportEmail: env.SUPPORT_EMAIL || undefined,
       betaAccessCode: env.BETA_ACCESS_CODE || undefined,

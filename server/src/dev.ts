@@ -21,6 +21,7 @@ const app = createApp({
   agentTokenSecret: process.env.AGENT_TOKEN_SECRET || "local-agent-token-secret",
   allowDevSignin: true,
   checkoutUrl: process.env.CHECKOUT_URL,
+  freeFirstPackCode: process.env.FREE_FIRST_PACK_CODE,
   downloadUrl: process.env.DOWNLOAD_URL,
   supportEmail: process.env.SUPPORT_EMAIL,
 });
