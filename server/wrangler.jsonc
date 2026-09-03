@@ -22,17 +22,17 @@
     "LLM_RESPONSES_ENDPOINT": "https://api.openai.com/v1/responses",
     "LLM_MODEL": "gpt-5.6-terra",
     "APP_VERSION": "0.1.5-beta",
-    // Lemon Squeezy store "tembro", product "Tembro credits". The ids are public
+    // Lemon Squeezy store "tembro" (live mode), product "Tembro credits". The ids are public
     // (visible on the checkout page); only LEMON_SQUEEZY_WEBHOOK_SECRET is a secret.
     "LEMON_SQUEEZY_STORE_ID": "463641",
-    "LEMON_SQUEEZY_PRODUCT_ID": "1334039",
+    "LEMON_SQUEEZY_PRODUCT_ID": "1335888",
     // Variant id → credits: Starter · 40 credits €12, Studio · 120 credits €29.
-    "CREDIT_PACKS": "2084611:40,2084627:120",
+    "CREDIT_PACKS": "2087359:40,2087371:120",
     "CHAT_COST_CREDITS": "1",
     "BETA_GRANT_CREDITS": "40",
     // Empty keeps the landing page on the free-beta journey; set to the hosted
     // checkout URL to switch it to the paid journey.
-    "CHECKOUT_URL": "",
+    "CHECKOUT_URL": "https://tembro.lemonsqueezy.com/checkout/buy/51752dd4-3c30-466b-8e5d-d7c985ff9111",
     "DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/v0.1.5-beta/Tembro-0.1.5-beta.dmg",
     "SUPPORT_EMAIL": "support@gettembro.com"
   },
