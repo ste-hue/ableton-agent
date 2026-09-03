@@ -397,10 +397,17 @@ export function createApp(config: AppConfig) {
       const result = await store.processBillingGrant(grant);
       await store.logEvent(
         "billing.order_created",
-        { eventKey: grant.eventKey, credits: grant.credits, processed: result.processed },
+        { eventKey: grant.eventKey, credits: result.credits, free: grant.free, processed: result.processed },
         result.userId,
       );
-      return c.json({ ok: true, processed: result.processed });
+      if (result.processed && grant.free && result.credits === 0) {
+        await store.logEvent(
+          "billing.free_pack_repeat",
+          { eventKey: grant.eventKey, email: grant.email, refused: grant.credits },
+          result.userId,
+        );
+      }
+      return c.json({ ok: true, processed: result.processed, credits: result.credits });
     });
   }
 

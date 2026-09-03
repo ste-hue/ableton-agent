@@ -203,6 +203,7 @@ export function billingGrantFromWebhook(
     lemonProductId: productId,
     lemonVariantId: variantId,
     credits: packCredits * quantity,
+    free: integer(attributes.total) === 0,
     payload: parsed.data,
   };
 }

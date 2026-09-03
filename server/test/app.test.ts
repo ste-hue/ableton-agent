@@ -974,6 +974,38 @@ test("signed paid order webhook grants the pack's credits exactly once", async (
   assert.equal(await store.creditBalance(user.id), 40 + 2 * 120);
 });
 
+test("a fully discounted order grants the free pack once per email, paid orders still add up", async () => {
+  // Observed live: the FIRSTPACK redemption cap in Lemon Squeezy is global, not
+  // per customer, so one email redeemed the free Starter twice and got 80 credits.
+  const secret = "webhook-test-secret";
+  const { app, store } = makeApp(0, {
+    lemonStoreId: 10,
+    lemonProductId: 20,
+    lemonWebhookSecret: secret,
+    creditPacks: PACKS,
+  });
+  const free = (id: string) => {
+    const order = paidOrder({ total: 0, discount_total: 1200, subtotal: 1200 });
+    order.data.id = id;
+    return order;
+  };
+  const first = await signedWebhook(app, secret, free("free-1"));
+  assert.deepEqual(await first.json(), { ok: true, processed: true, credits: 40 });
+  const second = await signedWebhook(app, secret, free("free-2"));
+  assert.equal(second.status, 200);
+  assert.deepEqual(await second.json(), { ok: true, processed: true, credits: 0 });
+  const user = await store.getUserByEmail("buyer@example.com");
+  assert.ok(user);
+  assert.equal(await store.creditBalance(user.id), 40);
+  assert.ok(store.events.some((e) => e.kind === "billing.free_pack_repeat" && e.userId === user.id));
+
+  // A real purchase after the free pack is unaffected.
+  const paid = paidOrder({ total: 1200 });
+  paid.data.id = "paid-1";
+  assert.deepEqual(await (await signedWebhook(app, secret, paid)).json(), { ok: true, processed: true, credits: 40 });
+  assert.equal(await store.creditBalance(user.id), 80);
+});
+
 test("orders that are not paid, or subscription events, grant nothing", async () => {
   const secret = "webhook-test-secret";
   const { app, store } = makeApp(0, {
