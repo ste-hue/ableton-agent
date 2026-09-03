@@ -88,6 +88,30 @@ test("a wrong key is rejected even after the activation fallback", async () => {
   assert.equal(calls.length, 2);
 });
 
+test("the provider calls fetch unbound, as the platform requires", async () => {
+  // Cloudflare's fetch throws "Illegal invocation" when called with a foreign
+  // `this`; a plain function records what `this` was at call time.
+  let seenThis: unknown = "unset";
+  const fetchImpl = async function (this: unknown) {
+    seenThis = this;
+    return new Response(
+      JSON.stringify({ activated: true, error: null, license_key: { id: 90, status: "active" }, instance: { id: "2d473749-2037-4817-aa15-e2b44882a67c" }, meta }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  } as unknown as typeof fetch;
+  const provider = new LemonSqueezyLicenseProvider(fetchImpl);
+  await provider.activateOrValidate({ licenseKey: "key", instanceName: "Studio Mac" });
+  assert.equal(seenThis, undefined);
+  assert.notEqual(seenThis, provider);
+});
+
+test("the default provider wraps the global fetch instead of storing it", () => {
+  const provider = new LemonSqueezyLicenseProvider();
+  const stored = (provider as unknown as { fetchImpl: unknown }).fetchImpl;
+  assert.notEqual(stored, globalThis.fetch);
+  assert.equal(typeof stored, "function");
+});
+
 test("a disabled key never activates", async () => {
   const { fetchImpl } = fakeFetch([
     { url: /\/licenses\/activate$/, body: { activated: false, error: "This license key has been disabled.", license_key: { id: 90, status: "disabled" }, meta } },

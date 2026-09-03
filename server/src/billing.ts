@@ -41,7 +41,14 @@ export interface LicenseProvider {
 }
 
 export class LemonSqueezyLicenseProvider implements LicenseProvider {
-  constructor(private readonly fetchImpl: typeof fetch = fetch) {}
+  private readonly fetchImpl: typeof fetch;
+
+  constructor(fetchImpl?: typeof fetch) {
+    // Never keep the platform fetch as a method: calling `this.fetchImpl(...)`
+    // binds `this` to the provider and Cloudflare throws "Illegal invocation".
+    // Observed live on every license activation until 2026-09-03.
+    this.fetchImpl = fetchImpl ?? ((input, init) => fetch(input, init));
+  }
 
   async activateOrValidate(input: {
     licenseKey: string;
@@ -68,7 +75,8 @@ export class LemonSqueezyLicenseProvider implements LicenseProvider {
     extra: Record<string, string>,
   ): Promise<LicenseActivation> {
     const body = new URLSearchParams({ license_key: licenseKey, ...extra });
-    const response = await this.fetchImpl(`https://api.lemonsqueezy.com/v1/licenses/${action}`, {
+    const fetchImpl = this.fetchImpl;
+    const response = await fetchImpl(`https://api.lemonsqueezy.com/v1/licenses/${action}`, {
       method: "POST",
       headers: {
         accept: "application/json",
