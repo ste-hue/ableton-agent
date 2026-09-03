@@ -33,6 +33,9 @@
     // Empty keeps the landing page on the free-beta journey; set to the hosted
     // checkout URL to switch it to the paid journey.
     "CHECKOUT_URL": "https://tembro.lemonsqueezy.com/checkout/buy/51752dd4-3c30-466b-8e5d-d7c985ff9111",
+    // Launch offer: 100% discount code limited to the Starter variant, pre-applied
+    // on the landing CTA. Empty turns the offer off (plain paid journey).
+    "FREE_FIRST_PACK_CODE": "FIRSTPACK",
     "DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/v0.1.5-beta/Tembro-0.1.5-beta.dmg",
     "SUPPORT_EMAIL": "support@gettembro.com"
   },

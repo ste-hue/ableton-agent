@@ -13,6 +13,7 @@ interface __BaseEnv_WorkerEnv {
 	CREDIT_PACKS: string;
 	CHAT_COST_CREDITS: string;
 	CHECKOUT_URL: string;
+	FREE_FIRST_PACK_CODE: string;
 	DOWNLOAD_URL: string;
 	SUPPORT_EMAIL: string;
 	BETA_ACCESS_CODE: string;
@@ -29,5 +30,5 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "LLM_RESPONSES_ENDPOINT" | "LLM_API_KEY" | "AGENT_TOKEN_SECRET" | "LLM_MODEL" | "APP_VERSION" | "LEMON_SQUEEZY_STORE_ID" | "LEMON_SQUEEZY_PRODUCT_ID" | "LEMON_SQUEEZY_WEBHOOK_SECRET" | "CREDIT_PACKS" | "CHAT_COST_CREDITS" | "CHECKOUT_URL" | "DOWNLOAD_URL" | "SUPPORT_EMAIL" | "BETA_ACCESS_CODE" | "BETA_GRANT_CREDITS">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "LLM_RESPONSES_ENDPOINT" | "LLM_API_KEY" | "AGENT_TOKEN_SECRET" | "LLM_MODEL" | "APP_VERSION" | "LEMON_SQUEEZY_STORE_ID" | "LEMON_SQUEEZY_PRODUCT_ID" | "LEMON_SQUEEZY_WEBHOOK_SECRET" | "CREDIT_PACKS" | "CHAT_COST_CREDITS" | "CHECKOUT_URL" | "FREE_FIRST_PACK_CODE" | "DOWNLOAD_URL" | "SUPPORT_EMAIL" | "BETA_ACCESS_CODE" | "BETA_GRANT_CREDITS">> {}
 }

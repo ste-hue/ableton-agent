@@ -53,6 +53,7 @@ export interface AppConfig {
   chatCostCredits?: number;
   historyLimit?: number;
   checkoutUrl?: string;
+  freeFirstPackCode?: string;
   downloadUrl?: string;
   supportEmail?: string;
   betaAccessCode?: string;
@@ -213,6 +214,7 @@ export function createApp(config: AppConfig) {
     chatCostCredits = 1,
     historyLimit = 30,
     checkoutUrl,
+    freeFirstPackCode,
     downloadUrl,
     supportEmail,
     betaAccessCode,
@@ -237,6 +239,7 @@ export function createApp(config: AppConfig) {
     return c.html(
       landingPage({
         checkoutUrl,
+        freeFirstPackCode,
         downloadUrl,
         supportEmail,
         baseCreditCost: chatCostCredits,

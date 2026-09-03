@@ -118,6 +118,29 @@ test("landing page explains the complete customer journey", async () => {
   assert.match(body, /docs\.cycling74\.com\/apiref\/lom\/song/);
 });
 
+test("landing page pre-applies the free first pack code at checkout", async () => {
+  const { app } = makeApp(100, {
+    checkoutUrl: "https://tembro.lemonsqueezy.com/checkout/buy/test-product",
+    freeFirstPackCode: "firstpack",
+  });
+  const body = await (await app.request("/")).text();
+  assert.match(body, /Get 40 credits free/);
+  assert.match(body, /checkout\/buy\/test-product\?checkout%5Bdiscount_code%5D=FIRSTPACK/);
+  assert.match(body, /first Starter pack is free with code FIRSTPACK/);
+  assert.match(body, /Studio · 120 credits €29/);
+  assert.doesNotMatch(body, /Packs from €12/);
+});
+
+test("landing page ignores a malformed free pack code", async () => {
+  const { app } = makeApp(100, {
+    checkoutUrl: "https://tembro.lemonsqueezy.com/checkout/buy/test-product",
+    freeFirstPackCode: "<script>",
+  });
+  const body = await (await app.request("/")).text();
+  assert.match(body, /Get Tembro/);
+  assert.doesNotMatch(body, /discount_code/);
+});
+
 test("landing page rejects unsafe checkout URLs", async () => {
   const { app } = makeApp(100, { checkoutUrl: "javascript:alert(1)" });
   const body = await (await app.request("/")).text();
