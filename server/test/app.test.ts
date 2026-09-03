@@ -865,7 +865,7 @@ test("license activation rejects a purchase for another customer", async () => {
       };
     },
   };
-  const { app } = makeApp(0, {
+  const { app, store } = makeApp(0, {
     licenseProvider,
     lemonStoreId: 10,
     lemonProductId: 20,
@@ -880,6 +880,44 @@ test("license activation rejects a purchase for another customer", async () => {
     }),
   });
   assert.equal(response.status, 403);
+  const failure = store.events.find((event) => event.kind === "auth.license_failed");
+  assert.ok(failure, "failed activation is logged");
+  assert.deepEqual(failure.payload, {
+    reason: "product_or_email_mismatch",
+    email: "attacker@example.com",
+    keyPrefix: "someone-",
+    instanceName: "Studio Mac",
+    hasInstanceId: false,
+    licenseStoreId: 10,
+    licenseProductId: 20,
+    licenseEmail: "owner@example.com",
+  });
+});
+
+test("license activation logs the provider's rejection reason without the key", async () => {
+  const licenseProvider: LicenseProvider = {
+    async activateOrValidate() {
+      throw new Error("license_inactive");
+    },
+  };
+  const { app, store } = makeApp(0, { licenseProvider, lemonStoreId: 10, lemonProductId: 20 });
+  const response = await app.request("/v0/auth/license", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "buyer@example.com",
+      license_key: "ABCD1234-EFGH-5678",
+      instance_name: "Studio Mac",
+    }),
+  });
+  assert.equal(response.status, 401);
+  const failure = store.events.find((event) => event.kind === "auth.license_failed");
+  assert.ok(failure);
+  const payload = failure.payload as Record<string, unknown>;
+  assert.equal(payload.reason, "provider_rejected");
+  assert.equal(payload.providerError, "license_inactive");
+  assert.equal(payload.keyPrefix, "ABCD1234");
+  assert.doesNotMatch(JSON.stringify(payload), /EFGH-5678/);
 });
 
 function paidOrder(overrides: Record<string, unknown> = {}, item: Record<string, unknown> = {}) {
