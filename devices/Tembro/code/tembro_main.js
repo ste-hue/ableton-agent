@@ -19,6 +19,7 @@ const { McpClient } = require("./mcp_client.js");
 const { LomBridge } = require("./lom_bridge.js");
 const { buildLiveContext } = require("./context.js");
 const { completionReply, raceWithStop, runAgentTurn } = require("./agent_loop.js");
+const clipboard = require("./clipboard.js");
 const { spawn } = require("child_process");
 
 const maxApi = require("max-api");
@@ -105,6 +106,22 @@ maxApi.addHandler("license", async (email, licenseKey) => {
     ui("error", "connection failed: " + err.message);
   } finally {
     clearInterval(heartbeat);
+  }
+});
+
+// Clipboard bridge for the page: jweb denies navigator.clipboard, so paste and
+// copy fall back to the macOS pasteboard via the engine. Payloads are base64.
+maxApi.addHandler("clipboard", async (op, payload) => {
+  try {
+    if (op === "read") {
+      const text = await clipboard.readClipboard();
+      maxApi.outlet(["clipboard", "text", clipboard.encodeText(text)]);
+    } else if (op === "write") {
+      await clipboard.writeClipboard(clipboard.decodeText(payload));
+      maxApi.outlet(["clipboard", "written"]);
+    }
+  } catch (err) {
+    maxApi.outlet(["clipboard", "error", String(err && err.message ? err.message : err)]);
   }
 });
 

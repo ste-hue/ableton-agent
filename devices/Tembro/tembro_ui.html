@@ -699,14 +699,97 @@
           let ok = false;
           try { ok = document.execCommand("copy"); } catch (_) {}
           scratch.remove();
+          if (!ok) {
+            // Last resort: the engine writes the macOS pasteboard.
+            outlet("clipboard", "write", encodeClipboard(text));
+            ok = true;
+          }
           done(ok);
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(() => done(true), fallback);
+          withTimeout(navigator.clipboard.writeText(text), CLIPBOARD_API_TIMEOUT_MS).then(() => done(true), fallback);
         } else {
           fallback();
         }
       }
+      // jweb denies navigator.clipboard on file:// pages, so every clipboard
+      // action tries the browser API first and falls back to the engine, which
+      // reads/writes the macOS pasteboard (pbpaste/pbcopy). Text crosses Max
+      // base64-encoded because Max splits messages on whitespace.
+      function encodeClipboard(text) {
+        return btoa(unescape(encodeURIComponent(String(text))));
+      }
+      function decodeClipboard(encoded) {
+        try { return decodeURIComponent(escape(atob(String(encoded || "")))); } catch (_) { return ""; }
+      }
+      let pendingPaste = null;
+      function insertText(field, text, replace) {
+        if (replace) {
+          field.value = text.trim();
+        } else {
+          const start = field.selectionStart ?? field.value.length;
+          const end = field.selectionEnd ?? start;
+          field.value = field.value.slice(0, start) + text + field.value.slice(end);
+          const cursor = start + text.length;
+          try { field.setSelectionRange(cursor, cursor); } catch (_) { /* password fields */ }
+        }
+        field.dispatchEvent(new Event("input"));
+        field.focus();
+      }
+      // jweb neither resolves nor rejects navigator.clipboard calls on this
+      // page (observed: the promise hangs forever), so never await them bare.
+      const CLIPBOARD_API_TIMEOUT_MS = 500;
+      function withTimeout(promise, ms) {
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("clipboard api timeout")), ms);
+          Promise.resolve(promise).then(
+            (value) => { clearTimeout(timer); resolve(value); },
+            (err) => { clearTimeout(timer); reject(err); },
+          );
+        });
+      }
+      async function readClipboardText() {
+        try {
+          if (!navigator.clipboard || !navigator.clipboard.readText) return null;
+          const text = await withTimeout(navigator.clipboard.readText(), CLIPBOARD_API_TIMEOUT_MS);
+          if (text) return text;
+        } catch (_) { /* denied or hung: fall back to the engine */ }
+        return null;
+      }
+      async function writeClipboardText(text) {
+        try {
+          if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("no clipboard api");
+          await withTimeout(navigator.clipboard.writeText(text), CLIPBOARD_API_TIMEOUT_MS);
+          return true;
+        } catch (_) {
+          outlet("clipboard", "write", encodeClipboard(text));
+          return false;
+        }
+      }
+      function requestEnginePaste(field, replace, onBlocked) {
+        pendingPaste = { field, replace, onBlocked, at: Date.now() };
+        outlet("clipboard", "read");
+        setTimeout(() => {
+          if (pendingPaste && pendingPaste.at + 2500 <= Date.now()) {
+            const blocked = pendingPaste.onBlocked;
+            pendingPaste = null;
+            if (blocked) blocked();
+          }
+        }, 2600);
+      }
+      bind("clipboard", (kind, payload) => {
+        if (kind !== "text") {
+          if (kind === "error" && pendingPaste && pendingPaste.onBlocked) pendingPaste.onBlocked();
+          if (kind === "error") pendingPaste = null;
+          return;
+        }
+        const target = pendingPaste;
+        pendingPaste = null;
+        if (!target) return;
+        const text = decodeClipboard(payload);
+        if (!text) return target.onBlocked && target.onBlocked();
+        insertText(target.field, text, target.replace);
+      });
       async function pasteInto(field, button, replace) {
         const label = button.textContent;
         const fail = () => {
@@ -714,21 +797,9 @@
           setTimeout(() => { button.textContent = label; }, 2200);
           field.focus();
         };
-        try {
-          const text = await navigator.clipboard.readText();
-          if (!text) return fail();
-          if (replace) {
-            field.value = text.trim();
-          } else {
-            const start = field.selectionStart ?? field.value.length;
-            const end = field.selectionEnd ?? start;
-            field.value = field.value.slice(0, start) + text + field.value.slice(end);
-          }
-          field.dispatchEvent(new Event("input"));
-          field.focus();
-        } catch (_) {
-          fail();
-        }
+        const text = await readClipboardText();
+        if (text) return insertText(field, text, replace);
+        requestEnginePaste(field, replace, fail);
       }
       function addMessage(who, text) {
         if (!text) return;
@@ -955,18 +1026,9 @@
           field && (field.tagName === "TEXTAREA" || field.tagName === "INPUT");
         if (key === "v" && editable) {
           event.preventDefault();
-          try {
-            const text = await navigator.clipboard.readText();
-            if (!text) return;
-            const start = field.selectionStart ?? field.value.length;
-            const end = field.selectionEnd ?? start;
-            field.value = field.value.slice(0, start) + text + field.value.slice(end);
-            const cursor = start + text.length;
-            field.setSelectionRange(cursor, cursor);
-            field.dispatchEvent(new Event("input"));
-          } catch (_) {
-            /* clipboard read denied: the paste chips still work */
-          }
+          const text = await readClipboardText();
+          if (text) return insertText(field, text, false);
+          requestEnginePaste(field, false, null);
         } else if (key === "c" || key === "x") {
           let text = "";
           if (editable && field.selectionStart !== field.selectionEnd) {
@@ -976,11 +1038,7 @@
           }
           if (!text) return;
           event.preventDefault();
-          try {
-            await navigator.clipboard.writeText(text);
-          } catch (_) {
-            /* nothing sensible to do; the per-message Copy buttons remain */
-          }
+          await writeClipboardText(text);
           if (key === "x" && editable) {
             const start = field.selectionStart;
             const end = field.selectionEnd;
