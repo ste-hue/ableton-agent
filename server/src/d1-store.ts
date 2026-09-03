@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { BillingGrant, CreditChargeResult, LicenseIdentity, Store } from "./store.js";
+import { FREE_PACK_REASON, PAID_PACK_REASON } from "./store.js";
 import type { Message, User } from "./types.js";
 
 type Row = Record<string, unknown>;
@@ -218,7 +219,7 @@ export class D1Store implements Store {
 
   async processBillingGrant(
     grant: BillingGrant,
-  ): Promise<{ processed: boolean; userId: string }> {
+  ): Promise<{ processed: boolean; userId: string; credits: number }> {
     const existing = await this.getUserByEmail(grant.email);
     const user = existing ?? (await this.createUser(grant.email));
     const result = await this.db
@@ -243,15 +244,27 @@ export class D1Store implements Store {
       )
       .run();
     const processed = changes(result) > 0;
-    if (processed) {
+    if (!processed) return { processed, userId: user.id, credits: 0 };
+    let credits = grant.credits;
+    if (grant.free) {
+      // The launch offer's 100 % code has a global redemption cap only, so the
+      // "one free pack per person" rule lives here: the second free order of
+      // the same email is recorded but grants nothing.
+      const prior = await this.db
+        .prepare("SELECT 1 AS seen FROM credit_ledger WHERE user_id = ? AND reason = ? LIMIT 1")
+        .bind(user.id, FREE_PACK_REASON)
+        .first<Row>();
+      if (prior?.seen) credits = 0;
+    }
+    if (credits > 0) {
       await this.addCredits(
         user.id,
-        grant.credits,
-        "grant:subscription_payment",
+        credits,
+        grant.free ? FREE_PACK_REASON : PAID_PACK_REASON,
         grant.eventKey,
       );
     }
-    return { processed, userId: user.id };
+    return { processed, userId: user.id, credits };
   }
 
   async createConversation(userId: string): Promise<string> {

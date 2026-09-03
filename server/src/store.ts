@@ -11,6 +11,9 @@ export interface LicenseIdentity {
   lemonVariantId: number;
 }
 
+export const FREE_PACK_REASON = "grant:free_pack";
+export const PAID_PACK_REASON = "grant:subscription_payment";
+
 export interface BillingGrant {
   eventKey: string;
   eventName: string;
@@ -22,6 +25,8 @@ export interface BillingGrant {
   lemonProductId?: number;
   lemonVariantId?: number;
   credits: number;
+  /** Fully discounted order (total 0): the launch offer's free pack, granted once per email. */
+  free: boolean;
   payload: unknown;
 }
 
@@ -48,7 +53,9 @@ export interface Store {
   /** Close an agent request (refund or step limit): no further continuations. */
   closeAgentRequest(requestId: string, userId: string): Promise<void>;
   creditBalance(userId: string): Promise<number>;
-  processBillingGrant(grant: BillingGrant): Promise<{ processed: boolean; userId: string }>;
+  processBillingGrant(
+    grant: BillingGrant,
+  ): Promise<{ processed: boolean; userId: string; credits: number }>;
   createConversation(userId: string): Promise<string>;
   conversationBelongsTo(conversationId: string, userId: string): Promise<boolean>;
   appendMessage(conversationId: string, msg: Message): Promise<void>;
@@ -164,13 +171,19 @@ export class MemoryStore implements Store {
     return this.balanceFor(userId);
   }
 
-  async processBillingGrant(grant: BillingGrant): Promise<{ processed: boolean; userId: string }> {
+  async processBillingGrant(
+    grant: BillingGrant,
+  ): Promise<{ processed: boolean; userId: string; credits: number }> {
     let user = await this.getUserByEmail(grant.email);
     user ??= await this.createUser(grant.email);
-    if (this.billingEvents.has(grant.eventKey)) return { processed: false, userId: user.id };
+    if (this.billingEvents.has(grant.eventKey)) return { processed: false, userId: user.id, credits: 0 };
     this.billingEvents.add(grant.eventKey);
-    await this.addCredits(user.id, grant.credits, "grant:subscription_payment", grant.eventKey);
-    return { processed: true, userId: user.id };
+    const reason = grant.free ? FREE_PACK_REASON : PAID_PACK_REASON;
+    const repeatFreePack =
+      grant.free && this.ledger.some((row) => row.userId === user!.id && row.reason === FREE_PACK_REASON);
+    const credits = repeatFreePack ? 0 : grant.credits;
+    if (credits > 0) await this.addCredits(user.id, credits, reason, grant.eventKey);
+    return { processed: true, userId: user.id, credits };
   }
 
   async createConversation(userId: string): Promise<string> {
