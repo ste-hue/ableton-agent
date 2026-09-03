@@ -707,7 +707,7 @@
           done(ok);
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(() => done(true), fallback);
+          withTimeout(navigator.clipboard.writeText(text), CLIPBOARD_API_TIMEOUT_MS).then(() => done(true), fallback);
         } else {
           fallback();
         }
@@ -736,16 +736,30 @@
         field.dispatchEvent(new Event("input"));
         field.focus();
       }
+      // jweb neither resolves nor rejects navigator.clipboard calls on this
+      // page (observed: the promise hangs forever), so never await them bare.
+      const CLIPBOARD_API_TIMEOUT_MS = 500;
+      function withTimeout(promise, ms) {
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("clipboard api timeout")), ms);
+          Promise.resolve(promise).then(
+            (value) => { clearTimeout(timer); resolve(value); },
+            (err) => { clearTimeout(timer); reject(err); },
+          );
+        });
+      }
       async function readClipboardText() {
         try {
-          const text = await navigator.clipboard.readText();
+          if (!navigator.clipboard || !navigator.clipboard.readText) return null;
+          const text = await withTimeout(navigator.clipboard.readText(), CLIPBOARD_API_TIMEOUT_MS);
           if (text) return text;
-        } catch (_) { /* denied: fall back to the engine */ }
+        } catch (_) { /* denied or hung: fall back to the engine */ }
         return null;
       }
       async function writeClipboardText(text) {
         try {
-          await navigator.clipboard.writeText(text);
+          if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("no clipboard api");
+          await withTimeout(navigator.clipboard.writeText(text), CLIPBOARD_API_TIMEOUT_MS);
           return true;
         } catch (_) {
           outlet("clipboard", "write", encodeClipboard(text));

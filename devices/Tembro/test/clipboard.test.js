@@ -48,6 +48,10 @@ test("writeClipboard pipes the text into pbcopy", async () => {
 test("page, engine and patch agree on the clipboard selector", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "tembro_ui.html"), "utf8");
   assert.match(html, /bind\("clipboard"/);
+  // The browser clipboard promise can hang forever inside jweb: it is always raced against a timeout.
+  assert.match(html, /withTimeout\(navigator\.clipboard\.readText\(\), CLIPBOARD_API_TIMEOUT_MS\)/);
+  assert.match(html, /withTimeout\(navigator\.clipboard\.writeText\(text\), CLIPBOARD_API_TIMEOUT_MS\)/);
+  assert.doesNotMatch(html, /await navigator\.clipboard\.(readText|writeText)\(/);
   assert.match(html, /outlet\("clipboard", "read"\)/);
   assert.match(html, /outlet\("clipboard", "write", encodeClipboard\(text\)\)/);
   // Paste paths fall back to the engine instead of dying on a denied clipboard API.
