@@ -124,7 +124,7 @@ class McpClient {
     this.start();
     await this._request("initialize", {
       protocolVersion: "2024-11-05",
-      clientInfo: { name: "tembro", version: "0.1.5-beta" },
+      clientInfo: { name: "tembro", version: "0.1.6-beta" },
       capabilities: {},
     });
     this._send({ jsonrpc: "2.0", method: "notifications/initialized" });

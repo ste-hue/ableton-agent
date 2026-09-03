@@ -3,7 +3,7 @@ set -euo pipefail
 
 # TEMBRO_VERSION and OFFICIAL_API_URL are rewritten by tools/build_tembro_dmg.py
 # at packaging time; these defaults only matter when running the script directly.
-TEMBRO_VERSION="0.1.5-beta"
+TEMBRO_VERSION="0.1.6-beta"
 OFFICIAL_API_URL="https://gettembro.com"
 UPSTREAM_COMMIT="70f7df9192b78d9bd9405f369c9e046c88f1610e"
 UV_VERSION="0.12.7"

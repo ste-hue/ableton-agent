@@ -49,7 +49,7 @@ const bridge = new LomBridge(client);
 let conversationId = null;
 let busy = false;
 let updateUrl = null;
-const DEVICE_VERSION = "0.1.5-beta";
+const DEVICE_VERSION = "0.1.6-beta";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 

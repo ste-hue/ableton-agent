@@ -17,7 +17,7 @@ from PIL import Image
 from build_tembro_release import REPO, build as build_release
 
 
-VERSION = "0.1.5-beta"
+VERSION = "0.1.6-beta"
 DIST = REPO / "dist"
 DEVICE_DIR = DIST / "Tembro"
 ZIP_PATH = DIST / "Tembro-v0-mac.zip"

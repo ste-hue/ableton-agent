@@ -219,7 +219,7 @@ export function createApp(config: AppConfig) {
     supportEmail,
     betaAccessCode,
     betaGrantCredits = 40,
-    appVersion = "0.1.5-beta",
+    appVersion = "0.1.6-beta",
   } = config;
 
   const app = new Hono<Env>();
