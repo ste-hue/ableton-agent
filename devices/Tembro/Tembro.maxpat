@@ -68,7 +68,7 @@
       232.0,
       22.0
      ],
-     "text": "starting\u2026"
+     "text": "starting…"
     }
    },
    {
@@ -93,7 +93,7 @@
       604.0,
       22.0
      ],
-     "text": "\u2014"
+     "text": "—"
     }
    },
    {
@@ -901,8 +901,9 @@
          "id": "chat-route",
          "maxclass": "newobj",
          "numinlets": 6,
-         "numoutlets": 8,
+         "numoutlets": 9,
          "outlettype": [
+          "",
           "",
           "",
           "",
@@ -918,7 +919,7 @@
           300.0,
           22.0
          ],
-         "text": "route chat license ui_ready status open_update chat_skill open_doc"
+         "text": "route chat license ui_ready status open_update chat_skill open_doc clipboard"
         }
        },
        {
@@ -1129,6 +1130,24 @@
           22.0
          ],
          "text": "prepend open_doc"
+        }
+       },
+       {
+        "box": {
+         "id": "chat-prepend-clipboard",
+         "maxclass": "newobj",
+         "numinlets": 1,
+         "numoutlets": 1,
+         "outlettype": [
+          ""
+         ],
+         "patching_rect": [
+          910.0,
+          560.0,
+          110.0,
+          22.0
+         ],
+         "text": "prepend clipboard"
         }
        }
       ],
@@ -1381,6 +1400,30 @@
          ],
          "source": [
           "chat-prepend-open-doc",
+          0
+         ]
+        }
+       },
+       {
+        "patchline": {
+         "destination": [
+          "chat-prepend-clipboard",
+          0
+         ],
+         "source": [
+          "chat-route",
+          7
+         ]
+        }
+       },
+       {
+        "patchline": {
+         "destination": [
+          "chat-out",
+          0
+         ],
+         "source": [
+          "chat-prepend-clipboard",
           0
          ]
         }
