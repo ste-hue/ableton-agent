@@ -21,7 +21,7 @@
   "vars": {
     "LLM_RESPONSES_ENDPOINT": "https://api.openai.com/v1/responses",
     "LLM_MODEL": "gpt-5.6-terra",
-    "APP_VERSION": "0.1.5-beta",
+    "APP_VERSION": "0.1.6-beta",
     // Lemon Squeezy store "tembro" (live mode), product "Tembro credits". The ids are public
     // (visible on the checkout page); only LEMON_SQUEEZY_WEBHOOK_SECRET is a secret.
     "LEMON_SQUEEZY_STORE_ID": "463641",
@@ -36,7 +36,7 @@
     // Launch offer: 100% discount code limited to the Starter variant, pre-applied
     // on the landing CTA. Empty turns the offer off (plain paid journey).
     "FREE_FIRST_PACK_CODE": "FIRSTPACK",
-    "DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/v0.1.5-beta/Tembro-0.1.5-beta.dmg",
+    "DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/v0.1.6-beta/Tembro-0.1.6-beta.dmg",
     "SUPPORT_EMAIL": "support@gettembro.com"
   },
   "observability": {
