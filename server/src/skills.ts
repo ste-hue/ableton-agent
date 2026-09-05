@@ -71,7 +71,13 @@ export function estimateCreditMultiplier(
 ): number {
   const requested = TEMBRO_SKILLS.find((profile) => profile.id === requestedSkill);
   let inferred = 1;
-  const text = message.trim().toLowerCase();
+  // Only the user's own words may raise the price above the pressed button.
+  // The device pastes the skill's prompt into the message box, and that prompt
+  // describes a full-track scope ("complete arrangement"): left in, it priced
+  // every beat and harmony button at 4 credits.
+  const text = (requested ? message.split(requested.prompt).join(" ") : message)
+    .trim()
+    .toLowerCase();
 
   if (
     /\b(full|complete|whole)\s+(track|song|arrangement)\b/.test(text) ||
