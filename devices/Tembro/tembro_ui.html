@@ -558,6 +558,7 @@
       let connected = false;
       let busy = false;
       let selectedSkill = null;
+      const DEFAULT_PLACEHOLDER = "Describe the result you want…";
       let skillProfiles = DEFAULT_SKILLS;
       let thoughtIndex = 0;
       let thoughtTimer = null;
@@ -629,11 +630,15 @@
           cost.className = "skill-cost";
           cost.textContent = profile.estimated_credits + "c";
           button.append(label, cost);
+          // The button carries its musical focus to the server on its own; the
+          // box holds only the user's words. Pasting the prompt here made its
+          // "complete arrangement" wording price every beat at 4 credits.
+          // Pressing the active button again returns to a custom request.
           button.addEventListener("click", () => {
-            selectedSkill = profile.id;
-            ui.prompt.value = profile.prompt;
-            ui.prompt.dispatchEvent(new Event("input"));
-            ui.skillRail.querySelectorAll(".skill-button").forEach((item) => item.classList.toggle("active", item === button));
+            const active = selectedSkill === profile.id;
+            selectedSkill = active ? null : profile.id;
+            ui.prompt.placeholder = active ? DEFAULT_PLACEHOLDER : (profile.description || profile.label).replace(/\.$/, "") + ". Add genre, tempo, mood…";
+            ui.skillRail.querySelectorAll(".skill-button").forEach((item) => item.classList.toggle("active", item === button && !active));
             updateCostHint();
             ui.prompt.focus();
           });
@@ -970,7 +975,11 @@
         ui.traceLog.scrollTop = ui.traceLog.scrollHeight;
       }
       function submit() {
-        const text = ui.prompt.value.trim();
+        const profile = skillProfiles.find((item) => item.id === selectedSkill);
+        // An empty box with a skill pressed sends the button's name: the
+        // server needs a user message, and the transcript should read as a
+        // request, not as the skill's internal prompt.
+        const text = ui.prompt.value.trim() || (profile ? profile.label : "");
         if (!text || !connected) return;
         // While a turn is running the message still goes out: the engine
         // queues it, echoes it into the transcript, and starts it when the

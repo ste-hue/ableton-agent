@@ -13,7 +13,7 @@ import {
 import type { AgentProvider } from "../src/llm.js";
 import type { LicenseProvider } from "../src/billing.js";
 import { parseCreditPacks } from "../src/billing.js";
-import { estimateCreditCost } from "../src/skills.js";
+import { estimateCreditCost, skillPromptFor } from "../src/skills.js";
 
 function makeApp(credits = 100, extra: Partial<AppConfig> = {}) {
   const store = new MemoryStore();
@@ -93,6 +93,14 @@ test("credit estimates rise with musical scope and cannot be lowered by a cheap 
   assert.equal(estimateCreditCost(1, "set tempo to 126"), 1);
   assert.equal(estimateCreditCost(1, "make a house beat"), 2);
   assert.equal(estimateCreditCost(1, "arrange a full 128-bar track", "clip_edit"), 4);
+  // The device pastes the pressed skill's own prompt into the message. That
+  // text must never price the turn: the beat prompt says "complete
+  // arrangement" and charged every beat 4 credits until 2026-09-05.
+  const beatPrompt = skillPromptFor("beat_making") ?? "";
+  assert.match(beatPrompt, /complete arrangement/);
+  assert.equal(estimateCreditCost(1, `${beatPrompt} Hip hop underground`, "beat_making"), 2);
+  assert.equal(estimateCreditCost(1, `${beatPrompt} a full 128-bar track please`, "beat_making"), 4);
+  assert.equal(estimateCreditCost(1, skillPromptFor("harmony_melody") ?? "", "harmony_melody"), 2);
 });
 
 test("landing page explains the complete customer journey", async () => {
