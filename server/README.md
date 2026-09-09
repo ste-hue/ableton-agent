@@ -197,10 +197,14 @@ repository. To collect emails through Lemon Squeezy, create a separate Lead Magn
 product, upload the beta ZIP and set its checkout URL in `ATLAS_CHECKOUT_URL`. Keep
 license-key generation disabled for Atlas. The product does not consume credits.
 
-The current beta is explicitly unnotarized and the supplied campaign assets say
-macOS 26+. The CI package declares a macOS 13 deployment target and passed native
-editor/catalog tests on an Apple Silicon runner; complete DAW and clean-Mac install
-acceptance remain separate. Do not equate the deployment target with a support matrix.
+Atlas 0.3.7 uses a universal macOS `.pkg` (Intel + Apple Silicon, deployment target
+14.0) and a Linux x86_64 archive built on Ubuntu 22.04. `ATLAS_LINUX_DOWNLOAD_URL`
+powers `/atlas/download/linux`; `/atlas/download` remains the direct Mac installer.
+The Mac beta is unsigned and unnotarized. Gallery previews include the earlier
+0.3.6 campaign; current requirements and installation steps are in the page text.
+Linux runtime/DAW compatibility and clean-Mac acceptance remain separate from CI.
+The Mac package installs system-wide; users upgrading from the earlier per-user
+ZIP must back up/remove their old bundles to avoid duplicate versions.
 
 Validation: typecheck, existing backend tests, independent Atlas checkout/download
 routing tests, Wrangler dry run and local HTTP checks of all pages/media/API routes.

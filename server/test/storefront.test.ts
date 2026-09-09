@@ -37,3 +37,21 @@ test('missing or unsafe download configuration never exposes an unsafe link', as
     assert.equal((await app.request('/atlas/download')).headers.get('location'), '/atlas#install');
   }
 });
+
+
+test('Linux downloads are explicit and independent from Mac and checkout', async () => {
+  const app = createApp({ store: new MemoryStore(), atlasCheckoutUrl: 'https://tembro.lemonsqueezy.com/buy/atlas', atlasDownloadUrl: 'https://example.com/atlas.pkg', atlasLinuxDownloadUrl: 'https://example.com/atlas.tar.gz' });
+  assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://example.com/atlas.pkg');
+  const linux = await app.request('/atlas/download/linux');
+  assert.equal(linux.status, 302);
+  assert.equal(linux.headers.get('location'), 'https://example.com/atlas.tar.gz');
+  assert.equal(linux.headers.get('cache-control'), 'no-store');
+  const page = await (await app.request('/atlas')).text();
+  assert.match(page, /href="\/atlas\/download\/linux"/);
+  assert.match(page, /python3 install.py/);
+  for (const atlasLinuxDownloadUrl of [undefined, 'javascript:alert(1)', 'https://user:secret@example.com/file']) {
+    const missing = createApp({ store: new MemoryStore(), atlasLinuxDownloadUrl });
+    assert.equal((await missing.request('/atlas/download/linux')).headers.get('location'), '/atlas#install');
+    assert.doesNotMatch(await (await missing.request('/atlas')).text(), /Download Linux beta/);
+  }
+});

@@ -55,6 +55,7 @@ export interface AppConfig {
   historyLimit?: number;
   atlasCheckoutUrl?: string;
   atlasDownloadUrl?: string;
+  atlasLinuxDownloadUrl?: string;
   checkoutUrl?: string;
   freeFirstPackCode?: string;
   downloadUrl?: string;
@@ -243,13 +244,18 @@ export function createApp(config: AppConfig) {
     }
     await next();
   });
-  const storeOptions = { atlasCheckoutUrl: config.atlasCheckoutUrl, atlasDownloadUrl: config.atlasDownloadUrl, supportEmail };
+  const storeOptions = { atlasCheckoutUrl: config.atlasCheckoutUrl, atlasDownloadUrl: config.atlasDownloadUrl, atlasLinuxDownloadUrl: config.atlasLinuxDownloadUrl, supportEmail };
   app.get("/", (c) => c.html(storefrontPage(storeOptions)));
   app.get("/atlas", (c) => c.html(atlasPage(storeOptions)));
   app.get("/atlas/download", (c) => {
     const url = publicHttpsUrl(config.atlasDownloadUrl);
     c.header("Cache-Control", "no-store");
     return url ? c.redirect(url, 302) : c.redirect("/atlas#install", 302);
+  });
+  app.get("/atlas/download/linux", (c) => {
+    const url = publicHttpsUrl(config.atlasLinuxDownloadUrl);
+    c.header("Cache-Control", "no-store");
+    return c.redirect(url ?? "/atlas#install", 302);
   });
   app.get("/tembro", (c) => {
     c.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
