@@ -186,8 +186,9 @@ fit the Worker request path.
 
 The root route is now the Tembro product store. `/tembro` retains the original
 Ableton Live product and credit-pack journey. `/atlas` is the free VST Atlas beta
-page, with the campaign media in `public/media/atlas/`. `/atlas/download` redirects
-to `ATLAS_CHECKOUT_URL` when configured, otherwise to `ATLAS_DOWNLOAD_URL`. Neither
+page, with the campaign media in `public/media/atlas/`. `/atlas/download` always
+redirects to `ATLAS_DOWNLOAD_URL`, so receipt links cannot loop back to checkout.
+Page buttons use `ATLAS_CHECKOUT_URL` when configured, otherwise `/atlas/download`. Neither
 Atlas setting changes the original Tembro `CHECKOUT_URL`, `DOWNLOAD_URL`, activation,
 credit-pack webhook or `/v0/version` response. No new database or migration.
 

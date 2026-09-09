@@ -247,7 +247,7 @@ export function createApp(config: AppConfig) {
   app.get("/", (c) => c.html(storefrontPage(storeOptions)));
   app.get("/atlas", (c) => c.html(atlasPage(storeOptions)));
   app.get("/atlas/download", (c) => {
-    const url = publicHttpsUrl(config.atlasCheckoutUrl) ?? publicHttpsUrl(config.atlasDownloadUrl);
+    const url = publicHttpsUrl(config.atlasDownloadUrl);
     c.header("Cache-Control", "no-store");
     return url ? c.redirect(url, 302) : c.redirect("/atlas#install", 302);
   });

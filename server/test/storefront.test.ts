@@ -19,10 +19,11 @@ test('store separates Atlas from Tembro credit purchases and preserves the API',
   assert.equal((await app.request('/v0/health')).status, 200);
 });
 
-test('Atlas checkout takes precedence without changing Tembro purchase flow', async () => {
+test('Atlas page offers checkout while receipt download stays a direct file link', async () => {
   const app = createApp({ store: new MemoryStore(), atlasCheckoutUrl: 'https://tembro.lemonsqueezy.com/buy/atlas', atlasDownloadUrl: 'https://example.com/atlas.zip' });
-  assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://tembro.lemonsqueezy.com/buy/atlas');
+  assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://example.com/atlas.zip');
   assert.match(await (await app.request('/atlas')).text(), /Get Atlas free/);
+  assert.match(await (await app.request('/atlas')).text(), /href="https:\/\/tembro.lemonsqueezy.com\/buy\/atlas"/);
 });
 
 test('missing or unsafe download configuration never exposes an unsafe link', async () => {
