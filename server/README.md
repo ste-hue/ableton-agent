@@ -180,3 +180,28 @@ webhook URL.
 Cloud Run is deliberately absent from V0. Add it only when Tembro performs
 heavy server-side audio rendering or other long-running compute that does not
 fit the Worker request path.
+
+
+## Product store (September 2026)
+
+The root route is now the Tembro product store. `/tembro` retains the original
+Ableton Live product and credit-pack journey. `/atlas` is the free VST Atlas beta
+page, with the campaign media in `public/media/atlas/`. `/atlas/download` always
+redirects to `ATLAS_DOWNLOAD_URL`, so receipt links cannot loop back to checkout.
+Page buttons use `ATLAS_CHECKOUT_URL` when configured, otherwise `/atlas/download`. Neither
+Atlas setting changes the original Tembro `CHECKOUT_URL`, `DOWNLOAD_URL`, activation,
+credit-pack webhook or `/v0/version` response. No new database or migration.
+
+Atlas is currently a direct free download from the public `tembro-releases`
+repository. To collect emails through Lemon Squeezy, create a separate Lead Magnet
+product, upload the beta ZIP and set its checkout URL in `ATLAS_CHECKOUT_URL`. Keep
+license-key generation disabled for Atlas. The product does not consume credits.
+
+The current beta is explicitly unnotarized and the supplied campaign assets say
+macOS 26+. The CI package declares a macOS 13 deployment target and passed native
+editor/catalog tests on an Apple Silicon runner; complete DAW and clean-Mac install
+acceptance remain separate. Do not equate the deployment target with a support matrix.
+
+Validation: typecheck, existing backend tests, independent Atlas checkout/download
+routing tests, Wrangler dry run and local HTTP checks of all pages/media/API routes.
+No browser visual inspection was available in this session.

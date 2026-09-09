@@ -13,3 +13,7 @@ DOWNLOAD_URL=https://github.com/ste-hue/ableton-agent/releases/download/v0.1.0-b
 SUPPORT_EMAIL=support@example.com
 BETA_ACCESS_CODE=replace-with-a-long-random-code
 BETA_GRANT_CREDITS=40
+
+# Atlas is independent of Tembro credit packs and activation.
+ATLAS_CHECKOUT_URL=
+ATLAS_DOWNLOAD_URL=

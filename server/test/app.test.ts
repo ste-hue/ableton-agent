@@ -108,7 +108,7 @@ test("landing page explains the complete customer journey", async () => {
     checkoutUrl: "https://tembro.lemonsqueezy.com/buy/test-product",
     supportEmail: "support@tembro.test",
   });
-  const res = await app.request("/");
+  const res = await app.request("/tembro");
   assert.equal(res.status, 200);
   assert.match(res.headers.get("content-type") ?? "", /text\/html/);
   assert.match(res.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
@@ -131,7 +131,7 @@ test("landing page pre-applies the free first pack code at checkout", async () =
     checkoutUrl: "https://tembro.lemonsqueezy.com/checkout/buy/test-product",
     freeFirstPackCode: "firstpack",
   });
-  const body = await (await app.request("/")).text();
+  const body = await (await app.request("/tembro")).text();
   assert.match(body, /Get 40 credits free/);
   assert.match(body, /checkout\/buy\/test-product\?checkout%5Bdiscount_code%5D=FIRSTPACK/);
   assert.match(body, /first Starter pack is free with code FIRSTPACK/);
@@ -144,14 +144,14 @@ test("landing page ignores a malformed free pack code", async () => {
     checkoutUrl: "https://tembro.lemonsqueezy.com/checkout/buy/test-product",
     freeFirstPackCode: "<script>",
   });
-  const body = await (await app.request("/")).text();
+  const body = await (await app.request("/tembro")).text();
   assert.match(body, /Get Tembro/);
   assert.doesNotMatch(body, /discount_code/);
 });
 
 test("landing page rejects unsafe checkout URLs", async () => {
   const { app } = makeApp(100, { checkoutUrl: "javascript:alert(1)" });
-  const body = await (await app.request("/")).text();
+  const body = await (await app.request("/tembro")).text();
   assert.doesNotMatch(body, /javascript:/);
   assert.match(body, /Early access soon/);
 });
@@ -160,7 +160,7 @@ test("landing page switches to a free beta download without payment copy", async
   const { app } = makeApp(100, {
     downloadUrl: "https://github.com/ste-hue/ableton-agent/releases/download/v0-beta/Tembro.zip",
   });
-  const body = await (await app.request("/")).text();
+  const body = await (await app.request("/tembro")).text();
   assert.match(body, /Download free beta/);
   assert.match(body, /No card, checkout, or little subscription surprise/);
   assert.match(body, /Free beta access code activation/);

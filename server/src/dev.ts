@@ -20,6 +20,8 @@ const app = createApp({
   agent,
   agentTokenSecret: process.env.AGENT_TOKEN_SECRET || "local-agent-token-secret",
   allowDevSignin: true,
+  atlasCheckoutUrl: process.env.ATLAS_CHECKOUT_URL,
+  atlasDownloadUrl: process.env.ATLAS_DOWNLOAD_URL,
   checkoutUrl: process.env.CHECKOUT_URL,
   freeFirstPackCode: process.env.FREE_FIRST_PACK_CODE,
   downloadUrl: process.env.DOWNLOAD_URL,
