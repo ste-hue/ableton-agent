@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "tembro-api",
+  "account_id": "8a6fdb9f42fa0fdbbb99dc93536c249d",
   "main": "src/worker.ts",
   "compatibility_date": "2026-08-30",
   "compatibility_flags": ["nodejs_compat"],
@@ -10,6 +11,7 @@
       "custom_domain": true
     }
   ],
+  "assets": { "directory": "./public" },
   "d1_databases": [
     {
       "binding": "DB",
@@ -19,6 +21,8 @@
     }
   ],
   "vars": {
+    "ATLAS_CHECKOUT_URL": "",
+    "ATLAS_DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/atlas-v0.3.6-beta/VST-Atlas-0.3.6-macOS-arm64-beta.zip",
     "LLM_RESPONSES_ENDPOINT": "https://api.openai.com/v1/responses",
     "LLM_MODEL": "gpt-5.6-terra",
     "APP_VERSION": "0.1.6-beta",

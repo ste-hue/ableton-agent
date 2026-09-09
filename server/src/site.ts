@@ -364,6 +364,8 @@ export function landingPage(options: LandingPageOptions = {}): string {
   <header class="wrap nav">
     <div class="wordmark"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 58" focusable="false"><path fill="currentColor" d="M29 5C15.745 5 5 15.745 5 29s10.745 24 24 24c9.087 0 16.995-5.05 21.07-12.49H29c-6.357 0-11.51-5.153-11.51-11.51S22.643 17.49 29 17.49h21.07C45.995 10.05 38.087 5 29 5Z"/><circle cx="51" cy="29" r="8" fill="currentColor"/></svg></span> Tembro</div>
     <nav class="nav-links" aria-label="Main navigation">
+      <a href="/">All products</a>
+      <a href="/atlas">Atlas</a>
       <a href="#how-it-works">How it works</a>
       <a href="#credits">Credits</a>
       <a class="nav-buy" href="#get-tembro">Get Tembro</a>

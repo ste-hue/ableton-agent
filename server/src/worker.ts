@@ -34,6 +34,8 @@ export default {
       lemonWebhookSecret: env.LEMON_SQUEEZY_WEBHOOK_SECRET || undefined,
       creditPacks: parseCreditPacks(env.CREDIT_PACKS),
       chatCostCredits: positiveInteger(env.CHAT_COST_CREDITS, "CHAT_COST_CREDITS"),
+      atlasCheckoutUrl: env.ATLAS_CHECKOUT_URL || undefined,
+      atlasDownloadUrl: env.ATLAS_DOWNLOAD_URL || undefined,
       checkoutUrl: env.CHECKOUT_URL || undefined,
       freeFirstPackCode: env.FREE_FIRST_PACK_CODE || undefined,
       downloadUrl: env.DOWNLOAD_URL || undefined,
