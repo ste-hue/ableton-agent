@@ -14,7 +14,8 @@ test('store separates Atlas from Tembro credit purchases and preserves the API',
   const atlas = await (await app.request('/atlas')).text();
   assert.match(atlas, /Download free beta/);
   assert.doesNotMatch(atlas, /lemonsqueezy.com\/buy\/credits/);
-  assert.match(atlas, /not notarized/i);
+  assert.match(atlas, /notarized by Apple/i);
+  assert.doesNotMatch(atlas, /not notarized/i);
   assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://example.com/atlas.zip');
   const legacy = await app.request('/tembro');
   assert.equal(legacy.status, 301);
