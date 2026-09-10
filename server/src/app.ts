@@ -399,11 +399,28 @@ export function createApp(config: AppConfig) {
           creditPacks,
         );
       } catch (error) {
-        if (
-          error instanceof Error &&
-          (error.message === "billing_product_mismatch" ||
-            error.message === "billing_unknown_variant")
-        ) {
+        if (error instanceof Error && error.message === "billing_product_mismatch") {
+          // Not the Tembro credit product: an Atlas lead-magnet order. Keep the
+          // email, and answer 200 so Lemon Squeezy stops retrying the webhook.
+          const p = payload as {
+            meta?: { event_name?: unknown };
+            data?: { id?: unknown; attributes?: Record<string, unknown> };
+          };
+          const a = p.data?.attributes ?? {};
+          const item = (a.first_order_item && typeof a.first_order_item === "object"
+            ? a.first_order_item
+            : {}) as Record<string, unknown>;
+          await store.logEvent("atlas.download", {
+            email: typeof a.user_email === "string" ? a.user_email.trim().toLowerCase() : null,
+            name: typeof a.user_name === "string" ? a.user_name : null,
+            orderId: p.data?.id ?? null,
+            productId: item.product_id ?? null,
+            productName: item.product_name ?? null,
+            event: p.meta?.event_name ?? null,
+          });
+          return c.json({ ok: true, recorded: "atlas.download" });
+        }
+        if (error instanceof Error && error.message === "billing_unknown_variant") {
           await store.logEvent("billing.rejected", { reason: error.message });
           return c.json({ error: error.message }, 400);
         }
