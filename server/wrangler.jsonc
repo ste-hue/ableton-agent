@@ -22,7 +22,7 @@
   ],
   "vars": {
     "ATLAS_CHECKOUT_URL": "https://tembro.lemonsqueezy.com/checkout/buy/0026137e-70fd-4687-b09d-d3e190142565",
-    "ATLAS_DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/atlas-v0.3.7-beta/VST-ATLAS-0.3.7-macOS-universal-beta-unsigned.pkg",
+    "ATLAS_DOWNLOAD_URL": "https://github.com/ste-hue/tembro-releases/releases/download/atlas-v0.3.7-beta/VST-ATLAS-0.3.7-macOS-universal.pkg",
     "LLM_RESPONSES_ENDPOINT": "https://api.openai.com/v1/responses",
     "LLM_MODEL": "gpt-5.6-terra",
     "APP_VERSION": "0.1.6-beta",
