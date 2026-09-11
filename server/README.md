@@ -71,7 +71,10 @@ redelivered webhook cannot grant twice.
 
 | Endpoint | Auth | Purpose |
 | --- | --- | --- |
-| `GET /` | no | public Tembro product page and free download or paid checkout link |
+| `GET /` | no | Tembro product catalog |
+| `GET /chordarium` | no | Chordarium product page and browser/plugin comparison |
+| `GET /chordarium/buy` | no | redirect to the Chordarium plugin checkout |
+| `GET /tembro` | no | original Tembro for Live landing page |
 | `GET /v0/health` | no | liveness and protocol version |
 | `POST /v0/auth/license` | no | activate a beta access code or Lemon Squeezy license |
 | `POST /v0/webhooks/lemonsqueezy` | HMAC | grant a credit pack exactly once per paid order |
@@ -105,8 +108,9 @@ point never enables that route.
 
 ## Public product page
 
-The same Hono Worker serves the public Tembro page at `/`, so V0 needs only one
-Cloudflare deployment and one custom domain. Set `DOWNLOAD_URL` to the public
+The same Hono Worker serves the product catalog at `/`, the product pages, and
+the original Tembro for Live page at `/tembro`. Public page rendering does not
+query the database or call the payment service. Set `DOWNLOAD_URL` to the public
 GitHub release asset for free beta mode. Later, setting `CHECKOUT_URL` takes
 priority and automatically changes the page back to its paid journey.
 `SUPPORT_EMAIL` is the public support address. If neither URL is configured,
@@ -184,27 +188,57 @@ fit the Worker request path.
 
 ## Product store (September 2026)
 
-The root route is the Tembro store: one card and one button per product — VST Atlas
-(`/atlas`), Chordarium (Buy button to `/chordarium`, the checkout redirect Worker in `redirects/`,
-plus a link to chordarium.com) and Rudiment (coming soon, no link yet). Tembro for Live is not a
-store product; its original landing page (credit-pack journey) stays available at
-`/tembro`. `/atlas` is the free VST Atlas beta page in
-its own store styling, with the campaign media in `public/media/atlas/`. `/atlas/download` always
-redirects to `ATLAS_DOWNLOAD_URL`, so receipt links cannot loop back to checkout.
-Page buttons use `ATLAS_CHECKOUT_URL` when configured, otherwise `/atlas/download`. Neither
-Atlas setting changes the original Tembro `CHECKOUT_URL`, `DOWNLOAD_URL`, activation,
-credit-pack webhook or `/v0/version` response. No new database or migration.
+The home page is a terminal-style catalog for VST Atlas, Chordarium and the
+upcoming Rudiment. Product labels and the Chordarium browser/checkout destinations
+live in `src/products.ts`; public routing lives in `src/storefront-routes.ts` and
+HTML/CSS in `src/storefront.ts`. There are no client scripts, remote fonts, or
+new dependencies. The original Tembro for Live page remains at `/tembro`.
 
-Atlas is currently a direct free download from the public `tembro-releases`
-repository. To collect emails through Lemon Squeezy, create a separate Lead Magnet
-product, upload the beta ZIP and set its checkout URL in `ATLAS_CHECKOUT_URL`. Keep
-license-key generation disabled for Atlas. The product does not consume credits.
+`/chordarium` is a product page with separate browser and macOS plug-in choices.
+`/chordarium/buy` redirects to the fixed plugin checkout with `Cache-Control:
+no-store` and does not forward arbitrary query parameters. Browser credit buying
+stays inside the composer, which retains wallet-specific top-up parameters.
+Plugin price, duration, activation limits and download details belong to the
+checkout; the page does not duplicate mutable licensing terms. The piano-roll
+figure is explicitly an example, not an interactive player or a product screenshot.
 
-The current beta is explicitly unnotarized and the supplied campaign assets say
-macOS 26+. The CI package declares a macOS 13 deployment target and passed native
-editor/catalog tests on an Apple Silicon runner; complete DAW and clean-Mac install
-acceptance remain separate. Do not equate the deployment target with a support matrix.
+Both Chordarium paths accept GET and HEAD. Trailing slashes redirect with HTTP 308
+and preserve the query string; unsupported methods return 405 with `Allow: GET,
+HEAD`. Tracked product links reach the same HTML page. Unknown child paths remain
+404. Page security headers are scoped so `/v0` API responses retain their existing
+behavior.
 
-Validation: typecheck, existing backend tests, independent Atlas checkout/download
-routing tests, Wrangler dry run and local HTTP checks of all pages/media/API routes.
-No browser visual inspection was available in this session.
+`/atlas/download` still redirects directly to `ATLAS_DOWNLOAD_URL`; page buttons
+use `ATLAS_CHECKOUT_URL` when configured. Atlas configuration, Tembro `CHECKOUT_URL`,
+`DOWNLOAD_URL`, activation, billing and `/v0/version` are unchanged. There are no
+new bindings, databases or migrations. The Atlas page does not display a release
+number because the previous 0.3.12 label did not match its configured 0.3.10 download;
+this change does not select or publish a replacement installer.
+
+### Publishing this change
+
+The existing `tembro-chordarium-link` Route Worker takes precedence over the main
+Worker for the two exact legacy paths. It must be updated as well as the main site.
+Its new role is only to forward the original request to the Custom Domain Worker;
+all content and checkout logic stay in the main application. No route deletion,
+wildcard expansion, DNS change or additional service binding is necessary.
+
+1. Check the current deployed main Worker configuration against `wrangler.jsonc`.
+   Preserve production bindings, secrets and all payment/download variables.
+2. Deploy the main `tembro-api` Worker first.
+3. Verify `/chordarium?utm_source=smoke` returns HTTP 200 HTML, and
+   `/chordarium/buy?utm_source=smoke` returns HTTP 302 to the intended plugin checkout.
+   The query-bearing page request bypasses the old exact Route Worker.
+4. Deploy the compatibility Worker using `redirects/wrangler.jsonc`.
+5. Verify bare `/chordarium` (200), `/chordarium/` (308), HEAD (empty body), unsupported
+   methods (405), `/`, `/atlas`, `/tembro`, `/atlas/download` and `/v0/health`.
+
+See `redirects/README.md` for the Route-to-Custom-Domain forwarding contract.
+The legacy redirect can be restored independently if the main site must be rolled
+back. Merging alone does not perform either manual Cloudflare deployment.
+
+Validation: `npm run typecheck`, `npm test` (56 tests), independent storefront
+routing/security/forwarding cases, and local HTTP checks. These checks do not
+validate an installer or establish DAW compatibility. The Chordarium plugin embeds
+its own composer at build time; web changes only reach it after a separate rebuild,
+signing and notarization.
