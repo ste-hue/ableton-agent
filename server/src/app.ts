@@ -17,7 +17,7 @@ import { billingGrantFromWebhook, verifyLemonSignature } from "./billing.js";
 import { ClientEventSchema, AgentRequestSchema, LicenseAuthRequestSchema } from "./types.js";
 import type { AgentStepResponse, McpTool } from "./types.js";
 import { landingPage } from "./site.js";
-import { atlasPage, publicHttpsUrl } from "./storefront.js";
+import { storefrontPage, atlasPage, publicHttpsUrl } from "./storefront.js";
 import {
   estimateCreditCost,
   isTembroSkill,
@@ -236,7 +236,7 @@ export function createApp(config: AppConfig) {
   });
 
   app.use("*", async (c, next) => {
-    if (["/", "/atlas"].includes(c.req.path)) {
+    if (["/", "/atlas", "/tembro"].includes(c.req.path)) {
       c.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
       c.header("Referrer-Policy", "strict-origin-when-cross-origin");
       c.header("X-Content-Type-Options", "nosniff");
@@ -250,8 +250,8 @@ export function createApp(config: AppConfig) {
     c.header("Cache-Control", "no-store");
     return url ? c.redirect(url, 302) : c.redirect("/atlas#install", 302);
   });
-  app.get("/tembro", (c) => c.redirect("/", 301));
-  app.get("/", (c) => {
+  app.get("/", (c) => c.html(storefrontPage(storeOptions)));
+  app.get("/tembro", (c) => {
     return c.html(
       landingPage({
         checkoutUrl,
