@@ -10,7 +10,8 @@ test('store lists Atlas, Chordarium and Rudiment and keeps Tembro for Live on it
   assert.match(home.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
   const homeBody = await home.text();
   assert.match(homeBody, /href="\/atlas"/);
-  assert.match(homeBody, /href="\/chordarium"/);
+  assert.match(homeBody, /href="https:\/\/chordarium.com"/);
+  assert.match(homeBody, /href="\/chordarium">Buy Chordarium/);
   assert.match(homeBody, /Rudiment/);
   assert.match(homeBody, /Coming soon/);
   assert.doesNotMatch(homeBody, /Tembro for Live/);

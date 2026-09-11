@@ -23,7 +23,7 @@ function shell(title: string, description: string, path: string, body: string, s
 export function storefrontPage(options: StoreOptions = {}): string {
   const products = [
     { tag: 'Visual plug-in browser · Free beta', name: 'VST Atlas', copy: 'Your plug-in collection, in view. Visual cards, focused filters, favorites and a compact workspace that feels like yours.', meta: 'macOS · Linux beta · VST3, AU & Standalone', button: '<a class="button primary" href="/atlas">Get Atlas free <span aria-hidden="true">↗</span></a>' },
-    { tag: 'Piano house composer · Browser & plug-in', name: 'Chordarium', copy: 'Compose piano-house phrases, bass and arrangement variations. Reproducible seeds, harmony and voicing edits, MIDI export.', meta: 'Browser · macOS plug-in', button: '<a class="button primary" href="/chordarium">Get Chordarium <span aria-hidden="true">↗</span></a>' },
+    { tag: 'Piano house composer · Browser & plug-in', name: 'Chordarium', copy: 'Compose piano-house phrases, bass and arrangement variations. Reproducible seeds, harmony and voicing edits, MIDI export.', meta: 'Browser · macOS plug-in · <a href="https://chordarium.com">chordarium.com</a>', button: '<a class="button primary" href="/chordarium">Buy Chordarium <span aria-hidden="true">↗</span></a>' },
     { tag: 'Coming soon', name: 'Rudiment', copy: 'The next Tembro tool is in the works. Details will appear here when it is ready.', meta: 'In development', button: '<span class="button soon" aria-disabled="true">Coming soon</span>' },
   ];
   const cards = products.map((p) => `<article class="product"><div class="copy"><span class="tag">${p.tag}</span><h2>${p.name}</h2><p>${p.copy}</p><p class="small">${p.meta}</p>${p.button}</div></article>`).join('');
