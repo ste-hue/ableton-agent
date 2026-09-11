@@ -3,23 +3,29 @@ import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
 import { MemoryStore } from '../src/store.js';
 
-test('store separates Atlas from Tembro credit purchases and preserves the API', async () => {
+test('store lists Atlas, Chordarium and Rudiment and keeps Tembro for Live on its own page', async () => {
   const app = createApp({ store: new MemoryStore(), checkoutUrl: 'https://tembro.lemonsqueezy.com/buy/credits', downloadUrl: 'https://example.com/tembro.dmg', atlasDownloadUrl: 'https://example.com/atlas.zip' });
   const home = await app.request('/');
   assert.equal(home.status, 200);
+  assert.match(home.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
   const homeBody = await home.text();
   assert.match(homeBody, /href="\/atlas"/);
-  assert.match(homeBody, /lemonsqueezy.com\/buy\/credits/);
-  assert.doesNotMatch(homeBody, /Find your flow/);
+  assert.match(homeBody, /href="\/chordarium"/);
+  assert.match(homeBody, /Rudiment/);
+  assert.match(homeBody, /Coming soon/);
+  assert.doesNotMatch(homeBody, /Tembro for Live/);
+  assert.doesNotMatch(homeBody, /lemonsqueezy.com\/buy\/credits/);
   const atlas = await (await app.request('/atlas')).text();
   assert.match(atlas, /Download free beta/);
+  assert.match(atlas, /href="\/tembro"/);
   assert.doesNotMatch(atlas, /lemonsqueezy.com\/buy\/credits/);
   assert.match(atlas, /notarized by Apple/i);
   assert.doesNotMatch(atlas, /not notarized/i);
   assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://example.com/atlas.zip');
-  const legacy = await app.request('/tembro');
-  assert.equal(legacy.status, 301);
-  assert.equal(legacy.headers.get('location'), '/');
+  const live = await app.request('/tembro');
+  assert.equal(live.status, 200);
+  assert.match(live.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
+  assert.match(await live.text(), /lemonsqueezy.com\/buy\/credits/);
   const version = await (await app.request('/v0/version')).json() as { download_url: string };
   assert.equal(version.download_url, 'https://example.com/tembro.dmg');
   assert.equal((await app.request('/v0/health')).status, 200);

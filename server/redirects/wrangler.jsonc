@@ -1,0 +1,18 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "tembro-chordarium-link",
+  "account_id": "8a6fdb9f42fa0fdbbb99dc93536c249d",
+  "main": "chordarium.mjs",
+  "compatibility_date": "2026-09-10",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "gettembro.com/chordarium", "zone_name": "gettembro.com" },
+    { "pattern": "gettembro.com/chordarium/", "zone_name": "gettembro.com" }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 0.01 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
+  }
+}

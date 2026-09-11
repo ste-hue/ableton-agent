@@ -184,8 +184,11 @@ fit the Worker request path.
 
 ## Product store (September 2026)
 
-The root route is the original Tembro for Live landing page (credit-pack journey);
-`/tembro` permanently redirects there. `/atlas` is the free VST Atlas beta page in
+The root route is the Tembro store: one card and one button per product — VST Atlas
+(`/atlas`), Chordarium (`/chordarium`, served by the dedicated checkout redirect Worker
+in `redirects/`) and Rudiment (coming soon, no link yet). Tembro for Live is not a
+store product; its original landing page (credit-pack journey) stays available at
+`/tembro`. `/atlas` is the free VST Atlas beta page in
 its own store styling, with the campaign media in `public/media/atlas/`. `/atlas/download` always
 redirects to `ATLAS_DOWNLOAD_URL`, so receipt links cannot loop back to checkout.
 Page buttons use `ATLAS_CHECKOUT_URL` when configured, otherwise `/atlas/download`. Neither
