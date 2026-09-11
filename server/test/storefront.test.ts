@@ -132,7 +132,7 @@ test('storefront support configuration cannot inject markup or links', async () 
   const app = createStorefront({ supportEmail: 'bad\"><script>alert(1)</script>@example.com' });
   for (const path of ['/', '/atlas', '/chordarium']) {
     const html = await (await app.request(path)).text();
-    assert.doesNotMatch(html, /<script>|alert\(1\)/);
+    assert.doesNotMatch(html, /<script>|alert\(1\)/i);
     assert.match(html, /mailto:support@gettembro.com/);
   }
 });
