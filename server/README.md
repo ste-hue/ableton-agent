@@ -202,6 +202,14 @@ Plugin price, duration, activation limits and download details belong to the
 checkout; the page does not duplicate mutable licensing terms. The piano-roll
 figure is explicitly an example, not an interactive player or a product screenshot.
 
+Atlas 0.3.7 uses a universal macOS `.pkg` (Intel + Apple Silicon, deployment target
+14.0) and a Linux x86_64 archive built on Ubuntu 22.04. `ATLAS_LINUX_DOWNLOAD_URL`
+powers `/atlas/download/linux`; `/atlas/download` remains the direct Mac installer.
+The Mac beta is unsigned and unnotarized. Gallery previews include the earlier
+0.3.6 campaign; current requirements and installation steps are in the page text.
+Linux runtime/DAW compatibility and clean-Mac acceptance remain separate from CI.
+The Mac package installs system-wide; users upgrading from the earlier per-user
+ZIP must back up/remove their old bundles to avoid duplicate versions.
 Both Chordarium paths accept GET and HEAD. Trailing slashes redirect with HTTP 308
 and preserve the query string; unsupported methods return 405 with `Allow: GET,
 HEAD`. Tracked product links reach the same HTML page. Unknown child paths remain

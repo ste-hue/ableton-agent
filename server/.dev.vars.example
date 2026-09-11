@@ -16,4 +16,5 @@ BETA_GRANT_CREDITS=40
 
 # Atlas is independent of Tembro credit packs and activation.
 ATLAS_CHECKOUT_URL=
+ATLAS_LINUX_DOWNLOAD_URL=
 ATLAS_DOWNLOAD_URL=

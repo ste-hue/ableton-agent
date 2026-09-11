@@ -55,6 +55,7 @@ export interface AppConfig {
   historyLimit?: number;
   atlasCheckoutUrl?: string;
   atlasDownloadUrl?: string;
+  atlasLinuxDownloadUrl?: string;
   checkoutUrl?: string;
   freeFirstPackCode?: string;
   downloadUrl?: string;
@@ -243,7 +244,12 @@ export function createApp(config: AppConfig) {
     }
     await next();
   });
-  const storeOptions = { atlasCheckoutUrl: config.atlasCheckoutUrl, atlasDownloadUrl: config.atlasDownloadUrl, supportEmail };
+  const storeOptions = {
+    atlasCheckoutUrl: config.atlasCheckoutUrl,
+    atlasDownloadUrl: config.atlasDownloadUrl,
+    atlasLinuxDownloadUrl: config.atlasLinuxDownloadUrl,
+    supportEmail,
+  };
   app.route("/", createStorefront(storeOptions));
   app.get("/tembro", (c) => {
     return c.html(

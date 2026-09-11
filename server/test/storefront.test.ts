@@ -22,8 +22,8 @@ test('store lists Atlas, Chordarium and Rudiment and keeps Tembro for Live on it
   assert.match(atlas, /Download free beta/);
   assert.match(atlas, /href="\/tembro"/);
   assert.doesNotMatch(atlas, /lemonsqueezy.com\/buy\/credits/);
-  assert.match(atlas, /notarized by Apple/i);
-  assert.doesNotMatch(atlas, /not notarized/i);
+  assert.match(atlas, /not notarized/i);
+  assert.doesNotMatch(atlas, /notarized by Apple/i);
   assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://example.com/atlas.zip');
   const live = await app.request('/tembro');
   assert.equal(live.status, 200);
@@ -43,7 +43,7 @@ test('Atlas page offers checkout while receipt download stays a direct file link
 });
 
 test('missing or unsafe download configuration never exposes an unsafe link', async () => {
-  for (const url of [undefined, 'javascript:alert(1)', 'http://example.com/atlas.zip', 'https://user:password@example.com/atlas.zip']) {
+  for (const url of [undefined, 'javascript:alert(1)', 'http://example.com/atlas.zip', '******example.com/atlas.zip']) {
     const app = createApp({ store: new MemoryStore(), atlasDownloadUrl: url });
     const page = await app.request('/atlas');
     assert.match(page.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
@@ -51,6 +51,23 @@ test('missing or unsafe download configuration never exposes an unsafe link', as
     assert.match(body, /download is being prepared/);
     assert.doesNotMatch(body, /href="javascript:|user:password/);
     assert.equal((await app.request('/atlas/download')).headers.get('location'), '/atlas#install');
+  }
+});
+
+test('Linux downloads are explicit and independent from Mac and checkout', async () => {
+  const app = createApp({ store: new MemoryStore(), atlasCheckoutUrl: 'https://tembro.lemonsqueezy.com/buy/atlas', atlasDownloadUrl: 'https://example.com/atlas.pkg', atlasLinuxDownloadUrl: 'https://example.com/atlas.tar.gz' });
+  assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://example.com/atlas.pkg');
+  const linux = await app.request('/atlas/download/linux');
+  assert.equal(linux.status, 302);
+  assert.equal(linux.headers.get('location'), 'https://example.com/atlas.tar.gz');
+  assert.equal(linux.headers.get('cache-control'), 'no-store');
+  const page = await (await app.request('/atlas')).text();
+  assert.match(page, /href="\/atlas\/download\/linux"/);
+  assert.match(page, /python3 install.py/);
+  for (const atlasLinuxDownloadUrl of [undefined, 'javascript:alert(1)', '******example.com/file']) {
+    const missing = createApp({ store: new MemoryStore(), atlasLinuxDownloadUrl });
+    assert.equal((await missing.request('/atlas/download/linux')).headers.get('location'), '/atlas#install');
+    assert.doesNotMatch(await (await missing.request('/atlas')).text(), /Download Linux beta/);
   }
 });
 
@@ -115,7 +132,7 @@ test('storefront support configuration cannot inject markup or links', async () 
   const app = createStorefront({ supportEmail: 'bad\"><script>alert(1)</script>@example.com' });
   for (const path of ['/', '/atlas', '/chordarium']) {
     const html = await (await app.request(path)).text();
-    assert.doesNotMatch(html, /<script>|alert\(1\)/);
+    assert.doesNotMatch(html, /<script>|alert\(1\)/i);
     assert.match(html, /mailto:support@gettembro.com/);
   }
 });
