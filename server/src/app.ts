@@ -17,7 +17,7 @@ import { billingGrantFromWebhook, verifyLemonSignature } from "./billing.js";
 import { ClientEventSchema, AgentRequestSchema, LicenseAuthRequestSchema } from "./types.js";
 import type { AgentStepResponse, McpTool } from "./types.js";
 import { landingPage } from "./site.js";
-import { storefrontPage, atlasPage, publicHttpsUrl } from "./storefront.js";
+import { createStorefront } from "./storefront-routes.js";
 import {
   estimateCreditCost,
   isTembroSkill,
@@ -237,30 +237,21 @@ export function createApp(config: AppConfig) {
   });
 
   app.use("*", async (c, next) => {
-    if (["/", "/atlas", "/tembro"].includes(c.req.path)) {
+    if (c.req.path === "/tembro") {
       c.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
       c.header("Referrer-Policy", "strict-origin-when-cross-origin");
       c.header("X-Content-Type-Options", "nosniff");
     }
     await next();
   });
-  const storeOptions = { atlasCheckoutUrl: config.atlasCheckoutUrl, atlasDownloadUrl: config.atlasDownloadUrl, atlasLinuxDownloadUrl: config.atlasLinuxDownloadUrl, supportEmail };
-  app.get("/", (c) => c.html(storefrontPage(storeOptions)));
-  app.get("/atlas", (c) => c.html(atlasPage(storeOptions)));
-  app.get("/atlas/download", (c) => {
-    const url = publicHttpsUrl(config.atlasDownloadUrl);
-    c.header("Cache-Control", "no-store");
-    return url ? c.redirect(url, 302) : c.redirect("/atlas#install", 302);
-  });
-  app.get("/atlas/download/linux", (c) => {
-    const url = publicHttpsUrl(config.atlasLinuxDownloadUrl);
-    c.header("Cache-Control", "no-store");
-    return c.redirect(url ?? "/atlas#install", 302);
-  });
+  const storeOptions = {
+    atlasCheckoutUrl: config.atlasCheckoutUrl,
+    atlasDownloadUrl: config.atlasDownloadUrl,
+    atlasLinuxDownloadUrl: config.atlasLinuxDownloadUrl,
+    supportEmail,
+  };
+  app.route("/", createStorefront(storeOptions));
   app.get("/tembro", (c) => {
-    c.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
-    c.header("Referrer-Policy", "strict-origin-when-cross-origin");
-    c.header("X-Content-Type-Options", "nosniff");
     return c.html(
       landingPage({
         checkoutUrl,
