@@ -46,6 +46,8 @@ export interface AppConfig {
   licenseProvider?: LicenseProvider;
   lemonStoreId?: number;
   lemonProductId?: number;
+  atlasProductId?: number;
+  chordariumProductId?: number;
   lemonWebhookSecret?: string;
   /** Lemon Squeezy variant id → credits per unit; empty disables the webhook. */
   creditPacks?: CreditPacks;
@@ -210,6 +212,8 @@ export function createApp(config: AppConfig) {
     licenseProvider,
     lemonStoreId,
     lemonProductId,
+    atlasProductId,
+    chordariumProductId,
     lemonWebhookSecret,
     creditPacks = new Map<number, number>(),
     allowDevSignin = false,
@@ -400,8 +404,9 @@ export function createApp(config: AppConfig) {
         );
       } catch (error) {
         if (error instanceof Error && error.message === "billing_product_mismatch") {
-          // Not the Tembro credit product: an Atlas lead-magnet order. Keep the
-          // email, and answer 200 so Lemon Squeezy stops retrying the webhook.
+          // Not the Tembro credit product: another product on the same store.
+          // Route by product id (Atlas lead magnet, Chordarium plugin, unknown),
+          // keep the email, and answer 200 so Lemon Squeezy stops retrying.
           const p = payload as {
             meta?: { event_name?: unknown };
             data?: { id?: unknown; attributes?: Record<string, unknown> };
@@ -410,7 +415,12 @@ export function createApp(config: AppConfig) {
           const item = (a.first_order_item && typeof a.first_order_item === "object"
             ? a.first_order_item
             : {}) as Record<string, unknown>;
-          await store.logEvent("atlas.download", {
+          const productId = typeof item.product_id === "number" ? item.product_id : Number(item.product_id);
+          const kind =
+            chordariumProductId && productId === chordariumProductId ? "chordarium.plugin_order"
+            : atlasProductId && productId === atlasProductId ? "atlas.download"
+            : "lead.unknown_product";
+          await store.logEvent(kind, {
             email: typeof a.user_email === "string" ? a.user_email.trim().toLowerCase() : null,
             name: typeof a.user_name === "string" ? a.user_name : null,
             orderId: p.data?.id ?? null,
@@ -418,7 +428,7 @@ export function createApp(config: AppConfig) {
             productName: item.product_name ?? null,
             event: p.meta?.event_name ?? null,
           });
-          return c.json({ ok: true, recorded: "atlas.download" });
+          return c.json({ ok: true, recorded: kind });
         }
         if (error instanceof Error && error.message === "billing_unknown_variant") {
           await store.logEvent("billing.rejected", { reason: error.message });

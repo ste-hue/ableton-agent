@@ -30,6 +30,8 @@
     // (visible on the checkout page); only LEMON_SQUEEZY_WEBHOOK_SECRET is a secret.
     "LEMON_SQUEEZY_STORE_ID": "463641",
     "LEMON_SQUEEZY_PRODUCT_ID": "1335888",
+    "ATLAS_PRODUCT_ID": "1350971",
+    "CHORDARIUM_PRODUCT_ID": "1353284",
     // Variant id → credits: Starter · 40 credits €12, Studio · 120 credits €29.
     "CREDIT_PACKS": "2087359:40,2087371:120",
     "CHAT_COST_CREDITS": "1",

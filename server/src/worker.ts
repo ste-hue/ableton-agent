@@ -31,6 +31,8 @@ export default {
         env.LEMON_SQUEEZY_PRODUCT_ID,
         "LEMON_SQUEEZY_PRODUCT_ID",
       ),
+      atlasProductId: optionalPositiveInteger(env.ATLAS_PRODUCT_ID, "ATLAS_PRODUCT_ID"),
+      chordariumProductId: optionalPositiveInteger(env.CHORDARIUM_PRODUCT_ID, "CHORDARIUM_PRODUCT_ID"),
       lemonWebhookSecret: env.LEMON_SQUEEZY_WEBHOOK_SECRET || undefined,
       creditPacks: parseCreditPacks(env.CREDIT_PACKS),
       chatCostCredits: positiveInteger(env.CHAT_COST_CREDITS, "CHAT_COST_CREDITS"),
