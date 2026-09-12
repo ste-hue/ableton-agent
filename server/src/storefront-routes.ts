@@ -7,7 +7,7 @@ import type { StoreOptions } from './storefront.js';
 export function createStorefront(options: StoreOptions = {}) {
   const app = new Hono();
   app.use('*', async (c, next) => {
-    if (['/', '/atlas', '/atlas/download', '/chordarium', '/chordarium/', '/chordarium/buy', '/chordarium/buy/'].includes(c.req.path)) {
+    if (['/', '/atlas', '/atlas/download', '/chordarium', '/chordarium/', '/chordarium/buy', '/chordarium/buy/', '/chordarium/download', '/chordarium/download/'].includes(c.req.path)) {
       c.header('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
       c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
       c.header('X-Content-Type-Options', 'nosniff');
@@ -27,7 +27,12 @@ export function createStorefront(options: StoreOptions = {}) {
     c.header('Referrer-Policy', 'no-referrer');
     return c.redirect(CHORDARIUM.checkoutUrl, 302);
   });
-  for (const path of ['/chordarium', '/chordarium/buy']) {
+  app.get('/chordarium/download', (c) => {
+    c.header('Cache-Control', 'no-store');
+    c.header('Referrer-Policy', 'no-referrer');
+    return c.redirect(CHORDARIUM.downloadUrl, 302);
+  });
+  for (const path of ['/chordarium', '/chordarium/buy', '/chordarium/download']) {
     app.get(path + '/', (c) => {
       const url = new URL(c.req.url);
       return c.redirect(path + url.search, 308);

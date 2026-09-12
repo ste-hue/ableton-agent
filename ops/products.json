@@ -17,18 +17,19 @@
     "chordarium": {
       "repository": "ste-hue/ChordBloom-v1",
       "releaseTarget": {
-        "version": "0.2.0",
+        "version": "0.3.0",
         "platforms": [
           "macos"
         ],
         "tag": null,
-        "sourceCommitSha": null,
+        "sourceCommitSha": "31c685614538d0ed0fc97ab14a6f40a6a1dcac72",
         "artifact": {
-          "filename": null,
-          "sha256": "ab3d6bcf1caf7c36540c88b9dc9a902667ce909f4b818e48b65ca46a17b86672",
+          "filename": "Chordarium-0.3.0-macOS-download.zip",
+          "sha256": "90d82f0c1a8749112a82d9e726e419c3baad0b8f8f7493f34536c6d3e22c7a60",
           "notarizationStatus": "accepted",
-          "notarizationRecord": "docs/NOTARIZATION-HANDOFF.md",
-          "lemonSqueezyDeliveryVerified": false
+          "notarizationRecord": "https://github.com/ste-hue/ChordBloom-v1/blob/release/chordarium-0.3.0/docs/NOTARIZATION-HANDOFF.md",
+          "lemonSqueezyDeliveryVerified": false,
+          "installerSha256": "6ba8b54f391efff8f090f5d62998eaca43981db802b8bce45f755a8325643b4b"
         }
       },
       "lemonSqueezy": {
@@ -36,19 +37,24 @@
         "variantIds": [
           "2113530"
         ],
-        "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed",
+        "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed?checkout[discount_code]=LAUNCH59",
         "price": {
-          "amount": "59.99",
-          "currency": "EUR"
+          "amount": "89.00",
+          "currency": "EUR",
+          "launchAmount": "59.00",
+          "discountCode": "LAUNCH59",
+          "discountAmount": "30.00"
         },
         "license": {
           "termDays": 365,
-          "activationLimit": 5
+          "activationLimit": 5,
+          "activationLimitEnforcedByPlugin": false
         }
       },
       "windowsPolicy": "free-beta-only-until-human-tested",
       "linuxPolicy": "deferred",
-      "webExperienceDecision": null
+      "webExperienceDecision": "limited-five-seed-demo",
+      "deliveryPolicy": "public-macos-download-with-separate-license-checkout"
     },
     "atlas": {
       "repository": "ste-hue/atlas",
