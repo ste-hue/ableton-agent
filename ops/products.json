@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Human-reviewed desired state. Live state must be observed separately.",
+  "rules": {
+    "handoffSummariesAreEvidence": false,
+    "unknownValuesRemainNull": true,
+    "releaseRequiresImmutableSourceAndArtifactEvidence": true
+  },
+  "commerce": {
+    "tembroStoreId": "463641",
+    "legacyChordariumWebCreditsStoreId": "459198",
+    "unresolvedExternalReferences": [
+      "104263"
+    ]
+  },
+  "products": {
+    "chordarium": {
+      "repository": "ste-hue/ChordBloom-v1",
+      "releaseTarget": {
+        "version": "0.2.0",
+        "platforms": [
+          "macos"
+        ],
+        "tag": null,
+        "sourceCommitSha": null,
+        "artifact": {
+          "filename": null,
+          "sha256": "ab3d6bcf1caf7c36540c88b9dc9a902667ce909f4b818e48b65ca46a17b86672",
+          "notarizationStatus": "accepted",
+          "notarizationRecord": "docs/NOTARIZATION-HANDOFF.md",
+          "lemonSqueezyDeliveryVerified": false
+        }
+      },
+      "lemonSqueezy": {
+        "productId": "1353284",
+        "variantIds": [
+          "2113530"
+        ],
+        "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed",
+        "price": {
+          "amount": "59.99",
+          "currency": "EUR"
+        },
+        "license": {
+          "termDays": 365,
+          "activationLimit": 5
+        }
+      },
+      "windowsPolicy": "free-beta-only-until-human-tested",
+      "linuxPolicy": "deferred",
+      "webExperienceDecision": null
+    },
+    "atlas": {
+      "repository": "ste-hue/atlas",
+      "releaseTarget": {
+        "version": "0.3.15",
+        "tag": null,
+        "sourceCommitSha": null,
+        "platforms": [
+          "macos",
+          "windows",
+          "linux"
+        ]
+      },
+      "lemonSqueezy": {
+        "productId": "1350971",
+        "variantIds": [
+          "2110069"
+        ],
+        "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/0026137e-70fd-4687-b09d-d3e190142565",
+        "price": {
+          "amount": "0",
+          "currency": "EUR"
+        }
+      },
+      "deliveryPolicy": "email-capture-via-lemonsqueezy",
+      "directDraftReleaseAssetsAllowed": false
+    },
+    "tembro-for-live": {
+      "repository": "ste-hue/ableton-agent",
+      "currentPublicVersion": "0.1.6-beta",
+      "lemonSqueezy": {
+        "productId": "1335888",
+        "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/51752dd4-3c30-466b-8e5d-d7c985ff9111"
+      }
+    },
+    "rudiment": {
+      "repository": "ste-hue/rudiment",
+      "lifecycle": "archived",
+      "storefrontStatus": "coming-soon",
+      "checkoutUrl": null
+    }
+  },
+  "services": {
+    "tembro-api": {
+      "repository": "ste-hue/ableton-agent",
+      "configPath": "server/wrangler.jsonc",
+      "productionUrl": "https://gettembro.com",
+      "deployPolicy": "manual-github-environment"
+    },
+    "tembro-chordarium-link": {
+      "repository": "ste-hue/ableton-agent",
+      "configPath": "server/redirects/wrangler.jsonc",
+      "deployPolicy": "after-tembro-api-smoke-test"
+    },
+    "chordbloom-credits": {
+      "repository": "ste-hue/ChordBloom-v1",
+      "configPath": "worker/wrangler.jsonc",
+      "deployPolicy": "legacy-manual-isolated",
+      "databaseMigrationPolicy": "separate-explicit-operation"
+    }
+  }
+}
