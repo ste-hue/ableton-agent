@@ -49,8 +49,9 @@ retry outside the sandbox; no credentials were recreated. Apple accepted VST3
 - Fresh PKG expansion: all three bundles retain strict signatures, valid tickets,
   version 0.3.2, arm64 + x86_64 and build ID a866abf4.
 - Final Mac/Linux CI run 34697117900 succeeded on the exact source commit.
-- Customer files and release evidence are prepared in
-  `~/Downloads/Chordarium-0.3.2-a866abf4/`; exact Lemon Squeezy delivery is pending.
+- The three current Lemon Squeezy customer files were downloaded and verified
+  byte for byte against the notarized release. Obsolete files were removed only
+  after verifying the replacements and Stefano confirmed the effect on past orders.
 - Live API confirms the license term is one year. The purchase copy explicitly
   states that term; this is a single payment, not an automatic subscription.
 
@@ -67,18 +68,47 @@ The product-flow correction narrows delivery to paid orders and supersedes the
 earlier public-release authorization. The latest activation confirmation must also
 be reflected in the store description, receipt and release evidence.
 
-The source changes are in ChordBloom-v1 PR #28. The website is in ableton-agent
-PR #76. Source PR #28 is merged; website PR #76 remains a draft until final package and delivery verification.
-The previous native foundation (0.3.0) passed Mac and Linux CI run 34688435075;
-that run does not by itself verify the changed 0.3.2 package.
+ChordBloom-v1 PR #28 and website PR #76 are both merged. The production website
+uses main `4c863628d01ee44059b8a2464ec24f127c95ca50`, whose tree matches the
+validated PR head `9ce56ee174c0e011c946ce1fbb7bf5acc71103d0`. All 58 server
+tests and Cloudflare CI run 34698298110 passed before publication.
 
-## Deploy sequence
+## Verified delivery and publication
 
-Verify the exact 0.3.2 file listed and downloaded from Lemon Squeezy; update the
-product description and receipt copy to explain first activation in the dedicated
-dialog. Verify real-key activation, MAIN/card export and drag, MIDI out to a
-receiving instrument, and DAW Sync on/off before presenting these as released.
-Then deploy tembro-api, verify the query-bearing product page, deploy the legacy
-exact-route shim, and check page/buy/orders redirects and unrelated product routes.
-Record deployment IDs and final HTTP evidence in #70. The source and package
-must continue to be described as prepared until these checks actually complete.
+[Machine-readable evidence](chordarium-0.3.2-evidence.json) records the exact
+customer downloads, notarization submissions and production HTTP results.
+
+| Lemon Squeezy file | File ID | Bytes |
+| --- | --- | ---: |
+| Chordarium-0.3.2-macOS-universal.pkg | 697341 | 22,828,482 |
+| INSTALL.txt | 697342 | 2,692 |
+| SHA256SUMS.txt | 697343 | 103 |
+
+All three SHA-256 values match the frozen customer files. The API confirms the
+0.3.2 description, €89 list price, key generation and one-year term. After saving
+and reloading the product UI, the confirmation modal and receipt retain the new
+activation instructions and **Download & license key** button to My Orders.
+LAUNCH59 remains a published, fixed €30 discount without an expiry or usage limit.
+
+The protected manual GitHub production workflow remains the default. Stefano's
+explicit one-time Mac exception was used here. No D1 migration was applied.
+
+| Worker | Deployment ID | Version ID |
+| --- | --- | --- |
+| tembro-api | f9ebb6bd-d267-430e-b8b1-4b2b32180a08 | d137e5b3-7a20-4d20-9a21-1b79f96dec11 |
+| tembro-chordarium-link | c5a64b4e-eaf9-499a-930d-6eac021829be | 55d88989-ab12-4396-9728-49a6fb8cbf26 |
+
+The main Worker was deployed first, followed by the query-bearing page smoke test,
+then the exact-route shim. All 11 final HTTP observations passed: catalog,
+Chordarium, Atlas, Tembro and health return 200; the product trailing slash returns
+308 preserving its query; HEAD returns 200 with no body; POST returns 405 with
+GET/HEAD allowed; purchase redirects to LAUNCH59 checkout; customer downloads
+redirect to My Orders; Atlas download redirects to its email-capture checkout.
+
+## Remaining acceptance
+
+This verifies published artifacts, stored copy and public routing. It does not
+claim a newly purchased order, fresh installation, real-key activation, physical
+MIDI drag or Ableton/Serum playback was observed. The next acceptance action is to
+install the exact customer PKG, ensure no old per-user plugin hides it, verify the
+visible **0.3.2 · a866abf4** build, and run that DAW trial.
