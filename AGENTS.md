@@ -31,7 +31,9 @@ Search for overlapping PRs and issues before opening new work. Treat chat summar
 as handoffs only: live observations and immutable release evidence are authoritative.
 Record any real state change in issue #70 with its evidence, one owner, and one next
 action. Respect every human merge, deployment, payment, and upload gate recorded
-there.
+there. When steering or assisting a non-developer collaborator, also follow
+[docs/COLLABORATOR-QUICKSTART.md](docs/COLLABORATOR-QUICKSTART.md); preserve its
+stop gates even if the collaborator asks the agent to “just finish everything.”
 
 ## Knowledge sources
 
