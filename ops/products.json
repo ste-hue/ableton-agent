@@ -28,7 +28,7 @@
           "sha256": "90d82f0c1a8749112a82d9e726e419c3baad0b8f8f7493f34536c6d3e22c7a60",
           "notarizationStatus": "accepted",
           "notarizationRecord": "https://github.com/ste-hue/ChordBloom-v1/blob/release/chordarium-0.3.0/docs/NOTARIZATION-HANDOFF.md",
-          "lemonSqueezyDeliveryVerified": false,
+          "lemonSqueezyDeliveryVerified": true,
           "installerSha256": "6ba8b54f391efff8f090f5d62998eaca43981db802b8bce45f755a8325643b4b"
         }
       },

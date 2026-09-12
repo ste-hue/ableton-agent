@@ -20,7 +20,7 @@ with a separate €59 license button (list €89, LAUNCH59 deducts €30).
 - Apple installer submission: `6054bd85-92c9-461b-8f19-379f18a3f022`, Accepted, zero issues.
 - Stapling and Gatekeeper validation passed on freshly extracted ZIP and PKG payloads.
 - Mac native tests: 3/3 on arm64 and under Rosetta; AU validation passed on both.
-- Web/source tests: 56/56 locally. Remote plugin CI run: pending.
+- Web/source tests: 56/56 locally. Remote plugin CI run: https://github.com/ste-hue/ChordBloom-v1/actions/runs/34688435075 (in progress at this observation; head `e276fbb`, documentation only after the binary source commit).
 - Detailed signature and bundle submission evidence: source `docs/NOTARIZATION-HANDOFF.md`.
 
 ## Website contract
@@ -40,8 +40,10 @@ with a separate €59 license button (list €89, LAUNCH59 deducts €30).
 Lemon Squeezy product `1353284`, variant `2113530`, price €89 and fixed €30
 LAUNCH59 discount are live. API lists exactly three published files:
 `697103` installer (22,779,962 bytes), `697108` INSTALL.txt, `697109` SHA256SUMS.txt.
-No old unsigned test file was listed. Exact receipt/download hash is still unverified;
-matching name and size are not cryptographic proof of delivery.
+No old unsigned test file was listed. The file was downloaded from the Lemon Squeezy
+API-provided customer download URL, and its full SHA-256 matched the installer hash
+above. The downloaded file also passed stapler and Gatekeeper checks. This verifies
+the stored delivery file; a fresh order/receipt walkthrough is still outstanding.
 
 Product description still contains outdated claims excluding live MIDI and DAW sync.
 The corrected copy is supplied in the local upload handoff. Dashboard edit required.
@@ -52,6 +54,11 @@ and a manual DAW drag/routing test remain human acceptance checks.
 ## Deployment prerequisites
 
 The local preparation passes 58 server tests, typecheck and both Worker dry-runs.
+Cloudflare CI is green: https://github.com/ste-hue/ableton-agent/actions/runs/34688465067.
+Desktop (1280px) and mobile (390px) previews have no horizontal overflow, broken
+images or missing local anchors; both were visually inspected.
+Source PR: https://github.com/ste-hue/ChordBloom-v1/pull/28.
+Storefront PR: https://github.com/ste-hue/ableton-agent/pull/76.
 Before any Worker upload, the production workflow downloads the anonymous public
 ZIP and requires the exact SHA-256. After upload it checks routes and other products.
 
