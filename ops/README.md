@@ -42,10 +42,22 @@ Cloudflare setup references:
 - https://developers.cloudflare.com/workers/versions-and-deployments/
 - https://developers.cloudflare.com/workers/observability/logs/workers-logs/
 
-## Current launch decisions still requiring Stefano
+## Confirmed Chordarium journey
 
-- Chordarium web experience: full credit product versus the currently deployed
-  limited five-seed demo.
+- The free demo is only at https://chordarium.com: five seeds, no MIDI exports.
+- https://gettembro.com/chordarium presents the product and the €59 launch checkout
+  (€89 list less the fixed €30 LAUNCH59 discount).
+- The installer and license key are delivered through the paid Lemon Squeezy order.
+  There is no public binary download. First activation happens in the dedicated
+  **Activate Chordarium** dialog and enables the MIDI features.
+- DAW Sync follows host BPM, timeline and Play/Stop; disabling it enables manual
+  tempo. MIDI out drives a receiving instrument, while the internal piano previews
+  through system audio. MAIN and cards can be dragged or exported as MIDI.
+- The current target is 0.3.1. Its final source, installer hash, notarization and
+  delivery evidence remain pending; see [the release record](releases/chordarium-0.3.1.md).
+
+## Outstanding launch checks and decisions
+
 - Confirm the exact Chordarium file delivered by Lemon Squeezy matches the recorded
   SHA-256, then complete a fresh install, real-key activation, and Ableton drag test.
 - Reconcile the external Lemon Squeezy reference `104263`; do not assign it a type

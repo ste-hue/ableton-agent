@@ -22,12 +22,12 @@
           "macos"
         ],
         "tag": null,
-        "sourceCommitSha": "36141022d027ea1aa90a3b3cfd76cb52af858ef8",
+        "sourceCommitSha": null,
         "artifact": {
           "filename": "Chordarium-0.3.1-macOS-universal.pkg",
           "sha256": null,
           "notarizationStatus": "pending",
-          "notarizationRecord": "https://github.com/ste-hue/ChordBloom-v1/blob/release/chordarium-0.3.0/docs/NOTARIZATION-HANDOFF.md",
+          "notarizationRecord": null,
           "lemonSqueezyDeliveryVerified": false
         }
       },
@@ -48,14 +48,14 @@
           "termDays": 365,
           "activationLimit": 5,
           "activationLimitEnforcedByPlugin": false,
-          "requiredByPlugin": false
+          "requiredByPlugin": true
         }
       },
       "windowsPolicy": "free-beta-only-until-human-tested",
       "linuxPolicy": "deferred",
       "webExperienceDecision": "limited-five-seed-demo",
       "deliveryPolicy": "paid-order-download-via-lemonsqueezy",
-      "pluginActivationRequired": false
+      "pluginActivationRequired": true
     },
     "atlas": {
       "repository": "ste-hue/atlas",

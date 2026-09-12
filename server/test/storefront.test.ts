@@ -73,7 +73,10 @@ test('Chordarium is an HTML product page for ordinary and tracked URLs', async (
     assert.match(html, /Live MIDI/);
     assert.match(html, /id="install"/);
     assert.match(html, /five seeds/i);
-    assert.match(html, /No in-plugin activation/);
+    assert.match(html, /Activate once to enable all MIDI features/);
+    assert.match(html, /Activate Chordarium/);
+    assert.match(html, /MAIN\/card drag-and-drop/);
+    assert.match(html, /DAW Sync follows the host BPM, timeline and Play\/Stop/);
     assert.doesNotMatch(html, /Each MIDI export uses one web credit|real-time MIDI output are being developed/);
     assert.match(html, /rel="canonical" href="https:\/\/gettembro.com\/chordarium"/);
     assert.doesNotMatch(html, /<script|utm_source|fbclid|€59\.99/);
@@ -158,7 +161,8 @@ test('Chordarium download requires a customer order and ignores query overrides'
     assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
   }
   const html = await (await app.request('/chordarium')).text();
-  assert.match(html, /No license key or activation step is required/);
+  assert.match(html, /paste the license key from your receipt/i);
+  assert.doesNotMatch(html, /No in-plugin activation|No license key|without activation|host tempo while stopped/);
   assert.doesNotMatch(html, /Download for Mac|Buy license|github.com.*releases\/download/);
   assert.match(html, /Logic Pro/);
   assert.match(html, /macOS 11/);
