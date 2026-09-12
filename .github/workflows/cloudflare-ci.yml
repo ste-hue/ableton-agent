@@ -1,0 +1,56 @@
+name: Cloudflare CI
+
+on:
+  pull_request:
+    paths:
+      - "server/**"
+      - ".github/workflows/cloudflare-ci.yml"
+      - ".github/workflows/cloudflare-production.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "server/**"
+      - ".github/workflows/cloudflare-ci.yml"
+      - ".github/workflows/cloudflare-production.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Dry-run tembro-api
+        run: ./node_modules/.bin/wrangler deploy --dry-run --outdir .wrangler-dry-run/tembro-api
+
+      - name: Dry-run tembro-chordarium-link
+        run: ./node_modules/.bin/wrangler deploy --config redirects/wrangler.jsonc --dry-run --outdir .wrangler-dry-run/chordarium-link
