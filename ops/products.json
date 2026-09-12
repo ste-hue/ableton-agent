@@ -28,8 +28,11 @@
           "sha256": "042d9470d1d486ac2a32fb513ce4325fc55ed091a86b0af96b94f27dccf6550e",
           "notarizationStatus": "Accepted",
           "notarizationRecord": "2b634ca8-ca97-432e-bff2-e5d50c0f624c",
-          "lemonSqueezyDeliveryVerified": false
-        }
+          "lemonSqueezyDeliveryVerified": true,
+          "lemonSqueezyFileId": "697341"
+        },
+        "evidencePath": "ops/releases/chordarium-0.3.2-evidence.json",
+        "realOrderAndDawAcceptance": "not-observed"
       },
       "lemonSqueezy": {
         "productId": "1353284",
@@ -55,7 +58,36 @@
       "linuxPolicy": "deferred",
       "webExperienceDecision": "limited-five-seed-demo",
       "deliveryPolicy": "paid-order-download-via-lemonsqueezy",
-      "pluginActivationRequired": true
+      "pluginActivationRequired": true,
+      "sitePublication": {
+        "sourceCommit": "4c863628d01ee44059b8a2464ec24f127c95ca50",
+        "verifiedAt": "2026-09-12T14:30:34.021Z",
+        "url": "https://gettembro.com/chordarium",
+        "workers": {
+          "api": {
+            "id": "f9ebb6bd-d267-430e-b8b1-4b2b32180a08",
+            "source": "wrangler",
+            "created_on": "2026-09-12T14:16:55.965658Z",
+            "versions": [
+              {
+                "version_id": "d137e5b3-7a20-4d20-9a21-1b79f96dec11",
+                "percentage": 100
+              }
+            ]
+          },
+          "shim": {
+            "id": "c5a64b4e-eaf9-499a-930d-6eac021829be",
+            "source": "wrangler",
+            "created_on": "2026-09-12T14:29:57.591909Z",
+            "versions": [
+              {
+                "version_id": "55d88989-ab12-4396-9728-49a6fb8cbf26",
+                "percentage": 100
+              }
+            ]
+          }
+        }
+      }
     },
     "atlas": {
       "repository": "ste-hue/atlas",

@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "version": "0.3.2",
+  "sourceCommit": "a866abf45f2f8ae6750923d33e4f63c1d1e0b4fb",
+  "tag": "v0.3.2",
+  "artifact": {
+    "filename": "Chordarium-0.3.2-macOS-universal.pkg",
+    "sha256": "042d9470d1d486ac2a32fb513ce4325fc55ed091a86b0af96b94f27dccf6550e",
+    "bytes": 22828482,
+    "notarization": "Accepted",
+    "gatekeeper": "Notarized Developer ID",
+    "notarizationSubmissions": {
+      "Chordarium.vst3": "7a7a4558-f48b-4c01-8d5e-a22451c893fe",
+      "Chordarium.component": "e494f07c-630c-4c4e-b2a0-6f72f1e2205d",
+      "Chordarium.app": "0881b277-f4eb-49bb-b927-6772081789b9",
+      "Chordarium-0.3.2-macOS-universal.pkg": "2b634ca8-ca97-432e-bff2-e5d50c0f624c"
+    }
+  },
+  "tests": {
+    "javascriptPassed": 74,
+    "nativeSuitesPassed": 3,
+    "rosettaProcessorFailures": 0,
+    "macLinuxCI": {
+      "run": 34697117900,
+      "status": "success",
+      "sourceCommit": "a866abf45f2f8ae6750923d33e4f63c1d1e0b4fb"
+    },
+    "actualKeyAbletonSerumDrag": "not-observed"
+  },
+  "customerDelivery": {
+    "verifiedAt": "2026-09-12T14:34:34.526Z",
+    "method": "Lemon Squeezy files API and exact customer-file download SHA256 comparison",
+    "productId": 1353284,
+    "variantId": 2113530,
+    "files": [
+      {
+        "id": "697341",
+        "name": "Chordarium-0.3.2-macOS-universal.pkg",
+        "bytes": 22828482,
+        "sha256": "042d9470d1d486ac2a32fb513ce4325fc55ed091a86b0af96b94f27dccf6550e",
+        "status": "published",
+        "version": null
+      },
+      {
+        "id": "697342",
+        "name": "INSTALL.txt",
+        "bytes": 2692,
+        "sha256": "8f87c54c339e87c752737acc61bca14e9d81ff920cd6b6f14d2e45bc3cd2ddb8",
+        "status": "published",
+        "version": null
+      },
+      {
+        "id": "697343",
+        "name": "SHA256SUMS.txt",
+        "bytes": 103,
+        "sha256": "843045b8e00759db8b524e233b7c7da3637288eee2f12b358b0fe80f3ee2f425",
+        "status": "published",
+        "version": null
+      }
+    ],
+    "price": 8900,
+    "currency": "EUR",
+    "license": "one year",
+    "descriptionVerified": true,
+    "legacyFiles": [],
+    "legacyCleanup": "complete"
+  },
+  "confirmationAndReceipt": {
+    "verifiedAfterReload": true,
+    "buttonText": "Download & license key",
+    "buttonUrl": "https://app.lemonsqueezy.com/my-orders"
+  },
+  "cloudflare": {
+    "sourceCommit": "4c863628d01ee44059b8a2464ec24f127c95ca50",
+    "verifiedAt": "2026-09-12T14:30:34.021Z",
+    "deployments": {
+      "api": {
+        "id": "f9ebb6bd-d267-430e-b8b1-4b2b32180a08",
+        "source": "wrangler",
+        "created_on": "2026-09-12T14:16:55.965658Z",
+        "versions": [
+          {
+            "version_id": "d137e5b3-7a20-4d20-9a21-1b79f96dec11",
+            "percentage": 100
+          }
+        ]
+      },
+      "shim": {
+        "id": "c5a64b4e-eaf9-499a-930d-6eac021829be",
+        "source": "wrangler",
+        "created_on": "2026-09-12T14:29:57.591909Z",
+        "versions": [
+          {
+            "version_id": "55d88989-ab12-4396-9728-49a6fb8cbf26",
+            "percentage": 100
+          }
+        ]
+      }
+    },
+    "http": {
+      "verifiedAt": "2026-09-12T14:30:34.021Z",
+      "sourceCommit": "4c863628d01ee44059b8a2464ec24f127c95ca50",
+      "result": "passed",
+      "observations": [
+        {
+          "path": "/",
+          "method": "GET",
+          "status": 200,
+          "location": null,
+          "allow": null
+        },
+        {
+          "path": "/atlas",
+          "method": "GET",
+          "status": 200,
+          "location": null,
+          "allow": null
+        },
+        {
+          "path": "/tembro",
+          "method": "GET",
+          "status": 200,
+          "location": null,
+          "allow": null
+        },
+        {
+          "path": "/v0/health",
+          "method": "GET",
+          "status": 200,
+          "location": null,
+          "allow": null
+        },
+        {
+          "path": "/chordarium",
+          "method": "GET",
+          "status": 200,
+          "location": null,
+          "allow": null
+        },
+        {
+          "path": "/chordarium/?utm_source=cloudflare-smoke",
+          "method": "GET",
+          "status": 308,
+          "location": "/chordarium?utm_source=cloudflare-smoke",
+          "allow": null
+        },
+        {
+          "path": "/chordarium",
+          "method": "HEAD",
+          "status": 200,
+          "location": null,
+          "allow": null
+        },
+        {
+          "path": "/chordarium",
+          "method": "POST",
+          "status": 405,
+          "location": null,
+          "allow": "GET, HEAD"
+        },
+        {
+          "path": "/chordarium/buy?utm_source=cloudflare-smoke",
+          "method": "GET",
+          "status": 302,
+          "location": "https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed?checkout[discount_code]=LAUNCH59",
+          "allow": null
+        },
+        {
+          "path": "/chordarium/download?utm_source=cloudflare-smoke",
+          "method": "GET",
+          "status": 302,
+          "location": "https://app.lemonsqueezy.com/my-orders",
+          "allow": null
+        },
+        {
+          "path": "/atlas/download",
+          "method": "GET",
+          "status": 302,
+          "location": "https://tembro.lemonsqueezy.com/checkout/buy/0026137e-70fd-4687-b09d-d3e190142565",
+          "allow": null
+        }
+      ]
+    }
+  },
+  "realOrderAndDawAcceptance": "not-observed"
+}

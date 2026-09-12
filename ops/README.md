@@ -53,13 +53,14 @@ Cloudflare setup references:
 - DAW Sync follows host BPM, timeline and Play/Stop; disabling it enables manual
   tempo. MIDI out drives a receiving instrument, while the internal piano previews
   through system audio. MAIN and cards can be dragged or exported as MIDI.
-- The current target is 0.3.2. Its final source, installer hash, notarization and
-  delivery evidence remain pending; see [the release record](releases/chordarium-0.3.2.md).
+- The published installer is 0.3.2. Source, notarization, exact customer-file hashes
+  and both Cloudflare deployments are verified; see [the release record](releases/chordarium-0.3.2.md).
+  A fresh install and real-key Ableton acceptance remain unobserved.
 
 ## Outstanding launch checks and decisions
 
-- Confirm the exact Chordarium file delivered by Lemon Squeezy matches the recorded
-  SHA-256, then complete a fresh install, real-key activation, and Ableton drag test.
+- Complete a fresh install, real-key activation, and Ableton MIDI out/drag test.
+  The three current Lemon Squeezy files already match their recorded SHA-256 hashes.
 - Reconcile the external Lemon Squeezy reference `104263`; do not assign it a type
   until confirmed.
 - Confirm commercial redistribution rights for the Scaler-derived corpus and the
