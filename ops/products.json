@@ -21,13 +21,13 @@
         "platforms": [
           "macos"
         ],
-        "tag": null,
+        "tag": "v0.3.2",
         "sourceCommitSha": "a866abf45f2f8ae6750923d33e4f63c1d1e0b4fb",
         "artifact": {
           "filename": "Chordarium-0.3.2-macOS-universal.pkg",
-          "sha256": null,
-          "notarizationStatus": "pending",
-          "notarizationRecord": null,
+          "sha256": "042d9470d1d486ac2a32fb513ce4325fc55ed091a86b0af96b94f27dccf6550e",
+          "notarizationStatus": "Accepted",
+          "notarizationRecord": "2b634ca8-ca97-432e-bff2-e5d50c0f624c",
           "lemonSqueezyDeliveryVerified": false
         }
       },

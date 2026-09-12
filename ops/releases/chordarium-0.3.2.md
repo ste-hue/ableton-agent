@@ -36,13 +36,24 @@ with visible build ID `a866abf4`. The working tree is clean.
 - GitHub Pages final-main run 34697091838 succeeded; the live online demo hash is
   `9fa1cec71197d0aef76d0c98544b5ff94c68f6bfa823410e05cffbfa65b2242b`.
 
-Developer ID signing succeeded, but final notarization is pending: on 2026-09-12
-notarytool could no longer find the previously working `ste-hue` Keychain profile.
-Restoring that profile is required before submitting the final build. This is an
-observed local credential failure, not an Apple rejection of the binary.
-No final 0.3.2 installer has been uploaded. Installer SHA, Apple submission and
-exact delivery readback remain null until verified; the previous a917 test candidate
-and currently delivered 0.3.1 installer do not establish final release provenance.
+Final notarization is complete. The existing ste-hue profile authenticated on
+retry outside the sandbox; no credentials were recreated. Apple accepted VST3
+`7a7a4558-f48b-4c01-8d5e-a22451c893fe`, AU
+`e494f07c-630c-4c4e-b2a0-6f72f1e2205d`, standalone
+`0881b277-f4eb-49bb-b927-6772081789b9`, and the signed installer
+`2b634ca8-ca97-432e-bff2-e5d50c0f624c`.
+
+- Installer: `Chordarium-0.3.2-macOS-universal.pkg`, 22,828,482 bytes.
+- SHA-256: `042d9470d1d486ac2a32fb513ce4325fc55ed091a86b0af96b94f27dccf6550e`.
+- Gatekeeper: accepted, Notarized Developer ID; installer staple validates.
+- Fresh PKG expansion: all three bundles retain strict signatures, valid tickets,
+  version 0.3.2, arm64 + x86_64 and build ID a866abf4.
+- Final Mac/Linux CI run 34697117900 succeeded on the exact source commit.
+- Customer files and release evidence are prepared in
+  `~/Downloads/Chordarium-0.3.2-a866abf4/`; exact Lemon Squeezy delivery is pending.
+- Live API confirms the license term is one year. The purchase copy explicitly
+  states that term; this is a single payment, not an automatic subscription.
+
 Actual purchased-key activation, Ableton/Serum routing and physical drag acceptance
 remain unobserved.
 
