@@ -21,6 +21,18 @@ user's durable workflow and communication preferences for this project. Update i
 only when the user asks or confirms that a recurring preference should become a
 rule. Safety and authorization rules in this file always take precedence.
 
+
+## Launch and product operations
+
+Before work touching storefronts, Cloudflare, releases, downloads, product identity,
+or Lemon Squeezy, read `ops/README.md`, `ops/products.json`, and the central
+[launch-control issue #70](https://github.com/ste-hue/ableton-agent/issues/70).
+Search for overlapping PRs and issues before opening new work. Treat chat summaries
+as handoffs only: live observations and immutable release evidence are authoritative.
+Record any real state change in issue #70 with its evidence, one owner, and one next
+action. Respect every human merge, deployment, payment, and upload gate recorded
+there.
+
 ## Knowledge sources
 
 - **What exists in the LOM** (objects, properties, methods): the `ableton-lom` skill
