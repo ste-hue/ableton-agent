@@ -160,7 +160,11 @@ jobs:
             assert(atlas.status === 200, `GET /atlas: ${atlas.status}`);
 
             const tembro = await hit("/tembro");
-            assert(tembro.status === 200, `GET /tembro: ${tembro.status}`);
+            assert(tembro.status === 302, `GET /tembro: ${tembro.status}`);
+            assert(new URL(tembro.headers.get("location"), base).href === `${base}/#products`, "retired credit page did not return to products");
+            assert(homeHtml.includes('href="/atlas/download"'), "Atlas acquisition link is missing");
+            assert(homeHtml.includes('href="/chordarium/buy"'), "Chordarium checkout link is missing");
+            assert(!/credits/i.test(homeHtml), "catalog still advertises credits");
 
             const health = await hit("/v0/health");
             assert(health.status === 200, `GET /v0/health: ${health.status}`);

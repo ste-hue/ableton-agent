@@ -5,7 +5,7 @@ import { MemoryStore } from '../src/store.js';
 import { CHORDARIUM } from '../src/products.js';
 import { createStorefront } from '../src/storefront-routes.js';
 
-test('store lists Atlas, Chordarium and Rudiment and keeps Tembro for Live on its own page', async () => {
+test('catalog connects available products to discovery and acquisition without advertising credits', async () => {
   const app = createApp({ store: new MemoryStore(), checkoutUrl: 'https://tembro.lemonsqueezy.com/buy/credits', downloadUrl: 'https://example.com/tembro.dmg', atlasDownloadUrl: 'https://example.com/atlas.zip' });
   const home = await app.request('/');
   assert.equal(home.status, 200);
@@ -13,26 +13,49 @@ test('store lists Atlas, Chordarium and Rudiment and keeps Tembro for Live on it
   const homeBody = await home.text();
   assert.match(homeBody, /href="\/atlas"/);
   assert.match(homeBody, /href="https:\/\/chordarium.com"/);
-  assert.match(homeBody, /href="\/chordarium">Explore Chordarium/);
+  assert.match(homeBody, /href="\/chordarium"/);
+  assert.match(homeBody, /href="\/chordarium\/buy"/);
+  assert.match(homeBody, /href="\/atlas\/download"/);
+  assert.match(homeBody, /href="\/chordarium\/download"/);
   assert.match(homeBody, /Rudiment/);
   assert.match(homeBody, /Coming soon/);
   assert.doesNotMatch(homeBody, /Tembro for Live/);
   assert.doesNotMatch(homeBody, /lemonsqueezy.com\/buy\/credits/);
   const atlas = await (await app.request('/atlas')).text();
   assert.match(atlas, /Download free beta/);
-  assert.match(atlas, /href="\/tembro"/);
+  assert.doesNotMatch(atlas, /credit|href="\/tembro"/i);
   assert.doesNotMatch(atlas, /lemonsqueezy.com\/buy\/credits/);
   assert.match(atlas, /notarized by Apple/i);
   assert.doesNotMatch(atlas, /not notarized/i);
   assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://example.com/atlas.zip');
   const live = await app.request('/tembro');
-  assert.equal(live.status, 200);
+  assert.equal(live.status, 302);
+  assert.equal(live.headers.get('location'), '/#products');
   assert.match(live.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
-  assert.match(await live.text(), /lemonsqueezy.com\/buy\/credits/);
+  assert.doesNotMatch(await live.text(), /lemonsqueezy.com\/buy\/credits/);
   const version = await (await app.request('/v0/version')).json() as { download_url: string };
   assert.equal(version.download_url, 'https://example.com/tembro.dmg');
   assert.equal((await app.request('/v0/health')).status, 200);
   assert.equal((await app.request('/v0/health')).headers.get('content-security-policy'), null);
+});
+
+test('retired credit landing links return to products without forwarding query overrides', async () => {
+  const app = createApp({ store: new MemoryStore() });
+  for (const path of ['/tembro', '/tembro/', '/tembro?redirect=https://example.com&checkout=credits']) {
+    for (const method of ['GET', 'HEAD']) {
+      const response = await app.request(path, { method });
+      assert.equal(response.status, 302);
+      assert.equal(response.headers.get('location'), '/#products');
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+    }
+    const post = await app.request(path, { method: 'POST' });
+    assert.equal(post.status, 405);
+    assert.equal(post.headers.get('location'), null);
+  }
+  for (const path of ['/', '/atlas', '/chordarium']) {
+    const body = await (await app.request(path)).text();
+    assert.doesNotMatch(body, /credits|href="\/tembro"/i, path);
+  }
 });
 
 test('Atlas page offers checkout while receipt download stays a direct file link', async () => {
@@ -40,6 +63,14 @@ test('Atlas page offers checkout while receipt download stays a direct file link
   assert.equal((await app.request('/atlas/download')).headers.get('location'), 'https://example.com/atlas.zip');
   assert.match(await (await app.request('/atlas')).text(), /Get Atlas free/);
   assert.match(await (await app.request('/atlas')).text(), /href="https:\/\/tembro.lemonsqueezy.com\/buy\/atlas"/);
+});
+
+test('Atlas can be acquired from the catalog when only its checkout is configured', async () => {
+  const app = createStorefront({ atlasCheckoutUrl: 'https://tembro.lemonsqueezy.com/buy/atlas' });
+  assert.match(await (await app.request('/')).text(), /href="\/atlas\/download"/);
+  const response = await app.request('/atlas/download?redirect=https://example.com');
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get('location'), 'https://tembro.lemonsqueezy.com/buy/atlas');
 });
 
 test('missing or unsafe download configuration never exposes an unsafe link', async () => {
@@ -67,12 +98,12 @@ test('Chordarium is an HTML product page for ordinary and tracked URLs', async (
     assert.match(html, /href="\/chordarium\/buy"/);
     assert.match(html, /Try online demo/);
     assert.match(html, /href="\/chordarium\/download"/);
-    assert.match(html, /Buy VST · €59/);
+    assert.match(html, /Buy plug-in · €59/);
     assert.match(html, /<s>€89<\/s>/);
     assert.match(html, /0\.3\.2/);
     assert.match(html, /Live MIDI/);
     assert.match(html, /id="install"/);
-    assert.match(html, /five seeds/i);
+    assert.match(html, /five replayable examples/i);
     assert.match(html, /Activate once to enable all MIDI features/);
     assert.match(html, /Activate Chordarium/);
     assert.match(html, /MAIN\/card drag-and-drop/);

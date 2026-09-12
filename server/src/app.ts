@@ -16,7 +16,6 @@ import type { CreditPacks, LicenseProvider } from "./billing.js";
 import { billingGrantFromWebhook, verifyLemonSignature } from "./billing.js";
 import { ClientEventSchema, AgentRequestSchema, LicenseAuthRequestSchema } from "./types.js";
 import type { AgentStepResponse, McpTool } from "./types.js";
-import { landingPage } from "./site.js";
 import { createStorefront } from "./storefront-routes.js";
 import {
   estimateCreditCost,
@@ -216,8 +215,6 @@ export function createApp(config: AppConfig) {
     signupGrantCredits = 100,
     chatCostCredits = 1,
     historyLimit = 30,
-    checkoutUrl,
-    freeFirstPackCode,
     downloadUrl,
     supportEmail,
     betaAccessCode,
@@ -235,27 +232,8 @@ export function createApp(config: AppConfig) {
     return c.json({ error: "internal_error" }, 500);
   });
 
-  app.use("*", async (c, next) => {
-    if (c.req.path === "/tembro") {
-      c.header("Content-Security-Policy", "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
-      c.header("Referrer-Policy", "strict-origin-when-cross-origin");
-      c.header("X-Content-Type-Options", "nosniff");
-    }
-    await next();
-  });
   const storeOptions = { atlasCheckoutUrl: config.atlasCheckoutUrl, atlasDownloadUrl: config.atlasDownloadUrl, supportEmail };
   app.route("/", createStorefront(storeOptions));
-  app.get("/tembro", (c) => {
-    return c.html(
-      landingPage({
-        checkoutUrl,
-        freeFirstPackCode,
-        downloadUrl,
-        supportEmail,
-        baseCreditCost: chatCostCredits,
-      }),
-    );
-  });
 
   app.get("/v0/health", (c) => c.json({ ok: true, protocol_version: "0.1" }));
 
