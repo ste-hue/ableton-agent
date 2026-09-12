@@ -5,11 +5,12 @@ export const CHORDARIUM = {
   path: '/chordarium',
   category: 'Piano house composer',
   description: 'Find the chords. Shape the groove. Take a new idea into your next track.',
-  platforms: 'Browser · macOS',
-  status: 'Available',
+  platforms: 'macOS 11+ · Apple Silicon & Intel · Browser demo',
+  status: '0.3.2 · Launch offer €59',
   action: 'Explore Chordarium',
   webUrl: 'https://chordarium.com',
-  checkoutUrl: 'https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed',
+  checkoutUrl: 'https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed?checkout[discount_code]=LAUNCH59',
+  version: '0.3.2',
 } as const;
 
 export const PRODUCTS = [

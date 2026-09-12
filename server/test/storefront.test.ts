@@ -65,9 +65,21 @@ test('Chordarium is an HTML product page for ordinary and tracked URLs', async (
     const html = await page.text();
     assert.match(html, /href="https:\/\/chordarium.com"/);
     assert.match(html, /href="\/chordarium\/buy"/);
-    assert.match(html, /Web credits are separate from the plug-in license/);
+    assert.match(html, /Try online demo/);
+    assert.match(html, /href="\/chordarium\/download"/);
+    assert.match(html, /Buy VST · €59/);
+    assert.match(html, /<s>€89<\/s>/);
+    assert.match(html, /0\.3\.2/);
+    assert.match(html, /Live MIDI/);
+    assert.match(html, /id="install"/);
+    assert.match(html, /five seeds/i);
+    assert.match(html, /Activate once to enable all MIDI features/);
+    assert.match(html, /Activate Chordarium/);
+    assert.match(html, /MAIN\/card drag-and-drop/);
+    assert.match(html, /DAW Sync follows the host BPM, timeline and Play\/Stop/);
+    assert.doesNotMatch(html, /Each MIDI export uses one web credit|real-time MIDI output are being developed/);
     assert.match(html, /rel="canonical" href="https:\/\/gettembro.com\/chordarium"/);
-    assert.doesNotMatch(html, /<script|utm_source|fbclid|€89|€59\.99/);
+    assert.doesNotMatch(html, /<script|utm_source|fbclid|€59\.99/);
   }
 });
 
@@ -84,21 +96,21 @@ test('Chordarium checkout has one destination and drops incoming checkout parame
 
 test('Chordarium canonical slash redirects retain attribution while HEAD stays bodyless', async () => {
   const app = createStorefront();
-  for (const path of ['/chordarium', '/chordarium/buy']) {
+  for (const path of ['/chordarium', '/chordarium/buy', '/chordarium/download']) {
     for (const method of ['GET', 'HEAD']) {
       const slash = await app.request(path + '/?utm_source=mail', { method });
       assert.equal(slash.status, 308);
       assert.equal(slash.headers.get('location'), path + '?utm_source=mail');
     }
     const head = await app.request(path + '?utm_source=mail', { method: 'HEAD' });
-    assert.equal(head.status, path.endsWith('/buy') ? 302 : 200);
+    assert.equal(head.status, path === '/chordarium' ? 200 : 302);
     assert.equal(await head.text(), '');
   }
 });
 
 test('unsupported Chordarium methods and unrelated paths never open checkout', async () => {
   const app = createStorefront();
-  for (const path of ['/chordarium', '/chordarium/', '/chordarium/buy', '/chordarium/buy/']) {
+  for (const path of ['/chordarium', '/chordarium/', '/chordarium/buy', '/chordarium/buy/', '/chordarium/download', '/chordarium/download/']) {
     for (const method of ['POST', 'PUT', 'DELETE', 'OPTIONS']) {
       const response = await app.request(path + '?utm_source=mail', { method });
       assert.equal(response.status, 405, method + ' ' + path);
@@ -106,7 +118,7 @@ test('unsupported Chordarium methods and unrelated paths never open checkout', a
       assert.equal(response.headers.get('location'), null);
     }
   }
-  for (const path of ['/chordarium-other', '/chordarium/download', '/chordarium/buy/other']) {
+  for (const path of ['/chordarium-other', '/chordarium/download/other', '/chordarium/buy/other']) {
     assert.equal((await app.request(path)).status, 404);
   }
 });
@@ -135,4 +147,31 @@ test('legacy route shim forwards the original request and response to the centra
     assert.equal(response.status, expected);
     assert.match(response.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
   }
+});
+
+
+test('Chordarium download requires a customer order and ignores query overrides', async () => {
+  const app = createStorefront();
+  const expected = 'https://app.lemonsqueezy.com/my-orders';
+  for (const path of ['/chordarium/download', '/chordarium/download?url=https://evil.example/test.pkg&version=unsigned']) {
+    const response = await app.request(path);
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get('location'), expected);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+  }
+  const html = await (await app.request('/chordarium')).text();
+  assert.match(html, /paste the license key from your receipt/i);
+  assert.doesNotMatch(html, /No in-plugin activation|No license key|without activation|host tempo while stopped/);
+  assert.doesNotMatch(html, /Download for Mac|Buy license|github.com.*releases\/download/);
+  assert.match(html, /Logic Pro/);
+  assert.match(html, /macOS 11/);
+  assert.doesNotMatch(html, /unsigned-test|LEGGIMI-TEST/);
+});
+
+test('Chordarium purchase applies the fixed launch offer', async () => {
+  const response = await createStorefront().request('/chordarium/buy?checkout[discount_code]=CHORDTEST');
+  const target = new URL(response.headers.get('location')!);
+  assert.equal(target.searchParams.get('checkout[discount_code]'), 'LAUNCH59');
+  assert.equal(target.pathname, '/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed');
 });

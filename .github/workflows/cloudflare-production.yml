@@ -100,7 +100,7 @@ jobs:
               "new Chordarium storefront was not returned",
             );
             assert(
-              html.includes("Web credits are separate from the plug-in license"),
+              html.includes("Try online. Get the complete plug-in."),
               "expected Chordarium product copy is missing",
             );
             assert(html.includes('href="/chordarium/buy"'), "purchase route is missing");
@@ -117,7 +117,7 @@ jobs:
           node --input-type=module <<'NODE'
           const base = "https://gettembro.com";
           const checkout =
-            "https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed";
+            "https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed?checkout[discount_code]=LAUNCH59";
           const atlasCheckout =
             "https://tembro.lemonsqueezy.com/checkout/buy/0026137e-70fd-4687-b09d-d3e190142565";
           const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -169,7 +169,7 @@ jobs:
             const chordarium = await hit("/chordarium");
             assert(chordarium.status === 200, `GET /chordarium: ${chordarium.status}`);
             assert(
-              (await chordarium.text()).includes("Web credits are separate from the plug-in license"),
+              (await chordarium.text()).includes("Try online. Get the complete plug-in."),
               "bare Chordarium route did not reach the storefront",
             );
 
@@ -195,6 +195,11 @@ jobs:
               buy.headers.get("location") === checkout,
               `wrong checkout destination: ${buy.headers.get("location")}`,
             );
+
+            const download = await hit("/chordarium/download?utm_source=cloudflare-smoke");
+            assert(download.status === 302, `GET /chordarium/download: ${download.status}`);
+            const downloadUrl = "https://app.lemonsqueezy.com/my-orders";
+            assert(download.headers.get("location") === downloadUrl, "wrong Chordarium download destination");
 
             const atlasDownload = await hit("/atlas/download");
             assert(atlasDownload.status === 302, `GET /atlas/download: ${atlasDownload.status}`);

@@ -17,17 +17,17 @@
     "chordarium": {
       "repository": "ste-hue/ChordBloom-v1",
       "releaseTarget": {
-        "version": "0.2.0",
+        "version": "0.3.2",
         "platforms": [
           "macos"
         ],
-        "tag": null,
-        "sourceCommitSha": null,
+        "tag": "v0.3.2",
+        "sourceCommitSha": "a866abf45f2f8ae6750923d33e4f63c1d1e0b4fb",
         "artifact": {
-          "filename": null,
-          "sha256": "ab3d6bcf1caf7c36540c88b9dc9a902667ce909f4b818e48b65ca46a17b86672",
-          "notarizationStatus": "accepted",
-          "notarizationRecord": "docs/NOTARIZATION-HANDOFF.md",
+          "filename": "Chordarium-0.3.2-macOS-universal.pkg",
+          "sha256": "042d9470d1d486ac2a32fb513ce4325fc55ed091a86b0af96b94f27dccf6550e",
+          "notarizationStatus": "Accepted",
+          "notarizationRecord": "2b634ca8-ca97-432e-bff2-e5d50c0f624c",
           "lemonSqueezyDeliveryVerified": false
         }
       },
@@ -36,24 +36,31 @@
         "variantIds": [
           "2113530"
         ],
-        "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed",
+        "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed?checkout[discount_code]=LAUNCH59",
         "price": {
-          "amount": "59.99",
-          "currency": "EUR"
+          "amount": "89.00",
+          "currency": "EUR",
+          "launchAmount": "59.00",
+          "discountCode": "LAUNCH59",
+          "discountAmount": "30.00"
         },
         "license": {
           "termDays": 365,
-          "activationLimit": 5
+          "activationLimit": 5,
+          "activationLimitEnforcedByPlugin": false,
+          "requiredByPlugin": true
         }
       },
       "windowsPolicy": "free-beta-only-until-human-tested",
       "linuxPolicy": "deferred",
-      "webExperienceDecision": null
+      "webExperienceDecision": "limited-five-seed-demo",
+      "deliveryPolicy": "paid-order-download-via-lemonsqueezy",
+      "pluginActivationRequired": true
     },
     "atlas": {
       "repository": "ste-hue/atlas",
       "releaseTarget": {
-        "version": "0.3.15",
+        "version": "0.3.25",
         "tag": null,
         "sourceCommitSha": null,
         "platforms": [
