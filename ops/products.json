@@ -17,19 +17,18 @@
     "chordarium": {
       "repository": "ste-hue/ChordBloom-v1",
       "releaseTarget": {
-        "version": "0.3.0",
+        "version": "0.3.1",
         "platforms": [
           "macos"
         ],
         "tag": null,
-        "sourceCommitSha": "31c685614538d0ed0fc97ab14a6f40a6a1dcac72",
+        "sourceCommitSha": "36141022d027ea1aa90a3b3cfd76cb52af858ef8",
         "artifact": {
-          "filename": "Chordarium-0.3.0-macOS-download.zip",
-          "sha256": "90d82f0c1a8749112a82d9e726e419c3baad0b8f8f7493f34536c6d3e22c7a60",
-          "notarizationStatus": "accepted",
+          "filename": "Chordarium-0.3.1-macOS-universal.pkg",
+          "sha256": null,
+          "notarizationStatus": "pending",
           "notarizationRecord": "https://github.com/ste-hue/ChordBloom-v1/blob/release/chordarium-0.3.0/docs/NOTARIZATION-HANDOFF.md",
-          "lemonSqueezyDeliveryVerified": true,
-          "installerSha256": "6ba8b54f391efff8f090f5d62998eaca43981db802b8bce45f755a8325643b4b"
+          "lemonSqueezyDeliveryVerified": false
         }
       },
       "lemonSqueezy": {
@@ -48,13 +47,15 @@
         "license": {
           "termDays": 365,
           "activationLimit": 5,
-          "activationLimitEnforcedByPlugin": false
+          "activationLimitEnforcedByPlugin": false,
+          "requiredByPlugin": false
         }
       },
       "windowsPolicy": "free-beta-only-until-human-tested",
       "linuxPolicy": "deferred",
       "webExperienceDecision": "limited-five-seed-demo",
-      "deliveryPolicy": "public-macos-download-with-separate-license-checkout"
+      "deliveryPolicy": "paid-order-download-via-lemonsqueezy",
+      "pluginActivationRequired": false
     },
     "atlas": {
       "repository": "ste-hue/atlas",

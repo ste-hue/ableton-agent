@@ -65,15 +65,15 @@ test('Chordarium is an HTML product page for ordinary and tracked URLs', async (
     const html = await page.text();
     assert.match(html, /href="https:\/\/chordarium.com"/);
     assert.match(html, /href="\/chordarium\/buy"/);
-    assert.match(html, /Download for Mac/);
+    assert.match(html, /Try online demo/);
     assert.match(html, /href="\/chordarium\/download"/);
-    assert.match(html, /Buy license · €59/);
+    assert.match(html, /Buy VST · €59/);
     assert.match(html, /<s>€89<\/s>/);
-    assert.match(html, /0\.3\.0/);
+    assert.match(html, /0\.3\.1/);
     assert.match(html, /Live MIDI/);
     assert.match(html, /id="install"/);
     assert.match(html, /five seeds/i);
-    assert.match(html, /one year/i);
+    assert.match(html, /No in-plugin activation/);
     assert.doesNotMatch(html, /Each MIDI export uses one web credit|real-time MIDI output are being developed/);
     assert.match(html, /rel="canonical" href="https:\/\/gettembro.com\/chordarium"/);
     assert.doesNotMatch(html, /<script|utm_source|fbclid|€59\.99/);
@@ -147,9 +147,9 @@ test('legacy route shim forwards the original request and response to the centra
 });
 
 
-test('public Chordarium download is the versioned notarized installer bundle and ignores query overrides', async () => {
+test('Chordarium download requires a customer order and ignores query overrides', async () => {
   const app = createStorefront();
-  const expected = 'https://github.com/ste-hue/tembro-releases/releases/download/chordarium-v0.3.0/Chordarium-0.3.0-macOS-download.zip';
+  const expected = 'https://app.lemonsqueezy.com/my-orders';
   for (const path of ['/chordarium/download', '/chordarium/download?url=https://evil.example/test.pkg&version=unsigned']) {
     const response = await app.request(path);
     assert.equal(response.status, 302);
@@ -158,7 +158,8 @@ test('public Chordarium download is the versioned notarized installer bundle and
     assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
   }
   const html = await (await app.request('/chordarium')).text();
-  assert.match(html, /90d82f0c1a8749112a82d9e726e419c3baad0b8f8f7493f34536c6d3e22c7a60/);
+  assert.match(html, /No license key or activation step is required/);
+  assert.doesNotMatch(html, /Download for Mac|Buy license|github.com.*releases\/download/);
   assert.match(html, /Logic Pro/);
   assert.match(html, /macOS 11/);
   assert.doesNotMatch(html, /unsigned-test|LEGGIMI-TEST/);

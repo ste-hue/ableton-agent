@@ -30,7 +30,7 @@ export function createStorefront(options: StoreOptions = {}) {
   app.get('/chordarium/download', (c) => {
     c.header('Cache-Control', 'no-store');
     c.header('Referrer-Policy', 'no-referrer');
-    return c.redirect(CHORDARIUM.downloadUrl, 302);
+    return c.redirect('https://app.lemonsqueezy.com/my-orders', 302);
   });
   for (const path of ['/chordarium', '/chordarium/buy', '/chordarium/download']) {
     app.get(path + '/', (c) => {

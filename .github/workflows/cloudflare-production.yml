@@ -54,19 +54,6 @@ jobs:
           ./node_modules/.bin/wrangler deploy --dry-run --outdir .wrangler-dry-run/tembro-api
           ./node_modules/.bin/wrangler deploy --config redirects/wrangler.jsonc --dry-run --outdir .wrangler-dry-run/chordarium-link
 
-      - name: Verify public Chordarium artifact before deployment
-        run: |
-          node --input-type=module <<'NODE'
-          import { createHash } from 'node:crypto';
-          const url = 'https://github.com/ste-hue/tembro-releases/releases/download/chordarium-v0.3.0/Chordarium-0.3.0-macOS-download.zip';
-          const response = await fetch(url, { signal: AbortSignal.timeout(120000) });
-          if (!response.ok) throw new Error(`Release must be public before deployment: ${response.status}`);
-          const actual = createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex');
-          const expected = '90d82f0c1a8749112a82d9e726e419c3baad0b8f8f7493f34536c6d3e22c7a60';
-          if (actual !== expected) throw new Error(`Wrong Chordarium artifact: ${actual}`);
-          console.log('Public Chordarium ZIP matches the verified release SHA-256.');
-          NODE
-
       - name: Deploy tembro-api
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -113,7 +100,7 @@ jobs:
               "new Chordarium storefront was not returned",
             );
             assert(
-              html.includes("Download first. Unlock when ready."),
+              html.includes("Try online. Get the complete plug-in."),
               "expected Chordarium product copy is missing",
             );
             assert(html.includes('href="/chordarium/buy"'), "purchase route is missing");
@@ -182,7 +169,7 @@ jobs:
             const chordarium = await hit("/chordarium");
             assert(chordarium.status === 200, `GET /chordarium: ${chordarium.status}`);
             assert(
-              (await chordarium.text()).includes("Download first. Unlock when ready."),
+              (await chordarium.text()).includes("Try online. Get the complete plug-in."),
               "bare Chordarium route did not reach the storefront",
             );
 
@@ -211,10 +198,8 @@ jobs:
 
             const download = await hit("/chordarium/download?utm_source=cloudflare-smoke");
             assert(download.status === 302, `GET /chordarium/download: ${download.status}`);
-            const downloadUrl = "https://github.com/ste-hue/tembro-releases/releases/download/chordarium-v0.3.0/Chordarium-0.3.0-macOS-download.zip";
+            const downloadUrl = "https://app.lemonsqueezy.com/my-orders";
             assert(download.headers.get("location") === downloadUrl, "wrong Chordarium download destination");
-            const artifact = await fetch(downloadUrl, { method: "HEAD" });
-            assert(artifact.status === 200, `public Chordarium artifact: ${artifact.status}`);
 
             const atlasDownload = await hit("/atlas/download");
             assert(atlasDownload.status === 302, `GET /atlas/download: ${atlasDownload.status}`);
