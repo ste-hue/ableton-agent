@@ -103,68 +103,19 @@ test("credit estimates rise with musical scope and cannot be lowered by a cheap 
   assert.equal(estimateCreditCost(1, skillPromptFor("harmony_melody") ?? "", "harmony_melody"), 2);
 });
 
-test("landing page explains the complete customer journey", async () => {
-  const { app } = makeApp(100, {
-    checkoutUrl: "https://tembro.lemonsqueezy.com/buy/test-product",
-    supportEmail: "support@tembro.test",
-  });
-  const res = await app.request("/tembro");
-  assert.equal(res.status, 200);
-  assert.match(res.headers.get("content-type") ?? "", /text\/html/);
-  assert.match(res.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
-  const body = await res.text();
-  assert.match(body, /Tell Tembro where the track should go\./);
-  assert.match(body, /Buy/);
-  assert.match(body, /Install/);
-  assert.match(body, /Activate/);
-  assert.match(body, /Chat/);
-  assert.match(body, /https:\/\/tembro\.lemonsqueezy\.com\/buy\/test-product/);
-  assert.match(body, /They are Tembro credits, not OpenAI tokens/);
-  assert.match(body, /No subscription/);
-  assert.match(body, /credits never expire/);
-  assert.match(body, /Liveworks/);
-  assert.match(body, /docs\.cycling74\.com\/apiref\/lom\/song/);
-});
-
-test("landing page pre-applies the free first pack code at checkout", async () => {
-  const { app } = makeApp(100, {
-    checkoutUrl: "https://tembro.lemonsqueezy.com/checkout/buy/test-product",
-    freeFirstPackCode: "firstpack",
-  });
-  const body = await (await app.request("/tembro")).text();
-  assert.match(body, /Get 40 credits free/);
-  assert.match(body, /checkout\/buy\/test-product\?checkout%5Bdiscount_code%5D=FIRSTPACK/);
-  assert.match(body, /first Starter pack is free with code FIRSTPACK/);
-  assert.match(body, /Studio · 120 credits €29/);
-  assert.doesNotMatch(body, /Packs from €12/);
-});
-
-test("landing page ignores a malformed free pack code", async () => {
-  const { app } = makeApp(100, {
-    checkoutUrl: "https://tembro.lemonsqueezy.com/checkout/buy/test-product",
-    freeFirstPackCode: "<script>",
-  });
-  const body = await (await app.request("/tembro")).text();
-  assert.match(body, /Get Tembro/);
-  assert.doesNotMatch(body, /discount_code/);
-});
-
-test("landing page rejects unsafe checkout URLs", async () => {
-  const { app } = makeApp(100, { checkoutUrl: "javascript:alert(1)" });
-  const body = await (await app.request("/tembro")).text();
-  assert.doesNotMatch(body, /javascript:/);
-  assert.match(body, /Early access soon/);
-});
-
-test("landing page switches to a free beta download without payment copy", async () => {
-  const { app } = makeApp(100, {
-    downloadUrl: "https://github.com/ste-hue/ableton-agent/releases/download/v0-beta/Tembro.zip",
-  });
-  const body = await (await app.request("/tembro")).text();
-  assert.match(body, /Download free beta/);
-  assert.match(body, /No card, checkout, or little subscription surprise/);
-  assert.match(body, /Free beta access code activation/);
-  assert.doesNotMatch(body, /Secure checkout and license delivery/);
+test("legacy payment settings cannot republish the retired credit landing page", async () => {
+  for (const legacy of [
+    { checkoutUrl: "https://tembro.lemonsqueezy.com/buy/test-product" },
+    { checkoutUrl: "https://tembro.lemonsqueezy.com/buy/test-product", freeFirstPackCode: "FIRSTPACK" },
+    { checkoutUrl: "javascript:alert(1)", freeFirstPackCode: "<script>" },
+    { downloadUrl: "https://example.com/tembro.zip" },
+  ]) {
+    const { app } = makeApp(100, legacy);
+    const response = await app.request("/tembro");
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get("location"), "/#products");
+    assert.doesNotMatch(await response.text(), /checkout|credits|javascript:/i);
+  }
 });
 
 test("agent requires auth", async () => {
