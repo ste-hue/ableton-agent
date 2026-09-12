@@ -34,7 +34,10 @@ Incolla tutto questo, senza modificare prima la cartella:
 > 1. Identifica la repository e verifica quale account GitHub usa questa sessione
 >    (con GitHub CLI, se disponibile, o con il connettore del tuo ambiente).
 >    Controlla anche l'accesso Git del remote: browser, CLI e Git possono usare
->    credenziali diverse. Non stampare token o URL che contengano credenziali.
+>    credenziali diverse. Prima di qualsiasi scrittura su GitHub verifica che
+>    l'account usato sia dellapietram-lab. Se è diverso, guidami a selezionare il
+>    mio account; non usare quello di Stefano.
+>    Non stampare token o URL che contengano credenziali.
 >    Se serve autenticazione, guidami nel login ufficiale al mio account;
 >    non chiedermi di incollare segreti in chat.
 > 2. Leggi AGENTS.md, README.md, le istruzioni locali collegate e gli eventuali
