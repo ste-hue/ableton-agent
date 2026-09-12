@@ -69,7 +69,7 @@ test('Chordarium is an HTML product page for ordinary and tracked URLs', async (
     assert.match(html, /href="\/chordarium\/download"/);
     assert.match(html, /Buy VST · €59/);
     assert.match(html, /<s>€89<\/s>/);
-    assert.match(html, /0\.3\.1/);
+    assert.match(html, /0\.3\.2/);
     assert.match(html, /Live MIDI/);
     assert.match(html, /id="install"/);
     assert.match(html, /five seeds/i);
