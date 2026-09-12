@@ -21,12 +21,30 @@ payment. This supersedes the earlier proposal to remove native activation.
 
 ## Release evidence
 
-0.3.2 is being rebuilt and notarized with first activation and the revised MIDI
-playback and DAW Sync behavior.
-Source SHA, installer SHA-256, Apple submission and exact delivery-file readback
-must be filled from completed checks before launch. Unknown values remain null
-in products.json. Earlier 0.3.2 candidates do not establish the final artifact's
-provenance. The previous 0.3.0 installer is not the current release target.
+The final source is merged on main:
+`a866abf45f2f8ae6750923d33e4f63c1d1e0b4fb` (PR #28, containing PRs #25 and #29).
+Its tree matches the reviewed freeze `5ed76e2f85e727c8c9c26a5360962241b43d4806`.
+CMake was rerun after switching to main; all three universal formats were rebuilt
+with visible build ID `a866abf4`. The working tree is clean.
+
+- 74 JavaScript tests pass; demo build matches committed dist without regenerated fixtures.
+- All 3 native CTest suites pass on the final main build; Intel processor tests
+  under Rosetta report 0 failures.
+- Independent overlap/seek review confirms balanced note-off events, including
+  tolerated PPQ jitter at an event boundary.
+- Final Mac/Linux CI: https://github.com/ste-hue/ChordBloom-v1/actions/runs/34697117900
+- GitHub Pages final-main run 34697091838 succeeded; the live online demo hash is
+  `9fa1cec71197d0aef76d0c98544b5ff94c68f6bfa823410e05cffbfa65b2242b`.
+
+Developer ID signing succeeded, but final notarization is pending: on 2026-09-12
+notarytool could no longer find the previously working `ste-hue` Keychain profile.
+Restoring that profile is required before submitting the final build. This is an
+observed local credential failure, not an Apple rejection of the binary.
+No final 0.3.2 installer has been uploaded. Installer SHA, Apple submission and
+exact delivery readback remain null until verified; the previous a917 test candidate
+and currently delivered 0.3.1 installer do not establish final release provenance.
+Actual purchased-key activation, Ableton/Serum routing and physical drag acceptance
+remain unobserved.
 
 ## Publication authorization
 
@@ -39,7 +57,7 @@ earlier public-release authorization. The latest activation confirmation must al
 be reflected in the store description, receipt and release evidence.
 
 The source changes are in ChordBloom-v1 PR #28. The website is in ableton-agent
-PR #76. Both are drafts until final release checks and delivery verification.
+PR #76. Source PR #28 is merged; website PR #76 remains a draft until final package and delivery verification.
 The previous native foundation (0.3.0) passed Mac and Linux CI run 34688435075;
 that run does not by itself verify the changed 0.3.2 package.
 

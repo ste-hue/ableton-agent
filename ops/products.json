@@ -22,7 +22,7 @@
           "macos"
         ],
         "tag": null,
-        "sourceCommitSha": null,
+        "sourceCommitSha": "a866abf45f2f8ae6750923d33e4f63c1d1e0b4fb",
         "artifact": {
           "filename": "Chordarium-0.3.2-macOS-universal.pkg",
           "sha256": null,
