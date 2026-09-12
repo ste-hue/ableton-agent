@@ -53,8 +53,8 @@ Cloudflare setup references:
 - DAW Sync follows host BPM, timeline and Play/Stop; disabling it enables manual
   tempo. MIDI out drives a receiving instrument, while the internal piano previews
   through system audio. MAIN and cards can be dragged or exported as MIDI.
-- The current target is 0.3.1. Its final source, installer hash, notarization and
-  delivery evidence remain pending; see [the release record](releases/chordarium-0.3.1.md).
+- The current target is 0.3.2. Its final source, installer hash, notarization and
+  delivery evidence remain pending; see [the release record](releases/chordarium-0.3.2.md).
 
 ## Outstanding launch checks and decisions
 

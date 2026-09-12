@@ -17,14 +17,14 @@
     "chordarium": {
       "repository": "ste-hue/ChordBloom-v1",
       "releaseTarget": {
-        "version": "0.3.1",
+        "version": "0.3.2",
         "platforms": [
           "macos"
         ],
         "tag": null,
         "sourceCommitSha": null,
         "artifact": {
-          "filename": "Chordarium-0.3.1-macOS-universal.pkg",
+          "filename": "Chordarium-0.3.2-macOS-universal.pkg",
           "sha256": null,
           "notarizationStatus": "pending",
           "notarizationRecord": null,
@@ -60,7 +60,7 @@
     "atlas": {
       "repository": "ste-hue/atlas",
       "releaseTarget": {
-        "version": "0.3.15",
+        "version": "0.3.25",
         "tag": null,
         "sourceCommitSha": null,
         "platforms": [
