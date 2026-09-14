@@ -1,0 +1,24 @@
+{
+  "tool": "tembro_ensemble_compose",
+  "arguments": {
+    "seed": 4242,
+    "key": "C",
+    "mode": "Minor",
+    "bpm": 120,
+    "bars": 8,
+    "genre": "Power Piano House",
+    "drum_style": "Tech House",
+    "density": 60,
+    "syncopation": 40,
+    "kit": {
+      "kick": true,
+      "snare": true,
+      "clap": true,
+      "hats": true,
+      "shaker": false,
+      "perc": false,
+      "toms": false,
+      "cymbals": false
+    }
+  }
+}

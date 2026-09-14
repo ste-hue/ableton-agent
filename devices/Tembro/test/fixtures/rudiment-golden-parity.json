@@ -1,0 +1,212 @@
+{
+  "schema": "tembro.rudiment-golden-parity.v1",
+  "source_revision": "e9fafb8d970f40fc8c3fd7147d6f550278aa9206",
+  "source_fixture": "test/fixtures/golden.json",
+  "source_fixture_git_blob_sha": "79131bf35a537c1b7c1e1cf8b528d9040add973c",
+  "cases": [
+    {
+      "name": "defaults-8-bars",
+      "config": {
+        "length": 8
+      },
+      "result_sha256": "9f9a3755fe4e623548b4b14eb0fa26c5adb7f035ab6a2423bb091b5b728b5f7b"
+    },
+    {
+      "name": "defaults-16-bars",
+      "config": {
+        "length": 16
+      },
+      "result_sha256": "c468e5ee4fb905694eee28828fc6bc5155d8187d056a8039b8652ea69cc90f57"
+    },
+    {
+      "name": "defaults-32-bars",
+      "config": {
+        "length": 32
+      },
+      "result_sha256": "25eceaaf8cf5739cadf8d8aaa448d3038b1e6bf3a6eea6486feedb49a1616b58"
+    },
+    {
+      "name": "defaults-64-bars",
+      "config": {
+        "length": 64
+      },
+      "result_sha256": "b22b95bcf0810961efc86b084781a1e73017a46cae0ba946b2cc81b1309caadc"
+    },
+    {
+      "name": "defaults-96-bars",
+      "config": {
+        "length": 96
+      },
+      "result_sha256": "09be5e980172cf393a49d465f56df1787df2b99a230385d4ed2229b88a2f45e3"
+    },
+    {
+      "name": "defaults-128-bars",
+      "config": {
+        "length": 128
+      },
+      "result_sha256": "928fdeb37000b4c9ad03c04e1d655183a8f91b34d0839c3d0c5867087bb0611e"
+    },
+    {
+      "name": "style-tech-house-32-bars",
+      "config": {
+        "style": "Tech House",
+        "length": 32
+      },
+      "result_sha256": "25eceaaf8cf5739cadf8d8aaa448d3038b1e6bf3a6eea6486feedb49a1616b58"
+    },
+    {
+      "name": "style-minimal-deep-tech-32-bars",
+      "config": {
+        "style": "Minimal / Deep Tech",
+        "length": 32
+      },
+      "result_sha256": "2b6486315810803e7411abb9838af59b07fccd8b23c50a3219ba3b71ecc066ce"
+    },
+    {
+      "name": "style-house-32-bars",
+      "config": {
+        "style": "House",
+        "length": 32
+      },
+      "result_sha256": "f3e3891d970e1ba938e38e4f08e041f7bc44df427c4f9708f543fe8839f7748b"
+    },
+    {
+      "name": "style-disco-house-32-bars",
+      "config": {
+        "style": "Disco House",
+        "length": 32
+      },
+      "result_sha256": "f604099db71b6056022db0593227b7cce15ceee5be6b56cfb332bfb22efe3527"
+    },
+    {
+      "name": "style-techno-32-bars",
+      "config": {
+        "style": "Techno",
+        "length": 32
+      },
+      "result_sha256": "14f1deb5b83ed71e13a578bc23ec5fbdbe5e8cae3519b6a8f3db800380c6eae4"
+    },
+    {
+      "name": "style-hypnotic-techno-32-bars",
+      "config": {
+        "style": "Hypnotic Techno",
+        "length": 32
+      },
+      "result_sha256": "2c81d3105bfe34ac4c5d6c964e4829c2bdcd7dfbbac2e2de1ecc92d9d9026072"
+    },
+    {
+      "name": "style-hardgroove-32-bars",
+      "config": {
+        "style": "Hardgroove",
+        "length": 32
+      },
+      "result_sha256": "e9a52335beae1a6d061e195f5e7f24b109df209acbb6a2684d4c72e29b6b1b96"
+    },
+    {
+      "name": "style-melodic-techno-32-bars",
+      "config": {
+        "style": "Melodic Techno",
+        "length": 32
+      },
+      "result_sha256": "d7c5f698bcaa76725a7642b1d8ba3af2754bc420a74d303972b9975ba8ee1629"
+    },
+    {
+      "name": "style-electro-32-bars",
+      "config": {
+        "style": "Electro",
+        "length": 32
+      },
+      "result_sha256": "4a58427b33d46af8f5852519133cd65740f4af2534cca175013cfcbeb73bff47"
+    },
+    {
+      "name": "style-breakbeat-32-bars",
+      "config": {
+        "style": "Breakbeat",
+        "length": 32
+      },
+      "result_sha256": "767fc1afdc3457274fd3d997669617d82f0460a132d840635330698296e3e636"
+    },
+    {
+      "name": "swing-0-32-bars",
+      "config": {
+        "swing": 0,
+        "length": 32
+      },
+      "result_sha256": "e26ecfc97d6c4734de60f4520f3006356cd51e388bf5a49b4fe88f846cc9a5e2"
+    },
+    {
+      "name": "swing-50-32-bars",
+      "config": {
+        "swing": 50,
+        "length": 32
+      },
+      "result_sha256": "630f8c20663ba2e3de59b908cb7d1cfa2f4436e9e104d09869105bb8202bb9ba"
+    },
+    {
+      "name": "swing-100-32-bars",
+      "config": {
+        "swing": 100,
+        "length": 32
+      },
+      "result_sha256": "e26ecfc97d6c4734de60f4520f3006356cd51e388bf5a49b4fe88f846cc9a5e2"
+    },
+    {
+      "name": "kit-no-snare-no-clap-32-bars",
+      "config": {
+        "length": 32,
+        "kit": {
+          "snare": false,
+          "clap": false
+        }
+      },
+      "result_sha256": "f1371e0c5688c173adedc4f12a3132b6d31155b500b8719da0cfc0febcc9e95e"
+    },
+    {
+      "name": "kit-no-toms-no-perc-32-bars",
+      "config": {
+        "length": 32,
+        "kit": {
+          "toms": false,
+          "perc": false
+        }
+      },
+      "result_sha256": "e674924bf8af6b38b42b4fcefc62e94799c0d05a4902352fd5293a40a8a0ba94"
+    },
+    {
+      "name": "kit-kick-hats-only-32-bars",
+      "config": {
+        "length": 32,
+        "kit": {
+          "snare": false,
+          "clap": false,
+          "shaker": false,
+          "perc": false,
+          "toms": false,
+          "cymbals": false
+        }
+      },
+      "result_sha256": "b86ffed69d1c4157fd3ec5a98a6f996ad72ad0fe0f3910bd5783593aef00f4b5"
+    },
+    {
+      "name": "build-huge-pausona-off-64-bars",
+      "config": {
+        "length": 64,
+        "build": "Huge",
+        "pausona": false
+      },
+      "result_sha256": "cbb7b5513d7cf5a12804229d71e1543ef8a5fc699a42f1ab1c9f316a573e5106"
+    },
+    {
+      "name": "creative-max-tight-96-bars",
+      "config": {
+        "length": 96,
+        "creativity": 100,
+        "variationScope": "Phrase",
+        "phraseShape": "Progressive",
+        "velocityCharacter": "Tight",
+        "seed": 777
+      },
+      "result_sha256": "317fc8307456f69b343963fe9669c384c397efe4b5d49013212ec50a9a02277e"
+    }
+  ]
+}

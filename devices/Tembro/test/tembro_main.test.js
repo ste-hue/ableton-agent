@@ -144,6 +144,7 @@ function loadHost(options = {}) {
     "./context.js": { async buildLiveContext() { contextBuilds += 1; return { tracks: [], tempo: 120 }; } },
     "./agent_loop.js": loop,
     "./clip_variation.js": { ClipVariation },
+    "./musical_engines.js": require("../code/musical_engines.js"),
     "./runtime_preflight.js": { async validateRuntime() {
       preflights += 1;
       if (options.preflightError) throw options.preflightError;

@@ -28,3 +28,4 @@ Until now decisions lived as dated headers inside `docs/product-vision.md` and
 | [0001](0001-product-shape-and-monetization.md) | Product shape, target user, monetization and channel | Proposed |
 | [0002](0002-agent-architecture-and-interaction.md) | Agent architecture, UX and interaction | Proposed |
 | [0003](0003-studio-partner-interaction.md) | Studio partnership and bounded musical interaction | Proposed |
+| [0004](0004-shared-musical-engines.md) | Shared musical engines | Proposed |

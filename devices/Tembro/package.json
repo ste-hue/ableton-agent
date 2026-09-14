@@ -1,6 +1,6 @@
 {
   "name": "tembro-device",
-  "version": "0.1.7-beta.1",
+  "version": "0.1.8-dev.1",
   "private": true,
   "description": "Tembro Max for Live device: floating agent chat over the local MCP/LOM bridge",
   "scripts": {

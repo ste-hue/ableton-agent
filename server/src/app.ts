@@ -101,6 +101,12 @@ const SAFE_MCP_TOOLS = new Set([
   "live_observe",
   "live_events",
   "tembro_arrange_clip",
+  // These tools generate and inspect local proposals; the device owns their
+  // implementations. They do not write to Live or execute arbitrary code.
+  "tembro_chordarium_compose",
+  "tembro_rudiment_compose",
+  "tembro_ensemble_compose",
+  "tembro_proposal_notes",
 ]);
 
 interface AgentTokenPayload {

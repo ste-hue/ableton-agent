@@ -34,6 +34,17 @@ const SAFE_TOOL_NAMES = new Set([
   "live_observe",
   "live_events",
   "tembro_arrange_clip",
+  "tembro_chordarium_compose",
+  "tembro_rudiment_compose",
+  "tembro_ensemble_compose",
+  "tembro_proposal_notes",
+]);
+
+// These names belong to local implementations. A bridge cannot replace their
+// descriptions/schemas, nor cause them to fall through to an MCP call.
+const LOCAL_ENGINE_NAMES = new Set([
+  "tembro_chordarium_compose", "tembro_rudiment_compose",
+  "tembro_ensemble_compose", "tembro_proposal_notes",
 ]);
 
 // Safety net only: the server ends a turn at its own step budget (64) with a
@@ -105,13 +116,15 @@ const TEMBRO_ARRANGE_CLIP_TOOL = {
   },
 };
 
-function safeTools(advertised) {
+function safeTools(advertised, localTools = []) {
   const seen = new Set();
   const safe = (advertised || [])
     .filter((tool) => {
       const allowed =
         tool &&
         SAFE_TOOL_NAMES.has(tool.name) &&
+        !LOCAL_ENGINE_NAMES.has(tool.name) &&
+        tool.name !== "tembro_arrange_clip" &&
         !seen.has(tool.name) &&
         tool.inputSchema &&
         tool.inputSchema.type === "object";
@@ -131,6 +144,12 @@ function safeTools(advertised) {
     seen.has("live_get")
   ) {
     safe.push(TEMBRO_ARRANGE_CLIP_TOOL);
+  }
+  for (const tool of localTools) {
+    if (LOCAL_ENGINE_NAMES.has(tool.name) && !seen.has(tool.name) && tool.inputSchema?.type === "object") {
+      seen.add(tool.name);
+      safe.push(tool);
+    }
   }
   return safe;
 }
@@ -161,7 +180,7 @@ function completionReply(reply) {
   const detail = normalized
     .replace(/^(ho fatto|fatto|completato|i have finished|i've finished|done|finished)\s*[—:.,-]?\s*/i, "")
     .trim();
-  return "Ho finito — " + (detail || "lavoro completato e verificato in Live.");
+  return "Ho finito — " + (detail || "richiesta completata.");
 }
 
 function arrangementClipIds(summary) {
@@ -319,7 +338,11 @@ async function arrangeClip(client, args, onStatus = () => {}, shouldStop = () =>
   };
 }
 
-async function executeTool(client, name, args, onStatus, shouldStop = () => false) {
+async function executeTool(client, name, args, onStatus, shouldStop = () => false, engines = null) {
+  if (LOCAL_ENGINE_NAMES.has(name)) {
+    if (!engines) throw new Error("local musical engines unavailable");
+    return engines.callTool(name, args || {});
+  }
   if (name === "tembro_arrange_clip") {
     return arrangeClip(client, args || {}, onStatus, shouldStop);
   }
@@ -334,6 +357,7 @@ async function runAgentTurn(options) {
     skill,
     liveContext,
     conversationId,
+    engines = null,
     onStatus = () => {},
     onTool = () => {},
     onStep = () => {},
@@ -347,7 +371,7 @@ async function runAgentTurn(options) {
     }
   };
   onStatus("discovering Live tools…");
-  const tools = safeTools(await raceWithStop(client.listTools(), shouldStop));
+  const tools = safeTools(await raceWithStop(client.listTools(), shouldStop), engines ? engines.listTools() : []);
   if (tools.length === 0) throw new Error("no safe Ableton MCP tools available");
 
   onStatus("thinking with " + tools.length + " Live tools…");
@@ -379,7 +403,7 @@ async function runAgentTurn(options) {
         });
         continue;
       }
-      onStatus("Live · " + call.name.replace(/^live_/, "").replace(/_/g, " ") + "…");
+      onStatus((LOCAL_ENGINE_NAMES.has(call.name) ? "Compose · " : "Live · ") + call.name.replace(/^(live_|tembro_)/, "").replace(/_/g, " ") + "…");
       onTool("start", call);
       let result;
       try {
@@ -389,7 +413,7 @@ async function runAgentTurn(options) {
           onStatus(note);
           onTool("progress", call, { note });
         };
-        result = await executeTool(client, call.name, call.arguments || {}, perCallStatus, shouldStop);
+        result = await executeTool(client, call.name, call.arguments || {}, perCallStatus, shouldStop, engines);
         result = { ok: true, result };
         consecutiveFailures = 0;
         onTool("success", call, result);

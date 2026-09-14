@@ -52,14 +52,29 @@ def m4l_payload(directory):
     return directory
 
 
+def engine_code_fixture(directory):
+    directory.mkdir()
+    for name in release.REQUIRED_CODE:
+        (directory / name).write_text('const base = cfg.api_base || "http://127.0.0.1:8787";\n')
+    for relative in release.ENGINE_ASSETS:
+        source = release.CODE_DIR / "engines" / relative
+        target = directory / "engines" / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(source.read_bytes())
+    return directory
+
+
 class ReleaseTests(unittest.TestCase):
     def test_release_zip_contains_required_js_and_nested_runtime_sources(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            code = root / "code"
-            code.mkdir()
-            for name in release.REQUIRED_CODE:
-                (code / name).write_text('const base = cfg.api_base || "http://127.0.0.1:8787";\n')
+            code = engine_code_fixture(root / "code")
+            # A source tree may contain tests and build notes. Only explicitly
+            # checked runtime assets belong beside the flattened JS modules.
+            (code / "engines/rudiment/golden-parity.json").write_text('{"test":true}')
+            (code / "engines/chordarium/README.md").write_text("development notes")
+            (code / "engines/chordarium/tools").mkdir()
+            (code / "engines/chordarium/tools/build.js").write_text("// build only")
             with patch.object(release, "CODE_DIR", code):
                 release.build(root / "Tembro", root / "Tembro.zip", "https://gettembro.com")
             with zipfile.ZipFile(root / "Tembro.zip") as archive:
@@ -68,12 +83,70 @@ class ReleaseTests(unittest.TestCase):
                 for name in release.REQUIRED_BRIDGE:
                     self.assertEqual(archive.read("Tembro/bridge/" + name), (release.BRIDGE_DIR / name).read_bytes())
                 self.assertIn(b'https://gettembro.com', archive.read("Tembro/tembro_main.js"))
+                expected = {"Tembro/engines/" + name for name in release.ENGINE_ASSETS}
+                self.assertEqual({name for name in archive.namelist() if name.startswith("Tembro/engines/")}, expected)
+                for relative in release.ENGINE_ASSETS:
+                    data = (code / "engines" / relative).read_bytes()
+                    self.assertEqual(archive.read("Tembro/engines/" + relative), data)
+                    self.assertEqual((root / "Tembro/engines" / relative).read_bytes(), data)
+
+    def test_missing_engine_asset_fails_before_creating_any_release_output(self):
+        for relative in release.ENGINE_ASSETS:
+            with self.subTest(asset=relative), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                code = engine_code_fixture(root / "code")
+                (code / "engines" / relative).unlink()
+                with patch.object(release, "CODE_DIR", code):
+                    with self.assertRaisesRegex(RuntimeError, "required engine release asset"):
+                        release.build(root / "Tembro", root / "Tembro.zip")
+                self.assertFalse((root / "Tembro").exists())
+                self.assertFalse((root / "Tembro.zip").exists())
+
+    def test_corrupt_bundle_manifest_or_trusted_pin_fails_before_creating_output(self):
+        for relative in release.ENGINE_ASSETS:
+            with self.subTest(asset=relative), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                code = engine_code_fixture(root / "code")
+                source = code / "engines" / relative
+                source.write_bytes(source.read_bytes() + b"\n")
+                with patch.object(release, "CODE_DIR", code):
+                    with self.assertRaisesRegex(RuntimeError, "does not match its reviewed pin"):
+                        release.build(root / "Tembro", root / "Tembro.zip")
+                self.assertFalse((root / "Tembro").exists())
+                self.assertFalse((root / "Tembro.zip").exists())
+
+    def test_symlinked_engine_source_is_rejected_even_if_its_bytes_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            code = engine_code_fixture(root / "code")
+            source = code / "engines/rudiment/engine.bundle.js"
+            outside = root / "outside.js"
+            source.rename(outside)
+            source.symlink_to(outside)
+            with patch.object(release, "CODE_DIR", code):
+                with self.assertRaisesRegex(RuntimeError, "missing or linked"):
+                    release.build(root / "Tembro", root / "Tembro.zip")
+            self.assertFalse((root / "Tembro").exists())
+
+    def test_reused_output_cannot_include_old_engine_test_fixtures(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            code = engine_code_fixture(root / "code")
+            stale = root / "Tembro/engines/rudiment/golden-parity.json"
+            stale.parent.mkdir(parents=True)
+            stale.write_text('{"old_fixture":true}')
+            with patch.object(release, "CODE_DIR", code):
+                with self.assertRaisesRegex(RuntimeError, "unexpected existing engine release asset"):
+                    release.build(root / "Tembro", root / "Tembro.zip")
+            self.assertEqual(stale.read_text(), '{"old_fixture":true}')
+            self.assertFalse((root / "Tembro.zip").exists())
+            self.assertFalse((root / "Tembro/Tembro.amxd").exists())
 
     def test_incomplete_device_fails_before_creating_a_release(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             with patch.object(release, "CODE_DIR", root):
-                with self.assertRaisesRegex(RuntimeError, "required clip variation"):
+                with self.assertRaisesRegex(RuntimeError, "required Tembro runtime"):
                     release.build(root / "output", root / "release.zip")
             self.assertFalse((root / "output").exists())
             self.assertFalse((root / "release.zip").exists())

@@ -14,6 +14,7 @@ import type { AgentProvider } from "../src/llm.js";
 import type { LicenseProvider } from "../src/billing.js";
 import { parseCreditPacks } from "../src/billing.js";
 import { estimateCreditCost, skillPromptFor } from "../src/skills.js";
+import type { AgentStepResponse, McpTool } from "../src/types.js";
 
 function makeApp(credits = 100, extra: Partial<AppConfig> = {}) {
   const store = new MemoryStore();
@@ -136,6 +137,170 @@ test("agent requires auth", async () => {
 function agentStart(token: string, body: Record<string, unknown>) {
   return authed(token, { kind: "start", tools: [LIVE_SET_TOOL], ...body });
 }
+
+// Representative client-owned schemas: the API must preserve every nested
+// constraint, without implementing or guessing the local engine's contract.
+const LOCAL_ENGINE_TOOLS: McpTool[] = [
+  "tembro_chordarium_compose",
+  "tembro_rudiment_compose",
+  "tembro_ensemble_compose",
+].map((name) => ({
+  name,
+  description: "Generate a local MIDI proposal without writing to Live.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      seed: { type: "integer", minimum: 0, maximum: 4294967295 },
+      bars: { type: "integer", enum: [4, 8, 16] },
+    },
+    required: ["seed", "bars"],
+    additionalProperties: false,
+  },
+}));
+LOCAL_ENGINE_TOOLS.push({
+  name: "tembro_proposal_notes",
+  description: "Read one bounded page of a local proposal.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      proposal_id: { type: "string", pattern: "^[a-f0-9]{64}$" },
+      offset: { type: "integer", minimum: 0 },
+      limit: { type: "integer", minimum: 1, maximum: 128 },
+    },
+    required: ["proposal_id", "offset", "limit"],
+    additionalProperties: false,
+  },
+});
+
+test("all four local engine tools survive the API round trip with exact schemas and one charge", async () => {
+  let calls = 0;
+  const outputs = LOCAL_ENGINE_TOOLS.map((tool, index) => ({
+    call_id: "local-call-" + index,
+    output: JSON.stringify({ ok: true, result: { tool: tool.name, written_to_live: false } }),
+  }));
+  const agent: AgentProvider = {
+    async step(request) {
+      calls += 1;
+      assert.deepEqual(request.tools, LOCAL_ENGINE_TOOLS);
+      if (calls === 1) {
+        return {
+          responseId: "local-start",
+          reply: "",
+          toolCalls: LOCAL_ENGINE_TOOLS.map((tool, index) => ({
+            call_id: "local-call-" + index,
+            name: tool.name,
+            arguments: {},
+          })),
+        };
+      }
+      assert.equal(request.previousResponseId, "local-start");
+      assert.deepEqual(request.toolOutputs, outputs);
+      return { responseId: "local-final", reply: "Proposta generata localmente.", toolCalls: [] };
+    },
+  };
+  const { app } = makeApp(10, { agent });
+  const { token } = await signin(app, "local-engines@example.com");
+  const forbidden = ["live_exec", "live_eval", "live_batch", "tembro_shell"].map((name) => ({
+    name,
+    description: "Must never reach the model.",
+    inputSchema: { type: "object" },
+  }));
+  const started = await app.request("/v0/agent", agentStart(token, {
+    message: "prepare a local proposal",
+    tools: [...LOCAL_ENGINE_TOOLS, ...forbidden, { ...LOCAL_ENGINE_TOOLS[0], description: "duplicate" }],
+  }));
+  assert.equal(started.status, 200);
+  const first = await started.json() as AgentStepResponse;
+  assert.equal(first.kind, "tool_calls");
+  assert.deepEqual(first.tool_calls.map((call) => call.name), LOCAL_ENGINE_TOOLS.map((tool) => tool.name));
+  assert.ok(first.credits_charged > 0);
+  assert.equal(first.credits_remaining, 10 - first.credits_charged);
+  const continued = await app.request("/v0/agent", authed(token, {
+    kind: "continue",
+    conversation_id: first.conversation_id,
+    continuation_token: first.continuation_token,
+    tools: LOCAL_ENGINE_TOOLS,
+    tool_outputs: outputs,
+  }));
+  assert.equal(continued.status, 200);
+  const final = await continued.json() as AgentStepResponse;
+  assert.equal(final.kind, "final");
+  assert.equal(final.reply, "Proposta generata localmente.");
+  assert.equal(final.credits_remaining, first.credits_remaining);
+  assert.equal(final.credits_charged, first.credits_charged);
+  assert.equal(calls, 2);
+});
+
+test("local tool continuation binds nested schemas and tool order before consuming the token", async () => {
+  let calls = 0;
+  const agent: AgentProvider = {
+    async step(request) {
+      calls += 1;
+      assert.deepEqual(request.tools, LOCAL_ENGINE_TOOLS);
+      return calls === 1
+        ? { responseId: "schema-start", reply: "", toolCalls: [{
+          call_id: "compose", name: "tembro_ensemble_compose", arguments: { seed: 7, bars: 4 },
+        }] }
+        : { responseId: "schema-final", reply: "ready", toolCalls: [] };
+    },
+  };
+  const { app } = makeApp(10, { agent });
+  const { token } = await signin(app, "local-schema@example.com");
+  const started = await app.request("/v0/agent", agentStart(token, {
+    message: "prepare a proposal", tools: LOCAL_ENGINE_TOOLS,
+  }));
+  assert.equal(started.status, 200);
+  const first = await started.json() as AgentStepResponse;
+  const next = (tools: McpTool[]) => app.request("/v0/agent", authed(token, {
+    kind: "continue",
+    conversation_id: first.conversation_id,
+    continuation_token: first.continuation_token,
+    tools,
+    tool_outputs: [{ call_id: "compose", output: '{"ok":true}' }],
+  }));
+  const changedSchema = LOCAL_ENGINE_TOOLS.map((tool, index) => index !== 3 ? tool : {
+    ...tool,
+    inputSchema: {
+      ...tool.inputSchema,
+      properties: { proposal_id: { type: "string" }, limit: { type: "integer", maximum: 100000 } },
+    },
+  });
+  for (const tools of [changedSchema, [...LOCAL_ENGINE_TOOLS].reverse(), LOCAL_ENGINE_TOOLS.slice(0, 3)]) {
+    const rejected = await next(tools);
+    assert.equal(rejected.status, 401);
+    assert.deepEqual(await rejected.json(), { error: "invalid_continuation" });
+    assert.equal(calls, 1);
+  }
+  const accepted = await next(LOCAL_ENGINE_TOOLS);
+  assert.equal(accepted.status, 200);
+  const final = await accepted.json() as AgentStepResponse;
+  assert.equal(final.kind, "final");
+  assert.equal(final.credits_remaining, first.credits_remaining);
+  assert.equal(calls, 2);
+});
+
+test("engine allowlist does not admit arbitrary code or similarly named local tools", async () => {
+  let calls = 0;
+  const agent: AgentProvider = {
+    async step() {
+      calls += 1;
+      return { responseId: "unexpected", reply: "unexpected", toolCalls: [] };
+    },
+  };
+  const { app } = makeApp(10, { agent });
+  const { token } = await signin(app, "local-denied@example.com");
+  for (const name of ["live_exec", "live_eval", "live_batch", "tembro_proposal_write", "tembro_ensemble_compose_exec"]) {
+    const response = await app.request("/v0/agent", agentStart(token, {
+      message: "prepare a proposal",
+      tools: [{ name, description: "denied", inputSchema: { type: "object" } }],
+    }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), { error: "no_safe_mcp_tools" });
+  }
+  assert.equal(calls, 0);
+  const balance = await app.request("/v0/credits", { headers: { authorization: "Bearer " + token } });
+  assert.equal((await balance.json() as { credits: number }).credits, 10);
+});
 
 test("insufficient credits → 402 before the model is called", async () => {
   let modelCalls = 0;

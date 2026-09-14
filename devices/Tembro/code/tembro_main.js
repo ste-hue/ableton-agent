@@ -21,6 +21,7 @@ const { buildLiveContext } = require("./context.js");
 const { completionReply, runAgentTurn } = require("./agent_loop.js");
 const { ClipVariation } = require("./clip_variation.js");
 const { validateRuntime } = require("./runtime_preflight.js");
+const { MusicalEngines } = require("./musical_engines.js");
 const clipboard = require("./clipboard.js");
 const { spawn } = require("child_process");
 
@@ -47,6 +48,7 @@ const config = loadConfig();
 const api = new TembroApi(config.apiBase);
 const client = new McpClient(config.mcpCommand);
 const bridge = new LomBridge(client);
+const engines = new MusicalEngines();
 const variation = new ClipVariation({
   client,
   preflight: () => validateRuntime(config.mcpCommand),
@@ -56,7 +58,7 @@ const variation = new ClipVariation({
 let conversationId = null;
 let busy = false;
 let updateUrl = null;
-const DEVICE_VERSION = "0.1.7-beta.1";
+const DEVICE_VERSION = "0.1.8-dev.1";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 
@@ -260,6 +262,7 @@ async function handleChat(message, skill = null, echoed = false) {
     const res = await runAgentTurn({
       api,
       client,
+      engines,
       message,
       skill,
       liveContext,

@@ -93,3 +93,28 @@ npm test        # agent loop, API, MCP bridge integration, context, UI
 
 The full developer run path and the two real-Ableton acceptance tests are in
 [`../../docs/tembro-v0-run.md`](../../docs/tembro-v0-run.md).
+## Local Chordarium and Rudiment engines (0.1.8 development)
+
+Tembro can compose with the original Chordarium harmony/arranger engine and
+Rudiment rhythm engine. The ensemble tool generates chords, a related bassline
+and drums across the same 8 or 16 bars. Chordarium's embedded Scaler catalogs are
+not included. The standalone products remain the source of their musical logic.
+
+Four tools are registered locally: `tembro_chordarium_compose`,
+`tembro_rudiment_compose`, `tembro_ensemble_compose`, `tembro_proposal_notes`.
+Results are retained proposals with stable content identifiers; notes are read in
+pages of up to 128. Drum roles need an explicit mapping from the chosen kit.
+Generation makes no Live changes. Tembro must still inspect the target, apply
+approved notes through its existing Live tools, and read them back.
+
+Try the actual engine combination offline from the repository root:
+
+```sh
+node tools/compose_tembro.js docs/examples/ensemble-request.json > /tmp/tembro-ensemble.json
+```
+
+The output includes source identities and all three note streams. It is generated
+MIDI material, not a recording or proof of playback. In-device chat also needs
+the matching server allowlist update; this development work does not deploy it.
+The existing chat credit policy is unchanged and there is no additional local
+engine charge. See [ADR-0004](../../docs/adr/0004-shared-musical-engines.md).

@@ -1,0 +1,56 @@
+{
+  "schema": "tembro.engine-bundle.v1",
+  "engine": "rudiment",
+  "version": "0.1.0",
+  "repository": "ste-hue/rudiment",
+  "source_revision": "e9fafb8d970f40fc8c3fd7147d6f550278aa9206",
+  "declared_license": "UNLICENSED",
+  "minimum_node_major": 18,
+  "bundle_file": "engine.bundle.js",
+  "bundle_sha256": "57b6ee87717eab58c51d68036697be454c28c76a7edd22d78a6896729112a387",
+  "bundle_bytes": 64034,
+  "sources": [
+    {
+      "path": "src/engine/core-config.js",
+      "git_blob_sha": "d82e9142597f2f33c9763364c49ba6634cdd0005",
+      "sha256": "8a1edec65d17350c7a7091d37144bce72e0074b13911879b02b76f11f15cc19b",
+      "offset_bytes": 162,
+      "size_bytes": 15070
+    },
+    {
+      "path": "src/engine/drum-machine-theory-engine.js",
+      "git_blob_sha": "9f359348a045db48dde68304fab62bc48f7c7069",
+      "sha256": "cf562bc26b0bae46a4bff08d3859045d1f47226394aec3017ec47e464b8c1178",
+      "offset_bytes": 15286,
+      "size_bytes": 3929
+    },
+    {
+      "path": "src/engine/theory-rudiment-engine.js",
+      "git_blob_sha": "d0c5214500aafb89aad5d68b959875682fa8d294",
+      "sha256": "0fd25806cefe9e5fad2d7ebe71541d117b21ff97e2935961af541f4cb3742a1b",
+      "offset_bytes": 19265,
+      "size_bytes": 3053
+    },
+    {
+      "path": "src/engine/fill-engine.js",
+      "git_blob_sha": "c55a19350a74ccb3983314d31d78b34a6d88324b",
+      "sha256": "00352e06327c8786180cd1cef39a705d5fc87ff938d03aec6f444ea0789a4562",
+      "offset_bytes": 22357,
+      "size_bytes": 14812
+    },
+    {
+      "path": "src/engine/arrangement-engine.js",
+      "git_blob_sha": "3f2c3765ce0453bd37313cc1d4cb865cfca5d6f4",
+      "sha256": "094a80bc2da7e0e61fdd67c68b407afe21c85f4bac20b166f404ef00ad4d9021",
+      "offset_bytes": 37215,
+      "size_bytes": 26016
+    },
+    {
+      "path": "src/engine/timing-velocity-engine.js",
+      "git_blob_sha": "dbada6686b21de6e37d553390cb440c7c176dca8",
+      "sha256": "ff3268a479966e29fa2af51a948c78b6f96d8804cd2aee3247331514d6d60c47",
+      "offset_bytes": 63281,
+      "size_bytes": 752
+    }
+  ]
+}
