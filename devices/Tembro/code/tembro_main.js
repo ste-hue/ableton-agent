@@ -18,7 +18,9 @@ const { TembroApi } = require("./api.js");
 const { McpClient } = require("./mcp_client.js");
 const { LomBridge } = require("./lom_bridge.js");
 const { buildLiveContext } = require("./context.js");
-const { completionReply, raceWithStop, runAgentTurn } = require("./agent_loop.js");
+const { completionReply, runAgentTurn } = require("./agent_loop.js");
+const { ClipVariation } = require("./clip_variation.js");
+const { validateRuntime } = require("./runtime_preflight.js");
 const clipboard = require("./clipboard.js");
 const { spawn } = require("child_process");
 
@@ -45,11 +47,16 @@ const config = loadConfig();
 const api = new TembroApi(config.apiBase);
 const client = new McpClient(config.mcpCommand);
 const bridge = new LomBridge(client);
+const variation = new ClipVariation({
+  client,
+  preflight: () => validateRuntime(config.mcpCommand),
+  onState: (state) => maxApi.outlet(["variation_state", JSON.stringify(state)]),
+});
 
 let conversationId = null;
 let busy = false;
 let updateUrl = null;
-const DEVICE_VERSION = "0.1.6-beta";
+const DEVICE_VERSION = "0.1.7-beta.1";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 
@@ -137,10 +144,10 @@ maxApi.addHandler("signin", async (email) => {
   }
 });
 
-// A turn must never leave the device stuck: the user can stop it, and a
-// watchdog abandons it on its own. Soft stop aborts between steps; the hard
-// race frees the UI even if a single await hangs past every other timeout.
-let stopRequested = false;
+// The current token belongs to exactly one run and is never reset. Stopping
+// prevents another operation; an already sent Live call must first settle or
+// enter transport quarantine before this run releases the shared busy lane.
+let activeRun = null;
 const TURN_SOFT_TIMEOUT_MS = 840000;
 const TURN_HARD_TIMEOUT_MS = 900000;
 const CONTEXT_TIMEOUT_MS = 30000;
@@ -157,13 +164,31 @@ async function handleChat(message, skill = null, echoed = false) {
   if (!message) return;
   if (message === "/stop") {
     pendingChats.length = 0;
-    if (busy) {
-      stopRequested = true;
+    if (busy && activeRun) {
+      activeRun.stopped = true;
       ui("working", "stopping…");
     }
     return;
   }
+  if (client.quarantined) {
+    pendingChats.length = 0;
+    if (!echoed) transcript("you", message);
+    transcript("tembro", "Live's previous operation has an unknown outcome. Reconciliation is required before another request can run.");
+    ui("error", "Live outcome unknown · requests blocked");
+    return;
+  }
   if (busy) {
+    if (activeRun && activeRun.kind === "variation") {
+      if (!echoed) transcript("you", message);
+      transcript("tembro", "waiting for the clip variation to be verified in Live — resend this request when it finishes");
+      return;
+    }
+    if (activeRun && activeRun.stopped) {
+      if (!echoed) transcript("you", message);
+      transcript("tembro", "still waiting for the previous Live operation to settle — this request will not run; resend it once stopping finishes");
+      ui("working", "stopping · waiting for Live");
+      return;
+    }
     if (pendingChats.length >= PENDING_MAX) {
       // Never destroy what the user typed: echo it and say it won't run.
       transcript("you", message);
@@ -180,37 +205,51 @@ async function handleChat(message, skill = null, echoed = false) {
     return;
   }
   busy = true;
-  stopRequested = false;
+  const run = { stopped: false, kind: "chat" };
+  activeRun = run;
+  const ensureRunning = () => {
+    if (run.stopped) {
+      const err = new Error(run.reason || "stopped by user");
+      err.stopped = true;
+      throw err;
+    }
+  };
   const watchdog = setTimeout(() => {
-    stopRequested = true;
+    run.stopped = true;
+    run.reason = "turn time limit reached";
+    ui("working", "time limit reached · waiting for Live to settle");
   }, TURN_SOFT_TIMEOUT_MS);
+  const hardWatchdog = setTimeout(() => {
+    run.stopped = true;
+    run.reason = "turn exceeded its hard time limit";
+    // Do not abandon local promises: the transport timeout determines when
+    // the lane is usable again, or quarantines it if the outcome is unknown.
+    ui("working", "time limit reached · waiting for Live to settle");
+  }, TURN_HARD_TIMEOUT_MS);
+  let contextWatchdog = null;
   // The page frees its own spinner if these stop arriving (dead engine).
   const heartbeat = setInterval(() => maxApi.outlet(["engine", "alive"]), HEARTBEAT_MS);
   if (!echoed) transcript("you", message);
   try {
     // 1. Live context (read-only), immediately before the request. This phase
-    // hung forever in the field (bridge socket contention): it gets its own
-    // timeout and honors the stop button like every other phase of the turn.
+    // gets its own deadline. A stopped context build cannot keep issuing
+    // reads in the background while a subsequent turn starts mutating Live.
     ui("working", "reading Live context…");
-    const liveContext = await raceWithStop(
-      Promise.race([
-        buildLiveContext(bridge),
-        new Promise((_, reject) =>
-          setTimeout(
-            () =>
-              reject(
-                new Error(
-                  "could not read Live within " +
-                    CONTEXT_TIMEOUT_MS / 1000 +
-                    "s — check that Ableton is open and no other agent is driving the bridge, then try again",
-                ),
-              ),
-            CONTEXT_TIMEOUT_MS,
-          ),
-        ),
-      ]),
-      () => stopRequested,
-    );
+    contextWatchdog = setTimeout(() => {
+      run.stopped = true;
+      run.reason = "could not read Live within " + CONTEXT_TIMEOUT_MS / 1000 + "s";
+      ui("working", "context timed out · waiting for Live to settle");
+    }, CONTEXT_TIMEOUT_MS);
+    const contextBridge = new LomBridge({
+      callTool: (name, args) => {
+        ensureRunning();
+        return client.callTool(name, args);
+      },
+    });
+    const liveContext = await buildLiveContext(contextBridge);
+    clearTimeout(contextWatchdog);
+    contextWatchdog = null;
+    ensureRunning();
 
     const trackCount = (liveContext.tracks || []).length;
     const tempo = liveContext.tempo ? liveContext.tempo + " BPM" : "tempo unknown";
@@ -218,14 +257,14 @@ async function handleChat(message, skill = null, echoed = false) {
 
     // 2. Server-side model ↔ local MCP loop. Tool calls execute one at a time
     // and every result goes back to the model before it decides what to do next.
-    const turn = runAgentTurn({
+    const res = await runAgentTurn({
       api,
       client,
       message,
       skill,
       liveContext,
       conversationId,
-      shouldStop: () => stopRequested,
+      shouldStop: () => run.stopped,
       onStatus: (status) => ui("working", status),
       onStep: (current, maximum) => {
         maxApi.outlet(["progress", current, maximum]);
@@ -262,16 +301,7 @@ async function handleChat(message, skill = null, echoed = false) {
         }
       },
     });
-    const res = await Promise.race([
-      turn,
-      new Promise((_, reject) =>
-        setTimeout(() => {
-          const err = new Error("turn abandoned after " + TURN_HARD_TIMEOUT_MS / 1000 + "s");
-          err.stopped = true;
-          reject(err);
-        }, TURN_HARD_TIMEOUT_MS),
-      ),
-    ]);
+    ensureRunning();
     conversationId = res.conversation_id;
     const finalReply = completionReply(res.reply);
     transcript("tembro", finalReply);
@@ -282,10 +312,13 @@ async function handleChat(message, skill = null, echoed = false) {
       "Ho finito · " + (res.credits_charged || 1) + " credits · " + res.credits_remaining + " left",
     );
   } catch (err) {
-    if (err && err.stopped) {
+    if (client.quarantined || (err && err.outcomeUnknown)) {
+      transcript("tembro", "Live's previous operation has an unknown outcome. No further requests will run until its effects are reconciled.");
+      ui("error", "Live outcome unknown · requests blocked");
+    } else if (err && err.stopped) {
       transcript(
         "tembro",
-        "stopped — if a Live operation was mid-flight it may have landed anyway; glance at the Set before the next request",
+        "stopped — no further actions were scheduled; an operation that had already started may have changed the Set",
       );
       ui("idle", "stopped · ready");
     } else {
@@ -297,11 +330,14 @@ async function handleChat(message, skill = null, echoed = false) {
     }
   } finally {
     clearTimeout(watchdog);
+    clearTimeout(hardWatchdog);
+    if (contextWatchdog) clearTimeout(contextWatchdog);
     clearInterval(heartbeat);
+    activeRun = null;
     busy = false;
     // A 401 cleared the session: queued messages can only fail the same way,
     // and running them would bury the sign-in view under fresh errors.
-    if (!api.signedIn) pendingChats.length = 0;
+    if (!api.signedIn || client.quarantined || run.stopped) pendingChats.length = 0;
     const next = pendingChats.shift();
     if (next) {
       setImmediate(() => {
@@ -317,6 +353,29 @@ maxApi.addHandler("chat", async (...words) => {
 
 maxApi.addHandler("chat_skill", async (skill, ...words) => {
   await handleChat(words.join(" "), String(skill || "") || null);
+});
+
+maxApi.addHandler("variation", async (action, pitch) => {
+  if (busy || !api.signedIn) {
+    variation.publish();
+    return;
+  }
+  busy = true;
+  const run = { stopped: false, kind: "variation" };
+  activeRun = run;
+  const heartbeat = setInterval(() => maxApi.outlet(["engine", "alive"]), HEARTBEAT_MS);
+  ui("working", "checking clip variation in Live…");
+  try {
+    await variation.execute(String(action), pitch, () => run.stopped);
+    ui(client.quarantined ? "error" : "success", client.quarantined ? "Live outcome unknown · requests blocked" : run.stopped ? "stopped · sent operation checked" : "clip variation checked in Live");
+  } catch (error) {
+    ui("error", error.message);
+  } finally {
+    clearInterval(heartbeat);
+    activeRun = null;
+    busy = false;
+    variation.publish();
+  }
 });
 
 maxApi.addHandler("status", reportAuth);
@@ -372,6 +431,7 @@ function startUiLoad() {
 maxApi.addHandler("ui_ready", async () => {
   stopUiLoad();
   reportAuth();
+  variation.publish();
   if (api.signedIn) {
     try {
       const balance = await api.credits();

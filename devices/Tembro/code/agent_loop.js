@@ -40,8 +40,8 @@ const SAFE_TOOL_NAMES = new Set([
 // refund; this cap just keeps a misbehaving server from running the device forever.
 const MAX_LOCAL_AGENT_STEPS = 72;
 const MAX_ARRANGEMENT_DESTINATIONS = 32;
-// A user's stop must land within this interval even while a server round or a
-// Live call is in flight — the in-flight work is abandoned, like the watchdog.
+// Cloud waits can be abandoned promptly. Local Live calls must settle before
+// releasing execution ownership, because their effects cannot be cancelled.
 const STOP_POLL_MS = 300;
 // Consecutive failed Live calls before the turn gives up instead of letting
 // the model spin its whole step budget against a bridge that keeps refusing.
@@ -292,7 +292,7 @@ async function arrangeClip(client, args, onStatus = () => {}, shouldStop = () =>
       knownIds = nextIds;
     } catch (error) {
       const message = error && error.message ? error.message : String(error);
-      throw new Error(
+      const failure = new Error(
         "tembro_arrange_clip stopped after " +
           verified.length +
           "/" +
@@ -301,6 +301,14 @@ async function arrangeClip(client, args, onStatus = () => {}, shouldStop = () =>
           message +
           ". Inspect Live before continuing; do not retry completed destinations.",
       );
+      if (error && error.outcomeUnknown) {
+        failure.outcomeUnknown = true;
+        failure.code = error.code;
+        failure.requestSent = error.requestSent;
+        failure.quarantine = error.quarantine;
+        failure.verifiedPlacements = verified;
+      }
+      throw failure;
     }
   }
 
@@ -381,15 +389,14 @@ async function runAgentTurn(options) {
           onStatus(note);
           onTool("progress", call, { note });
         };
-        result = await raceWithStop(
-          executeTool(client, call.name, call.arguments || {}, perCallStatus, shouldStop),
-          shouldStop,
-        );
+        result = await executeTool(client, call.name, call.arguments || {}, perCallStatus, shouldStop);
         result = { ok: true, result };
         consecutiveFailures = 0;
         onTool("success", call, result);
       } catch (error) {
-        if (error && error.stopped) throw error;
+        // An uncertain sent call is fatal to this turn. Returning it to the
+        // model as an ordinary failure could schedule duplicate mutations.
+        if (error && (error.stopped || error.outcomeUnknown)) throw error;
         result = {
           ok: false,
           error: error && error.message ? error.message : String(error),
@@ -400,6 +407,7 @@ async function runAgentTurn(options) {
       }
       outputs.push({ call_id: call.call_id, output: boundedJson(result) });
     }
+    ensureNotStopped();
     if (consecutiveFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
       throw new Error(
         consecutiveFailures +

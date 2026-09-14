@@ -22,6 +22,9 @@ from agent_m4l import build_amxd, extract_ptch_chunk
 REPO = Path(__file__).resolve().parents[1]
 SOURCE_PATCH = REPO / "devices" / "Tembro" / "Tembro.maxpat"
 CODE_DIR = REPO / "devices" / "Tembro" / "code"
+BRIDGE_DIR = REPO / "devices" / "Tembro" / "bridge"
+REQUIRED_CODE = ("tembro_main.js", "clip_variation.js", "runtime_preflight.js")
+REQUIRED_BRIDGE = ("patch_runtime.py", "variation_runtime.py")
 INSTALL_GUIDE = REPO / "devices" / "Tembro" / "INSTALL.md"
 UI_ASSETS = [
     REPO / "devices" / "Tembro" / "tembro_ui.html",
@@ -71,6 +74,10 @@ def release_patch() -> dict:
 
 
 def build(output_dir: Path, zip_path: Path, api_url: str | None = None) -> None:
+    for directory, names in ((CODE_DIR, REQUIRED_CODE), (BRIDGE_DIR, REQUIRED_BRIDGE)):
+        for name in names:
+            if not (directory / name).is_file():
+                raise RuntimeError("required clip variation release file is missing: " + name)
     output_dir.mkdir(parents=True, exist_ok=True)
     patch = release_patch()
 
@@ -95,6 +102,9 @@ def build(output_dir: Path, zip_path: Path, api_url: str | None = None) -> None:
         (output_dir / source.name).write_text(content, encoding="utf-8")
     for source in UI_ASSETS:
         shutil.copy2(source, output_dir / source.name)
+    (output_dir / "bridge").mkdir(exist_ok=True)
+    for name in REQUIRED_BRIDGE:
+        shutil.copy2(BRIDGE_DIR / name, output_dir / "bridge" / name)
     guide = INSTALL_GUIDE.read_text(encoding="utf-8").replace(
         "{{TEMBRO_API_URL}}",
         api_url or "http://127.0.0.1:8787 (local development)",
@@ -126,9 +136,9 @@ def build(output_dir: Path, zip_path: Path, api_url: str | None = None) -> None:
 
     zip_path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for source in sorted(output_dir.iterdir()):
+        for source in sorted(output_dir.rglob("*")):
             if source.is_file():
-                archive.write(source, Path("Tembro") / source.name)
+                archive.write(source, Path("Tembro") / source.relative_to(output_dir))
 
     print(output_dir)
     print(zip_path)

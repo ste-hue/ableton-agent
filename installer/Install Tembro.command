@@ -17,6 +17,8 @@ SCRIPT_DIR="${0:A:h}"
 PAYLOAD_DIR="$SCRIPT_DIR/.tembro-payload"
 DEVICE_SOURCE="$PAYLOAD_DIR/Tembro"
 REMOTE_SOURCE="$PAYLOAD_DIR/Ableton_Live_MCP"
+RUNTIME_OVERLAY="$PAYLOAD_DIR/variation-runtime"
+RUNTIME_PATCHER="$DEVICE_SOURCE/bridge/patch_runtime.py"
 INSTALL_HOME="${TEMBRO_INSTALL_HOME:-$HOME}"
 DEVICE_TARGET="$INSTALL_HOME/Music/Ableton/User Library/Presets/MIDI Effects/Max MIDI Effect/Tembro"
 REMOTE_TARGET="$INSTALL_HOME/Music/Ableton/User Library/Remote Scripts/Ableton_Live_MCP"
@@ -47,19 +49,17 @@ echo "  Tembro ${TEMBRO_VERSION}"
 echo "  ─────────────────────────────"
 echo ""
 
-if [[ ! -d "$DEVICE_SOURCE" || ! -d "$REMOTE_SOURCE" ]]; then
+if [[ ! -d "$DEVICE_SOURCE" || ! -d "$REMOTE_SOURCE" || ! -f "$RUNTIME_OVERLAY/manifest.json" || ! -f "$RUNTIME_PATCHER" || ! -f "$PAYLOAD_DIR/verify_tembro_runtime.py" ]]; then
   echo "Installer payload is missing. Download the Tembro DMG again."
   pause_before_close
   exit 1
 fi
 
-echo "• Installing the Max for Live device…"
-mkdir -p "$DEVICE_TARGET"
-ditto "$DEVICE_SOURCE" "$DEVICE_TARGET"
-
-echo "• Installing the Ableton control surface…"
-mkdir -p "$REMOTE_TARGET"
-ditto "$REMOTE_SOURCE" "$REMOTE_TARGET"
+if pgrep -f '/Ableton[^/]*/Contents/MacOS/Live([[:space:]]|$)' >/dev/null; then
+  echo "Quit Ableton Live, then run this installer again."
+  pause_before_close
+  exit 1
+fi
 
 echo "• Installing Tembro's private local bridge…"
 mkdir -p "$TEMBRO_HOME" "$TOOL_BIN" "$TOOL_DIR"
@@ -83,13 +83,47 @@ fi
 UV_TOOL_BIN_DIR="$TOOL_BIN" \
 UV_TOOL_DIR="$TOOL_DIR" \
   "$UV_BIN" tool install --force --python 3.12 \
-  "ableton-live-mcp @ https://github.com/bschoepke/ableton-live-mcp/archive/${UPSTREAM_COMMIT}.zip"
+  "ableton-live-mcp[visual] @ https://github.com/bschoepke/ableton-live-mcp/archive/${UPSTREAM_COMMIT}.zip"
 
 if [[ ! -x "$TOOL_BIN/ableton-live-mcp" ]]; then
   echo "Tembro's local bridge did not install correctly."
   pause_before_close
   exit 1
 fi
+
+# Patch only the private, pinned bridge installed above. The patch checks all
+# source hashes before writing and retains a verified backup for reversal.
+# Copy the device and Control Surface only after runtime readback agrees with
+# the exact files generated at packaging time.
+BRIDGE_PYTHON="$TOOL_DIR/ableton-live-mcp/bin/python"
+if [[ ! -x "$BRIDGE_PYTHON" ]]; then
+  echo "Tembro's private Python runtime is missing."
+  pause_before_close
+  exit 1
+fi
+BRIDGE_ROOT="$("$BRIDGE_PYTHON" -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"
+echo "• Preparing clip variation controls…"
+"$BRIDGE_PYTHON" "$PAYLOAD_DIR/verify_tembro_runtime.py" --pin-only
+"$BRIDGE_PYTHON" "$PAYLOAD_DIR/verify_tembro_runtime.py" --check-m4l-targets "$PAYLOAD_DIR/m4l"
+"$BRIDGE_PYTHON" "$RUNTIME_PATCHER" apply --upstream-root "$BRIDGE_ROOT"
+"$BRIDGE_PYTHON" "$PAYLOAD_DIR/verify_tembro_runtime.py" \
+  --restore-m4l-assets "$PAYLOAD_DIR/m4l" --runtime-root "$BRIDGE_ROOT"
+if [[ ! -x "$TOOL_BIN/ableton-live-mcp-sync-m4l-host" ]]; then
+  echo "Tembro's M4L companion sync tool is missing. Installation stopped before copying the device."
+  pause_before_close
+  exit 1
+fi
+"$TOOL_BIN/ableton-live-mcp-sync-m4l-host" --no-repair-wrappers
+"$BRIDGE_PYTHON" "$PAYLOAD_DIR/verify_tembro_runtime.py" \
+  --runtime-root "$BRIDGE_ROOT" --overlay-dir "$RUNTIME_OVERLAY" --remote-source "$REMOTE_SOURCE"
+
+echo "• Installing the Max for Live device…"
+mkdir -p "$DEVICE_TARGET"
+ditto "$DEVICE_SOURCE" "$DEVICE_TARGET"
+
+echo "• Installing the Ableton control surface…"
+mkdir -p "$REMOTE_TARGET"
+ditto "$REMOTE_SOURCE" "$REMOTE_TARGET"
 
 echo ""
 echo "  ✓ Tembro is installed"

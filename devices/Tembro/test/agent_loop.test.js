@@ -310,3 +310,93 @@ test("a stop request interrupts the arrangement macro between placements", async
   // One placement landed, then the stop check fired before the second.
   assert.equal(placed, 1);
 });
+
+test("an unknown tool outcome aborts the turn before another call or model continuation", async () => {
+  const uncertainty = Object.assign(new Error("sent call timed out"), {
+    outcomeUnknown: true,
+    code: "MCP_OUTCOME_UNKNOWN",
+    requestSent: true,
+    quarantine: { requestId: 1, toolName: DUPLICATE_TOOL.name },
+  });
+  let called = 0;
+  let continued = false;
+  const client = {
+    async listTools() { return [DUPLICATE_TOOL]; },
+    async callTool() {
+      called += 1;
+      throw uncertainty;
+    },
+  };
+  const api = {
+    async agentStart() {
+      return {
+        kind: "tool_calls",
+        continuation_token: "pending",
+        tool_calls: [1, 2].map((id) => ({
+          call_id: "call-" + id,
+          name: DUPLICATE_TOOL.name,
+          arguments: {},
+        })),
+      };
+    },
+    async agentContinue() { continued = true; },
+  };
+  await assert.rejects(
+    runAgentTurn({ api, client, message: "vai", liveContext: {} }),
+    (err) => err === uncertainty,
+  );
+  assert.equal(called, 1);
+  assert.equal(continued, false);
+});
+
+test("the arrangement macro preserves fatal uncertainty and verified partial evidence", async () => {
+  let placements = 0;
+  let summaries = 0;
+  const evidence = { requestId: 8, toolName: DUPLICATE_TOOL.name };
+  const client = {
+    async callTool(name) {
+      if (name === "live_set_summary") {
+        summaries += 1;
+        return {
+          set_signature: "sig-" + placements,
+          tracks: [{ arrangement_clips: placements ? [{ id: 101 }] : [] }],
+        };
+      }
+      if (name === DUPLICATE_TOOL.name) {
+        placements += 1;
+        if (placements === 2) {
+          throw Object.assign(new Error("MCP request timed out"), {
+            outcomeUnknown: true,
+            code: "MCP_OUTCOME_UNKNOWN",
+            requestSent: true,
+            quarantine: evidence,
+          });
+        }
+        return { ok: true };
+      }
+      if (name === "live_get") {
+        return { properties: { start_time: 0, end_time: 16, is_arrangement_clip: true } };
+      }
+      throw new Error("unexpected tool " + name);
+    },
+  };
+  await assert.rejects(
+    arrangeClip(client, {
+      track: { id: 7 },
+      clip: { id: 70 },
+      destination_times: [0, 16, 32],
+      expected_set_signature: "sig-0",
+    }),
+    (err) => {
+      assert.equal(err.outcomeUnknown, true);
+      assert.equal(err.code, "MCP_OUTCOME_UNKNOWN");
+      assert.equal(err.requestSent, true);
+      assert.equal(err.quarantine, evidence);
+      assert.equal(err.verifiedPlacements.length, 1);
+      assert.equal(err.verifiedPlacements[0].clip_id, 101);
+      return true;
+    },
+  );
+  assert.equal(placements, 2, "the third placement must not be sent");
+  assert.equal(summaries, 2, "normal readback must not run before bridge-status reconciliation");
+});
