@@ -18,7 +18,7 @@ const { TembroApi } = require("./api.js");
 const { McpClient } = require("./mcp_client.js");
 const { LomBridge } = require("./lom_bridge.js");
 const { buildLiveContext } = require("./context.js");
-const { completionReply, raceWithStop, runAgentTurn } = require("./agent_loop.js");
+const { completionReply, createLatencyTrace, raceWithStop, runAgentTurn } = require("./agent_loop.js");
 const clipboard = require("./clipboard.js");
 const { spawn } = require("child_process");
 
@@ -33,6 +33,7 @@ function loadConfig() {
     /* optional */
   }
   return {
+    traceLatency: process.env.TEMBRO_TRACE_LATENCY === "1" || cfg.trace_latency === true,
     apiBase: process.env.TEMBRO_API_BASE || cfg.api_base || "http://127.0.0.1:8787",
     mcpCommand:
       process.env.TEMBRO_MCP_COMMAND ||
@@ -181,6 +182,8 @@ async function handleChat(message, skill = null, echoed = false) {
   }
   busy = true;
   stopRequested = false;
+  const latency = config.traceLatency ? createLatencyTrace() : null;
+  let latencyOutcome = "failed";
   const watchdog = setTimeout(() => {
     stopRequested = true;
   }, TURN_SOFT_TIMEOUT_MS);
@@ -192,7 +195,7 @@ async function handleChat(message, skill = null, echoed = false) {
     // hung forever in the field (bridge socket contention): it gets its own
     // timeout and honors the stop button like every other phase of the turn.
     ui("working", "reading Live context…");
-    const liveContext = await raceWithStop(
+    const readContext = () => raceWithStop(
       Promise.race([
         buildLiveContext(bridge),
         new Promise((_, reject) =>
@@ -211,6 +214,7 @@ async function handleChat(message, skill = null, echoed = false) {
       ]),
       () => stopRequested,
     );
+    const liveContext = await (latency ? latency.measure("context", readContext) : readContext());
 
     const trackCount = (liveContext.tracks || []).length;
     const tempo = liveContext.tempo ? liveContext.tempo + " BPM" : "tempo unknown";
@@ -225,6 +229,7 @@ async function handleChat(message, skill = null, echoed = false) {
       skill,
       liveContext,
       conversationId,
+      latency,
       shouldStop: () => stopRequested,
       onStatus: (status) => ui("working", status),
       onStep: (current, maximum) => {
@@ -272,6 +277,7 @@ async function handleChat(message, skill = null, echoed = false) {
         }, TURN_HARD_TIMEOUT_MS),
       ),
     ]);
+    latencyOutcome = "completed";
     conversationId = res.conversation_id;
     const finalReply = completionReply(res.reply);
     transcript("tembro", finalReply);
@@ -282,6 +288,7 @@ async function handleChat(message, skill = null, echoed = false) {
       "Ho finito · " + (res.credits_charged || 1) + " credits · " + res.credits_remaining + " left",
     );
   } catch (err) {
+    latencyOutcome = err && err.stopped ? "abandoned" : "failed";
     if (err && err.stopped) {
       transcript(
         "tembro",
@@ -299,6 +306,14 @@ async function handleChat(message, skill = null, echoed = false) {
     clearTimeout(watchdog);
     clearInterval(heartbeat);
     busy = false;
+    if (latency) {
+      // Local Max console only. Diagnostics must never delay music or change
+      // error handling, even if the log sink throws or rejects its promise.
+      try {
+        Promise.resolve(maxApi.post("Tembro latency " + JSON.stringify(latency.finish(latencyOutcome))))
+          .catch(() => {});
+      } catch { /* best-effort diagnostics */ }
+    }
     // A 401 cleared the session: queued messages can only fail the same way,
     // and running them would bury the sign-in view under fresh errors.
     if (!api.signedIn) pendingChats.length = 0;

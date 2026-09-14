@@ -318,6 +318,104 @@ async function executeTool(client, name, args, onStatus, shouldStop = () => fals
   return client.callTool(name, args || {});
 }
 
+// Opt-in client-side diagnostics, outside the audio callback. Only fixed stage
+// names, allowlisted tool names, counters and durations are retained. These are
+// client-observed waits: a cloud wait is NOT a measurement of model inference.
+const LATENCY_STAGES = new Set([
+  "context", "tool_discovery", "cloud_start", "cloud_continue", "local_tool", "encode_result",
+]);
+
+function createLatencyTrace({ now = () => require("perf_hooks").performance.now() } = {}) {
+  const startedAt = now();
+  const stages = new Map();
+  const tools = new Map();
+  const pending = new Set();
+  let outputBytes = 0;
+  let finished = null;
+  const newStats = () => ({ calls: 0, wait_ms: 0, max_wait_ms: 0, errors: 0, abandoned_waits: 0 });
+  function record(map, key, elapsed, status) {
+    const stats = map.get(key) || newStats();
+    stats.calls += 1;
+    stats.wait_ms += elapsed;
+    stats.max_wait_ms = Math.max(stats.max_wait_ms, elapsed);
+    if (status === "error") stats.errors += 1;
+    if (status === "abandoned") stats.abandoned_waits += 1;
+    map.set(key, stats);
+  }
+  function begin(stage, tool) {
+    // Unknown names cannot turn diagnostics into an unbounded payload store.
+    if (finished || !LATENCY_STAGES.has(stage)) return () => {};
+    const start = now();
+    let ended = false;
+    const end = (status, at = now()) => {
+      if (ended || finished) return;
+      ended = true;
+      pending.delete(end);
+      const elapsed = Math.max(0, at - start);
+      record(stages, stage, elapsed, status);
+      if (stage === "local_tool" && SAFE_TOOL_NAMES.has(tool)) {
+        record(tools, tool, elapsed, status);
+      }
+    };
+    pending.add(end);
+    return end;
+  }
+  const statusOf = (error) => error && error.stopped ? "abandoned" : "error";
+  const rounded = (n) => Math.round(n * 1000) / 1000;
+  function snapshot(map) {
+    return Object.freeze(Object.fromEntries([...map].map(([key, value]) => [
+      key,
+      Object.freeze({ ...value, wait_ms: rounded(value.wait_ms), max_wait_ms: rounded(value.max_wait_ms) }),
+    ])));
+  }
+  return {
+    async measure(stage, work, tool) {
+      const end = begin(stage, tool);
+      try {
+        const result = await work();
+        end("ok");
+        return result;
+      } catch (error) {
+        end(statusOf(error));
+        throw error;
+      }
+    },
+    measureSync(stage, work) {
+      const end = begin(stage);
+      try {
+        const result = work();
+        end("ok");
+        return result;
+      } catch (error) {
+        end(statusOf(error));
+        throw error;
+      }
+    },
+    addOutputBytes(bytes) {
+      if (!finished && Number.isSafeInteger(bytes) && bytes >= 0) {
+        outputBytes = Math.min(Number.MAX_SAFE_INTEGER, outputBytes + bytes);
+      }
+    },
+    finish(outcome) {
+      if (finished) return finished;
+      const at = now();
+      // A watchdog can finish the UI while a promise is still in flight. Count
+      // only the wait observed so far; never claim the underlying call stopped.
+      for (const end of [...pending]) end("abandoned", at);
+      finished = Object.freeze({
+        schema_version: 1,
+        scope: "client_wait",
+        outcome: ["completed", "failed", "abandoned"].includes(outcome) ? outcome : "failed",
+        elapsed_ms: rounded(Math.max(0, at - startedAt)),
+        stages: snapshot(stages),
+        tools: snapshot(tools),
+        result_json_bytes: outputBytes,
+      });
+      return finished;
+    },
+  };
+}
+
 async function runAgentTurn(options) {
   const {
     api,
@@ -330,7 +428,15 @@ async function runAgentTurn(options) {
     onTool = () => {},
     onStep = () => {},
     shouldStop = () => false,
+    latency = null,
   } = options;
+  const measure = (stage, work, tool) => latency ? latency.measure(stage, work, tool) : work();
+  const encodeResult = (result) => {
+    if (!latency) return boundedJson(result);
+    const text = latency.measureSync("encode_result", () => boundedJson(result));
+    latency.addOutputBytes(Buffer.byteLength(text, "utf8"));
+    return text;
+  };
   const ensureNotStopped = () => {
     if (shouldStop()) {
       const err = new Error("stopped by user");
@@ -339,14 +445,14 @@ async function runAgentTurn(options) {
     }
   };
   onStatus("discovering Live tools…");
-  const tools = safeTools(await raceWithStop(client.listTools(), shouldStop));
+  const tools = safeTools(await measure("tool_discovery", () => raceWithStop(client.listTools(), shouldStop)));
   if (tools.length === 0) throw new Error("no safe Ableton MCP tools available");
 
   onStatus("thinking with " + tools.length + " Live tools…");
-  let step = await raceWithStop(
+  let step = await measure("cloud_start", () => raceWithStop(
     api.agentStart(message, liveContext, tools, conversationId, skill),
     shouldStop,
-  );
+  ));
   let iterations = 0;
   let consecutiveFailures = 0;
   let lastFailure = null;
@@ -367,7 +473,7 @@ async function runAgentTurn(options) {
       if (!allowed) {
         outputs.push({
           call_id: call.call_id,
-          output: boundedJson({ ok: false, error: "tool is not allowed by Tembro" }),
+          output: encodeResult({ ok: false, error: "tool is not allowed by Tembro" }),
         });
         continue;
       }
@@ -381,10 +487,10 @@ async function runAgentTurn(options) {
           onStatus(note);
           onTool("progress", call, { note });
         };
-        result = await raceWithStop(
+        result = await measure("local_tool", () => raceWithStop(
           executeTool(client, call.name, call.arguments || {}, perCallStatus, shouldStop),
           shouldStop,
-        );
+        ), call.name);
         result = { ok: true, result };
         consecutiveFailures = 0;
         onTool("success", call, result);
@@ -398,7 +504,7 @@ async function runAgentTurn(options) {
         lastFailure = result.error;
         onTool("error", call, result);
       }
-      outputs.push({ call_id: call.call_id, output: boundedJson(result) });
+      outputs.push({ call_id: call.call_id, output: encodeResult(result) });
     }
     if (consecutiveFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
       throw new Error(
@@ -409,10 +515,10 @@ async function runAgentTurn(options) {
       );
     }
     onStatus("checking the result…");
-    step = await raceWithStop(
+    step = await measure("cloud_continue", () => raceWithStop(
       api.agentContinue(step.continuation_token, step.conversation_id, tools, outputs),
       shouldStop,
-    );
+    ));
   }
   if (step.kind !== "final") throw new Error("agent returned an unknown state");
   return step;
@@ -424,6 +530,7 @@ module.exports = {
   TEMBRO_ARRANGE_CLIP_TOOL,
   arrangeClip,
   completionReply,
+  createLatencyTrace,
   raceWithStop,
   safeTools,
   boundedJson,
