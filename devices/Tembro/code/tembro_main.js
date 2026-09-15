@@ -58,7 +58,7 @@ const variation = new ClipVariation({
 let conversationId = null;
 let busy = false;
 let updateUrl = null;
-const DEVICE_VERSION = "0.1.8-dev.1";
+const DEVICE_VERSION = "0.1.8-beta.1";
 
 const STATE_MARK = { idle: "·", working: "⏳", success: "✓", error: "⚠" };
 

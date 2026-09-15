@@ -3,7 +3,7 @@ set -euo pipefail
 
 # TEMBRO_VERSION and OFFICIAL_API_URL are rewritten by tools/build_tembro_dmg.py
 # at packaging time; these defaults only matter when running the script directly.
-TEMBRO_VERSION="0.1.6-beta"
+TEMBRO_VERSION="0.1.8-beta.1"
 OFFICIAL_API_URL="https://gettembro.com"
 UPSTREAM_COMMIT="70f7df9192b78d9bd9405f369c9e046c88f1610e"
 UV_VERSION="0.12.7"
@@ -49,7 +49,7 @@ echo "  Tembro ${TEMBRO_VERSION}"
 echo "  ─────────────────────────────"
 echo ""
 
-if [[ ! -d "$DEVICE_SOURCE" || ! -d "$REMOTE_SOURCE" || ! -f "$RUNTIME_OVERLAY/manifest.json" || ! -f "$RUNTIME_PATCHER" || ! -f "$PAYLOAD_DIR/verify_tembro_runtime.py" ]]; then
+if [[ ! -d "$DEVICE_SOURCE" || ! -d "$REMOTE_SOURCE" || ! -f "$RUNTIME_OVERLAY/manifest.json" || ! -f "$RUNTIME_PATCHER" || ! -f "$PAYLOAD_DIR/verify_tembro_runtime.py" || ! -f "$PAYLOAD_DIR/m4l/manifest.json" ]]; then
   echo "Installer payload is missing. Download the Tembro DMG again."
   pause_before_close
   exit 1
@@ -61,18 +61,9 @@ if pgrep -f '/Ableton[^/]*/Contents/MacOS/Live([[:space:]]|$)' >/dev/null; then
   exit 1
 fi
 
-echo "• Installing Tembro's private local bridge…"
+echo "• Checking the local installation…"
 mkdir -p "$TEMBRO_HOME" "$TOOL_BIN" "$TOOL_DIR"
 
-# A leftover test config with a different api_base overrides the official URL
-# baked into the device and leaves the chat unable to connect (seen in the
-# field as getaddrinfo ENOTFOUND on a dead test hostname). Set it aside.
-CONFIG_FILE="$TEMBRO_HOME/config.json"
-if [[ -f "$CONFIG_FILE" ]] && grep -q '"api_base"' "$CONFIG_FILE" \
-  && ! grep -q "\"api_base\"[[:space:]]*:[[:space:]]*\"${OFFICIAL_API_URL}\"" "$CONFIG_FILE"; then
-  mv "$CONFIG_FILE" "$CONFIG_FILE.bak"
-  echo "• Set aside an old test config (config.json → config.json.bak)"
-fi
 if [[ ! -x "$UV_BIN" ]]; then
   curl --fail --location --silent --show-error \
     "https://astral.sh/uv/${UV_VERSION}/install.sh" \
@@ -80,6 +71,49 @@ if [[ ! -x "$UV_BIN" ]]; then
   UV_UNMANAGED_INSTALL="$UV_HOME" sh "$TEMP_DIR/uv-install.sh" >/dev/null
 fi
 
+precheck_existing_companions() {
+  local existing_runtime="$TOOL_DIR/ableton-live-mcp"
+  local existing_python="$existing_runtime/bin/python"
+  if [[ -e "$existing_runtime" || -L "$existing_runtime" ]]; then
+    if [[ ! -d "$existing_runtime" || ! -x "$existing_python" ]]; then
+      echo "The existing private bridge cannot be inspected. It has not been replaced."
+      return 1
+    fi
+    # Inspect through the existing interpreter so its generated companion
+    # directory is covered as well as the User Library targets.
+    "$existing_python" "$PAYLOAD_DIR/verify_tembro_runtime.py" \
+      --check-m4l-targets "$PAYLOAD_DIR/m4l"
+  else
+    # A fresh install may still have companions from another development setup.
+    # Use an isolated pinned environment, never system Python or the private
+    # tool destination. The wheel's missing m4l source does not prevent the
+    # upstream filesystem inspector from enumerating User Library targets.
+    "$UV_BIN" run --isolated --no-project --python 3.12 \
+      --with "ableton-live-mcp[visual] @ https://github.com/bschoepke/ableton-live-mcp/archive/${UPSTREAM_COMMIT}.zip" \
+      python "$PAYLOAD_DIR/verify_tembro_runtime.py" --check-m4l-targets "$PAYLOAD_DIR/m4l"
+  fi
+}
+
+# This must run before --force: a rejected custom companion must leave the
+# existing bridge, device, Remote Script and connection configuration intact.
+echo "• Checking existing Max for Live companions…"
+if ! precheck_existing_companions; then
+  echo "Installation stopped before replacing the existing bridge. Keep this message for support."
+  pause_before_close
+  exit 1
+fi
+
+# A leftover test config with a different api_base overrides the official URL
+# baked into the device and leaves the chat unable to connect. Set it aside only
+# after the preservation gate has passed.
+CONFIG_FILE="$TEMBRO_HOME/config.json"
+if [[ -f "$CONFIG_FILE" ]] && grep -q '"api_base"' "$CONFIG_FILE" \
+  && ! grep -q "\"api_base\"[[:space:]]*:[[:space:]]*\"${OFFICIAL_API_URL}\"" "$CONFIG_FILE"; then
+  mv "$CONFIG_FILE" "$CONFIG_FILE.bak"
+  echo "• Set aside an old test config (config.json → config.json.bak)"
+fi
+
+echo "• Installing Tembro's private local bridge…"
 UV_TOOL_BIN_DIR="$TOOL_BIN" \
 UV_TOOL_DIR="$TOOL_DIR" \
   "$UV_BIN" tool install --force --python 3.12 \

@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 from types import ModuleType
@@ -159,6 +160,84 @@ class ReleaseTests(unittest.TestCase):
             self.assertIn('"ableton-live-mcp[visual] @ https://github.com/bschoepke/ableton-live-mcp/archive/${UPSTREAM_COMMIT}.zip"', output.read_text())
             with self.assertRaises(ValueError):
                 dmg.stamp_installer(output, "https://gettembro.com", '../bad"version')
+
+    def test_companion_preservation_gate_precedes_reinstall_and_config_changes(self):
+        script = (ROOT / "installer/Install Tembro.command").read_text()
+        guard = script.index("if ! precheck_existing_companions; then")
+        reinstall = script.index('"$UV_BIN" tool install --force')
+        self.assertLess(guard, script.index('mv "$CONFIG_FILE" "$CONFIG_FILE.bak"'))
+        self.assertLess(guard, reinstall)
+        # Retain the existing post-install recheck before patching and sync.
+        recheck = script.rindex('--check-m4l-targets "$PAYLOAD_DIR/m4l"')
+        self.assertLess(reinstall, recheck)
+        self.assertLess(recheck, script.index('"$RUNTIME_PATCHER" apply'))
+        self.assertLess(recheck, script.index('"$TOOL_BIN/ableton-live-mcp-sync-m4l-host" --no-repair-wrappers'))
+
+    def test_failed_companion_precheck_preserves_old_runtime_and_config(self):
+        script = (ROOT / "installer/Install Tembro.command").read_text()
+        # Execute the actual shell gate through the destructive-install command.
+        # This block deliberately uses shell syntax shared by zsh and bash, so
+        # Linux can test it without emulating the rest of the macOS installer.
+        gate = script[script.index("precheck_existing_companions() {"):
+                      script.index('if [[ ! -x "$TOOL_BIN/ableton-live-mcp" ]]')]
+        for scenario in ("existing", "fresh", "broken"):
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                tembro = root / ".tembro"
+                uv = tembro / "uv/uv"
+                uv.parent.mkdir(parents=True)
+                tool_dir = tembro / "tools"
+                tool_dir.mkdir()
+                runtime = tool_dir / "ableton-live-mcp"
+                config = tembro / "config.json"
+                config.write_text('{"api_base":"https://previous-test.invalid"}')
+                backup = tembro / "config.json.bak"
+                backup.write_text("previous config backup")
+                original = root / "runtime-state"
+                original.write_text("existing runtime remains intact")
+                log = root / "calls"
+                # Only interpreter/uv process boundaries are substituted. The
+                # verifier's real hash-conflict behavior is tested separately.
+                uv.write_text('#!/bin/sh\n'
+                              'printf "uv:%s\\n" "$*" >> "$GATE_LOG"\n'
+                              'if [ "$1" = tool ]; then printf changed > "$ORIGINAL_RUNTIME"; fi\n'
+                              'exit 37\n')
+                uv.chmod(0o755)
+                existing_python = runtime / "bin/python"
+                if scenario != "fresh":
+                    existing_python.parent.mkdir(parents=True)
+                if scenario == "existing":
+                    existing_python.write_text('#!/bin/sh\n'
+                                               'printf "existing:%s\\n" "$*" >> "$GATE_LOG"\n'
+                                               'exit 37\n')
+                    existing_python.chmod(0o755)
+                before_python = existing_python.read_bytes() if existing_python.exists() else None
+                environment = dict(os.environ, TEMBRO_HOME=str(tembro), TOOL_DIR=str(tool_dir),
+                                   TOOL_BIN=str(tembro / "bin"), UV_BIN=str(uv),
+                                   PAYLOAD_DIR=str(root / "payload"), UPSTREAM_COMMIT=verifier.PIN,
+                                   OFFICIAL_API_URL="https://gettembro.com", GATE_LOG=str(log),
+                                   ORIGINAL_RUNTIME=str(original))
+                result = subprocess.run(["bash", "-c", "set -euo pipefail\npause_before_close() { :; }\n" + gate],
+                                        env=environment, text=True, capture_output=True, timeout=5)
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn("Installation stopped before replacing the existing bridge", result.stdout)
+                self.assertEqual(original.read_text(), "existing runtime remains intact")
+                self.assertEqual(config.read_text(), '{"api_base":"https://previous-test.invalid"}')
+                self.assertEqual(backup.read_text(), "previous config backup")
+                if before_python is not None:
+                    self.assertEqual(existing_python.read_bytes(), before_python)
+                calls = log.read_text() if log.exists() else ""
+                self.assertNotIn("uv:tool", calls)
+                if scenario == "existing":
+                    self.assertIn("existing:", calls)
+                    self.assertIn("--check-m4l-targets", calls)
+                    self.assertNotIn("uv:", calls)
+                elif scenario == "fresh":
+                    self.assertIn("uv:run --isolated --no-project --python 3.12 --with", calls)
+                    self.assertIn("ableton-live-mcp[visual] @ https://github.com/bschoepke/ableton-live-mcp/archive/" + verifier.PIN + ".zip", calls)
+                    self.assertIn("--check-m4l-targets", calls)
+                else:
+                    self.assertEqual(calls, "")
 
     def test_distribution_provenance_requires_exact_upstream_pin(self):
         class Distribution:
