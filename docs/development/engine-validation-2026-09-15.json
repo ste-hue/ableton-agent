@@ -1,0 +1,102 @@
+{
+  "schema": "tembro.engine-validation.v1",
+  "recorded_date": "2026-09-15",
+  "source_commit": "04faea5ef5193c4a0a721d199c821c8ef962dab2",
+  "branch": "feat/product-engines",
+  "development_version": "0.1.8-dev.1",
+  "rudiment_source_commit": "3dfc08d51d040c5823408298797fffe5388c7469",
+  "chordarium_source_commit": "9551df98030260188b728e1bf8915ad145dabb15",
+  "portability": {
+    "linux_node26": {
+      "runtime": {
+        "arch": "x64",
+        "node": "26.8.1",
+        "platform": "linux",
+        "v8": "14.6.202.34-node.28"
+      },
+      "case_count": 178,
+      "engine_case_counts": {
+        "chordarium": 88,
+        "rudiment": 90
+      },
+      "aggregate_sha256": "e11efb77d7f772d624d119dc5e83e97da5eaba0077499ef85b0f76aea3316690"
+    },
+    "mac_node18": {
+      "runtime": {
+        "arch": "arm64",
+        "node": "18.20.8",
+        "platform": "darwin",
+        "v8": "10.2.154.26-node.39"
+      },
+      "case_count": 178,
+      "engine_case_counts": {
+        "chordarium": 88,
+        "rudiment": 90
+      },
+      "aggregate_sha256": "e11efb77d7f772d624d119dc5e83e97da5eaba0077499ef85b0f76aea3316690"
+    },
+    "mac_max_bundled_node22": {
+      "runtime": {
+        "arch": "arm64",
+        "node": "22.18.0",
+        "platform": "darwin",
+        "v8": "12.4.254.21-node.27"
+      },
+      "case_count": 178,
+      "engine_case_counts": {
+        "chordarium": 88,
+        "rudiment": 90
+      },
+      "aggregate_sha256": "e11efb77d7f772d624d119dc5e83e97da5eaba0077499ef85b0f76aea3316690"
+    },
+    "mac_node25": {
+      "runtime": {
+        "arch": "arm64",
+        "node": "25.6.0",
+        "platform": "darwin",
+        "v8": "14.1.146.11-node.19"
+      },
+      "case_count": 178,
+      "engine_case_counts": {
+        "chordarium": 88,
+        "rudiment": 90
+      },
+      "aggregate_sha256": "e11efb77d7f772d624d119dc5e83e97da5eaba0077499ef85b0f76aea3316690"
+    }
+  },
+  "checks": {
+    "device_tests": {
+      "passed": 142,
+      "failed": 0,
+      "skipped": 0
+    },
+    "server_app_tests": {
+      "passed": 40,
+      "failed": 0
+    },
+    "server_typecheck": "passed",
+    "bridge_tests": {
+      "passed": 35,
+      "failed": 0,
+      "skipped": 0
+    },
+    "packaging_tests": {
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0
+    },
+    "rudiment_source_tests": {
+      "passed": 46,
+      "failed": 0
+    }
+  },
+  "portability_command": "node tools/check_tembro_engine_portability.js",
+  "scope": "Offline composition and automated integration. Max bundled Node was invoked directly, outside the M4L node.script host. No live MIDI application, audio audition or fresh-device installation was performed.",
+  "release_state": {
+    "server_deployed": false,
+    "installer_published": false,
+    "notarized": false,
+    "previous_0_1_7_beta_1_preserved": true
+  },
+  "handoff_issue": "https://github.com/ste-hue/ableton-agent/issues/90"
+}
