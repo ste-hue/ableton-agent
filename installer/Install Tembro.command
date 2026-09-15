@@ -3,15 +3,20 @@ set -euo pipefail
 
 # TEMBRO_VERSION and OFFICIAL_API_URL are rewritten by tools/build_tembro_dmg.py
 # at packaging time; these defaults only matter when running the script directly.
-TEMBRO_VERSION="0.1.8-beta.1"
+TEMBRO_VERSION="0.1.8-beta.2"
 OFFICIAL_API_URL="https://gettembro.com"
 UPSTREAM_COMMIT="70f7df9192b78d9bd9405f369c9e046c88f1610e"
 UV_VERSION="0.12.7"
 NON_INTERACTIVE=0
+BACKUP_EXISTING_COMPANIONS=0
 
-if [[ "${1:-}" == "--non-interactive" ]]; then
-  NON_INTERACTIVE=1
-fi
+for argument in "$@"; do
+  case "$argument" in
+    --non-interactive) NON_INTERACTIVE=1 ;;
+    --backup-existing-companions) BACKUP_EXISTING_COMPANIONS=1 ;;
+    *) echo "TEMBRO_ERROR: Unknown installer option: $argument"; exit 1 ;;
+  esac
+done
 
 SCRIPT_DIR="${0:A:h}"
 PAYLOAD_DIR="$SCRIPT_DIR/.tembro-payload"
@@ -20,8 +25,9 @@ REMOTE_SOURCE="$PAYLOAD_DIR/Ableton_Live_MCP"
 RUNTIME_OVERLAY="$PAYLOAD_DIR/variation-runtime"
 RUNTIME_PATCHER="$DEVICE_SOURCE/bridge/patch_runtime.py"
 INSTALL_HOME="${TEMBRO_INSTALL_HOME:-$HOME}"
-DEVICE_TARGET="$INSTALL_HOME/Music/Ableton/User Library/Presets/MIDI Effects/Max MIDI Effect/Tembro"
-REMOTE_TARGET="$INSTALL_HOME/Music/Ableton/User Library/Remote Scripts/Ableton_Live_MCP"
+export ABLETON_USER_LIBRARY="${ABLETON_USER_LIBRARY:-${ABLETON_LIVE_USER_LIBRARY:-$INSTALL_HOME/Music/Ableton/User Library}}"
+DEVICE_TARGET="$ABLETON_USER_LIBRARY/Presets/MIDI Effects/Max MIDI Effect/Tembro"
+REMOTE_TARGET="$ABLETON_USER_LIBRARY/Remote Scripts/Ableton_Live_MCP"
 TEMBRO_HOME="$INSTALL_HOME/.tembro"
 UV_HOME="$TEMBRO_HOME/uv"
 UV_BIN="$UV_HOME/uv"
@@ -50,13 +56,13 @@ echo "  ────────────────────────
 echo ""
 
 if [[ ! -d "$DEVICE_SOURCE" || ! -d "$REMOTE_SOURCE" || ! -f "$RUNTIME_OVERLAY/manifest.json" || ! -f "$RUNTIME_PATCHER" || ! -f "$PAYLOAD_DIR/verify_tembro_runtime.py" || ! -f "$PAYLOAD_DIR/m4l/manifest.json" ]]; then
-  echo "Installer payload is missing. Download the Tembro DMG again."
+  echo "TEMBRO_ERROR: Installer payload is missing. Download the Tembro DMG again."
   pause_before_close
   exit 1
 fi
 
 if pgrep -f '/Ableton[^/]*/Contents/MacOS/Live([[:space:]]|$)' >/dev/null; then
-  echo "Quit Ableton Live, then run this installer again."
+  echo "TEMBRO_ERROR: Quit Ableton Live, then run this installer again."
   pause_before_close
   exit 1
 fi
@@ -81,25 +87,40 @@ precheck_existing_companions() {
     fi
     # Inspect through the existing interpreter so its generated companion
     # directory is covered as well as the User Library targets.
-    "$existing_python" "$PAYLOAD_DIR/verify_tembro_runtime.py" \
-      --check-m4l-targets "$PAYLOAD_DIR/m4l"
+    if (( ${BACKUP_EXISTING_COMPANIONS:-0} )); then
+      "$existing_python" "$PAYLOAD_DIR/verify_tembro_runtime.py" \
+        --backup-m4l-targets "$PAYLOAD_DIR/m4l" --backup-root "$TEMBRO_HOME/backups"
+    else
+      "$existing_python" "$PAYLOAD_DIR/verify_tembro_runtime.py" \
+        --check-m4l-targets "$PAYLOAD_DIR/m4l"
+    fi
   else
     # A fresh install may still have companions from another development setup.
     # Use an isolated pinned environment, never system Python or the private
     # tool destination. The wheel's missing m4l source does not prevent the
     # upstream filesystem inspector from enumerating User Library targets.
+    local -a companion_args=(--check-m4l-targets "$PAYLOAD_DIR/m4l")
+    if (( ${BACKUP_EXISTING_COMPANIONS:-0} )); then
+      companion_args=(--backup-m4l-targets "$PAYLOAD_DIR/m4l" --backup-root "$TEMBRO_HOME/backups")
+    fi
     "$UV_BIN" run --isolated --no-project --python 3.12 \
       --with "ableton-live-mcp[visual] @ https://github.com/bschoepke/ableton-live-mcp/archive/${UPSTREAM_COMMIT}.zip" \
-      python "$PAYLOAD_DIR/verify_tembro_runtime.py" --check-m4l-targets "$PAYLOAD_DIR/m4l"
+      python "$PAYLOAD_DIR/verify_tembro_runtime.py" "${companion_args[@]}"
   fi
 }
 
-# This must run before --force: a rejected custom companion must leave the
+# This must run before installation: a rejected custom companion must leave the
 # existing bridge, device, Remote Script and connection configuration intact.
 echo "• Checking existing Max for Live companions…"
-if ! precheck_existing_companions; then
+if precheck_existing_companions; then
+  :
+else
+  precheck_status=$?
   echo "Installation stopped before replacing the existing bridge. Keep this message for support."
   pause_before_close
+  if (( precheck_status == 20 )); then
+    exit 20
+  fi
   exit 1
 fi
 
@@ -116,8 +137,12 @@ fi
 echo "• Installing Tembro's private local bridge…"
 UV_TOOL_BIN_DIR="$TOOL_BIN" \
 UV_TOOL_DIR="$TOOL_DIR" \
-  "$UV_BIN" tool install --force --python 3.12 \
+  "$UV_BIN" tool install --python 3.12 \
   "ableton-live-mcp[visual] @ https://github.com/bschoepke/ableton-live-mcp/archive/${UPSTREAM_COMMIT}.zip"
+
+# An identical pinned tool is reused. --force recreates its entire environment
+# and deletes private generated M4L devices. Pin, dependency, patch and resource
+# checks below still reject an altered or incomplete existing runtime.
 
 if [[ ! -x "$TOOL_BIN/ableton-live-mcp" ]]; then
   echo "Tembro's local bridge did not install correctly."

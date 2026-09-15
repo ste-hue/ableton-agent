@@ -163,8 +163,8 @@ class ReleaseTests(unittest.TestCase):
 
     def test_companion_preservation_gate_precedes_reinstall_and_config_changes(self):
         script = (ROOT / "installer/Install Tembro.command").read_text()
-        guard = script.index("if ! precheck_existing_companions; then")
-        reinstall = script.index('"$UV_BIN" tool install --force')
+        guard = script.index("if precheck_existing_companions; then")
+        reinstall = script.index('"$UV_BIN" tool install --python')
         self.assertLess(guard, script.index('mv "$CONFIG_FILE" "$CONFIG_FILE.bak"'))
         self.assertLess(guard, reinstall)
         # Retain the existing post-install recheck before patching and sync.

@@ -1,10 +1,10 @@
-# Tembro 0.1.8-beta.1 — prova privata su macOS
+# Tembro 0.1.8-beta.2 — installazione su macOS
 
 Tembro è un dispositivo Max for Live. Serve Ableton Live con Max for Live
 disponibile e una connessione Internet durante l'installazione e l'uso della chat.
 
 1. Salva il lavoro e chiudi Ableton Live.
-2. Apri `Tembro-0.1.8-beta.1.dmg` e avvia **Install Tembro**. Se macOS blocca
+2. Apri `Tembro-0.1.8-beta.2.dmg` e avvia **Install Tembro**. Se macOS blocca
    l'apertura, conserva il messaggio e contatta Tembro.
 3. Attendi la conferma dell'installer. Installa il dispositivo, il collegamento
    locale e la Control Surface nelle cartelle corrette. Non servono Xcode,
@@ -16,16 +16,28 @@ disponibile e una connessione Internet durante l'installazione e l'uso della cha
 6. Accedi con la tua email e la chiave di licenza Tembro, oppure con il codice
    beta se ti è stato fornito.
 
-Gli aggiornamenti sostituiscono la stessa cartella Tembro. L'installer controlla
-prima eventuali companion Max for Live personalizzati: se segnala differenze o
-non riesce a verificarli, si ferma prima di sostituire il bridge esistente.
-Conserva il messaggio; non rimuovere i file segnalati per forzare l'installazione.
+Gli aggiornamenti sostituiscono la stessa cartella Tembro. Se l'installer trova
+componenti Max for Live personalizzati, propone **Back up and update**: salva
+prima una copia verificata in `~/.tembro/backups/`, poi installa i componenti
+supportati. Le personalizzazioni salvate non restano attive dopo l'aggiornamento.
+Puoi chiudere l'installer per mantenere la configurazione corrente.
+
+In caso di errore, la finestra mostra il motivo. **Show installation log** apre
+il registro completo, salvato in `~/.tembro/logs/`. Se Ableton è aperto, salva
+il lavoro e chiudilo prima di riprovare.
+
+## Crediti Tembro
+
+Tembro è un dispositivo Max for Live. I crediti per la chat si acquistano dal
+[checkout Tembro](https://tembro.lemonsqueezy.com/checkout/buy/51752dd4-3c30-466b-8e5d-d7c985ff9111).
+Usa l'email e il codice ricevuti per accedere nel dispositivo.
 
 ## Prima prova dei motori
 
 Chordarium può preparare accordi, basso correlato, arpeggio e pad; Rudiment genera
-batterie. La generazione offline è verificata. Installazione fresca, funzionamento
-dentro il dispositivo e ascolto in Live restano da provare con questa beta.
+batterie. La generazione offline è verificata. Installazione fresca, aggiornamento
+con backup e reinstallazione sono stati verificati in un ambiente isolato.
+Funzionamento dentro il dispositivo e ascolto in Live restano da provare con questa beta.
 
 I nuovi comandi della chat richiedono anche l'aggiornamento del servizio Tembro.
 Se non sono ancora disponibili, segnala il messaggio: reinstallare il dispositivo

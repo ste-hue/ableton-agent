@@ -6,7 +6,11 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
     private var detailLabel: NSTextField!
     private var installButton: NSButton!
     private var spinner: NSProgressIndicator!
+    private var logButton: NSButton!
     private var process: Process?
+    private var outputState = InstallerOutput()
+    private var logURL: URL?
+    private var logHandle: FileHandle?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -35,7 +39,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
         let mauve = NSColor(calibratedRed: 0.604, green: 0.565, blue: 0.620, alpha: 1)
 
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 390),
+            contentRect: NSRect(x: 0, y: 0, width: 540, height: 460),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -69,7 +73,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
         detailLabel = label(
-            "One click puts the device and its local bridge in the right places. Updates use the same copy. No clutter.",
+            "Install the Max for Live device and its local connection. Save your work and quit Ableton Live first.",
             size: 12,
             weight: .regular,
             color: muted
@@ -91,6 +95,11 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
         installButton.layer?.cornerRadius = 8
         installButton.translatesAutoresizingMaskIntoConstraints = false
 
+        logButton = NSButton(title: "Show installation log", target: self, action: #selector(showLog))
+        logButton.bezelStyle = .inline
+        logButton.isHidden = true
+        logButton.translatesAutoresizingMaskIntoConstraints = false
+
         container.addSubview(icon)
         container.addSubview(title)
         container.addSubview(subtitle)
@@ -98,6 +107,7 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
         container.addSubview(detailLabel)
         container.addSubview(spinner)
         container.addSubview(installButton)
+        container.addSubview(logButton)
 
         NSLayoutConstraint.activate([
             icon.topAnchor.constraint(equalTo: container.topAnchor, constant: 28),
@@ -127,13 +137,27 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
             installButton.topAnchor.constraint(equalTo: spinner.bottomAnchor, constant: 13),
             installButton.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             installButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 160),
-            installButton.heightAnchor.constraint(equalToConstant: 32)
+            installButton.heightAnchor.constraint(equalToConstant: 32),
+            logButton.topAnchor.constraint(equalTo: installButton.bottomAnchor, constant: 12),
+            logButton.centerXAnchor.constraint(equalTo: container.centerXAnchor)
         ])
 
         window.makeKeyAndOrderFront(nil)
     }
 
     @objc private func startInstall() {
+        runInstall(backUpCompanions: false)
+    }
+
+    @objc private func backUpAndInstall() {
+        runInstall(backUpCompanions: true)
+    }
+
+    @objc private func showLog() {
+        if let logURL { NSWorkspace.shared.open(logURL) }
+    }
+
+    private func runInstall(backUpCompanions: Bool) {
         guard process == nil else { return }
         guard let script = Bundle.main.path(forResource: "Install Tembro", ofType: "command") else {
             finish(success: false, message: "The installer payload is missing. Download Tembro again.")
@@ -141,59 +165,84 @@ final class InstallerDelegate: NSObject, NSApplicationDelegate {
         }
 
         installButton.isEnabled = false
+        window.standardWindowButton(.closeButton)?.isEnabled = false
         installButton.title = "Installing…"
         statusLabel.stringValue = "Putting Tembro in the right places…"
-        detailLabel.stringValue = "Ableton can stay closed for a minute. Tembro is not going anywhere."
+        detailLabel.stringValue = "Keep Ableton Live closed until installation finishes."
         spinner.startAnimation(nil)
+
+        outputState = InstallerOutput()
+        do {
+            let home = ProcessInfo.processInfo.environment["TEMBRO_INSTALL_HOME"] ?? NSHomeDirectory()
+            let directory = URL(fileURLWithPath: home).appendingPathComponent(".tembro/logs", isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let url = directory.appendingPathComponent("install-\(UUID().uuidString).log")
+            guard FileManager.default.createFile(atPath: url.path, contents: nil) else {
+                throw NSError(domain: "Tembro", code: 1, userInfo: [NSLocalizedDescriptionKey: "The installation log could not be created."])
+            }
+            logHandle = try FileHandle(forWritingTo: url)
+            logURL = url
+            logButton.isHidden = false
+        } catch {
+            finish(success: false, message: error.localizedDescription)
+            return
+        }
 
         let output = Pipe()
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/zsh")
         task.arguments = [script, "--non-interactive"]
+        if backUpCompanions { task.arguments?.append("--backup-existing-companions") }
         task.standardOutput = output
         task.standardError = output
-
-        output.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
-            let lines = text.split(separator: "\n").map(String.init)
-            guard let last = lines.last(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) else { return }
-            DispatchQueue.main.async {
-                if last.hasPrefix("•") {
-                    self?.statusLabel.stringValue = last.replacingOccurrences(of: "• ", with: "")
-                }
-            }
-        }
-
-        task.terminationHandler = { [weak self] finished in
-            output.fileHandleForReading.readabilityHandler = nil
-            DispatchQueue.main.async {
-                self?.process = nil
-                if finished.terminationStatus == 0 {
-                    self?.finish(
-                        success: true,
-                        message: "Open Ableton Live, choose Ableton_Live_MCP as a Control Surface, then find Tembro in your User Library."
-                    )
-                } else {
-                    self?.finish(
-                        success: false,
-                        message: "Installation did not finish. Check your internet connection and try again."
-                    )
-                }
-            }
-        }
 
         do {
             try task.run()
             process = task
+            // Drain the pipe before finishing, so the final stderr message is
+            // processed before the exit status. UI and log state stay on main.
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                while true {
+                    let data = output.fileHandleForReading.availableData
+                    if data.isEmpty { break }
+                    DispatchQueue.main.async {
+                        self?.outputState.append(data)
+                        self?.logHandle?.write(data)
+                        if let progress = self?.outputState.progress {
+                            self?.statusLabel.stringValue = progress
+                        }
+                    }
+                }
+                task.waitUntilExit()
+                DispatchQueue.main.async { self?.installationEnded(task.terminationStatus) }
+            }
         } catch {
             finish(success: false, message: error.localizedDescription)
         }
     }
 
+    private func installationEnded(_ code: Int32) {
+        process = nil
+        switch outputState.outcome(exitCode: code) {
+        case .installed:
+            finish(success: true, message: "Open Ableton Live, choose Ableton_Live_MCP as a Control Surface, then add Tembro from your User Library.")
+        case .needsBackup:
+            finish(success: false, message: "Custom Max for Live support files were found. Back up and update saves the originals, then replaces their custom behavior with Tembro’s supported version.")
+            statusLabel.stringValue = "An existing customization needs your choice."
+            installButton.title = "Back up and update"
+            installButton.action = #selector(backUpAndInstall)
+            installButton.keyEquivalent = ""
+        case .failed:
+            finish(success: false, message: String(outputState.failureMessage.prefix(350)))
+        }
+    }
+
     private func finish(success: Bool, message: String) {
         spinner.stopAnimation(nil)
-        statusLabel.stringValue = success ? "✓ Tembro is in." : "Tembro did not make it in."
+        logHandle?.closeFile()
+        logHandle = nil
+        window.standardWindowButton(.closeButton)?.isEnabled = true
+        statusLabel.stringValue = success ? "✓ Tembro is installed." : "Installation needs attention."
         detailLabel.stringValue = message
         installButton.isEnabled = true
         installButton.title = success ? "Done" : "Try Again"

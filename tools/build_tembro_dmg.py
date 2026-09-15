@@ -26,6 +26,7 @@ DEVICE_DIR = DIST / "Tembro"
 ZIP_PATH = DIST / "Tembro-v0-mac.zip"
 INSTALLER = REPO / "installer" / "Install Tembro.command"
 INSTALLER_SOURCE = REPO / "installer" / "TembroInstaller.swift"
+INSTALLER_OUTPUT_SOURCE = REPO / "installer" / "InstallerOutput.swift"
 RUNTIME_VERIFIER = REPO / "installer" / "verify_tembro_runtime.py"
 ICON_SOURCE = REPO / "assets" / "brand" / "tembro-icon.png"
 REMOTE_SCRIPT = (
@@ -165,6 +166,10 @@ def compile_installer(app_path: Path, temp: Path, api_url: str, upstream_root: P
     arch_binaries: list[Path] = []
     module_cache = temp / "SwiftModuleCache"
     module_cache.mkdir()
+    # Swift requires top-level application code to live in main.swift when
+    # compiling alongside the shared, independently tested output parser.
+    main_source = temp / "main.swift"
+    shutil.copy2(INSTALLER_SOURCE, main_source)
     for arch in ("arm64", "x86_64"):
         binary = temp / f"TembroInstaller-{arch}"
         run(
@@ -176,7 +181,8 @@ def compile_installer(app_path: Path, temp: Path, api_url: str, upstream_root: P
             f"{arch}-apple-macosx11.0",
             "-framework",
             "AppKit",
-            str(INSTALLER_SOURCE),
+            str(main_source),
+            str(INSTALLER_OUTPUT_SOURCE),
             "-o",
             binary,
         )

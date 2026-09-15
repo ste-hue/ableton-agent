@@ -2,12 +2,16 @@
 """Check the packaged and private installed runtime without importing Live code."""
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import importlib
 import importlib.metadata
 import importlib.util
 import json
 from pathlib import Path
+import stat
+import sys
+import tempfile
 
 PIN = "70f7df9192b78d9bd9405f369c9e046c88f1610e"
 FILES = {"server.py", "bridge.py", "validate.py", "Ableton_Live_MCP/bridge.py"}
@@ -17,6 +21,10 @@ VISUAL_DEPENDENCIES = (
     ("pyobjc-framework-ScreenCaptureKit", "ScreenCaptureKit"),
 )
 M4L_FILES = {"agent_m4l_host.js", "agent_audio_tap.js", "AgentAudioTap.maxpat", "AgentAudioTap.amxd", "README.md"}
+
+
+class M4LConflict(ValueError):
+    """A recoverable upgrade conflict, distinct from an invalid installation."""
 
 
 def verify_pin():
@@ -95,8 +103,8 @@ def verify_m4l_host():
         raise ValueError("Generated M4L host companions are not current; the official sync must succeed before installation")
 
 
-def check_m4l_sync_targets(source):
-    """Refuse custom companions before source restoration or the sync writes."""
+def m4l_sync_conflicts(source):
+    """Inspect the source and companions without modifying them."""
     manifest_path = source / "manifest.json"
     asset = source / "agent_m4l_host.js"
     if source.is_symlink() or manifest_path.is_symlink() or asset.is_symlink():
@@ -125,10 +133,99 @@ def check_m4l_sync_targets(source):
                 conflicts.append(raw_path)
         elif path.exists() or target.get("target_sha256") is not None:
             conflicts.append(raw_path)
+    raw_source = status.get("source")
+    if raw_source is not None:
+        if not isinstance(raw_source, str) or not Path(raw_source).is_absolute():
+            raise ValueError("Incomplete M4L source status")
+        path = Path(raw_source)
+        if path.is_symlink() or (path.exists() and (not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected)):
+            conflicts.insert(0, raw_source)
+    return list(dict.fromkeys(conflicts))
+
+
+def check_m4l_sync_targets(source):
+    """Refuse custom companions before source restoration or the sync writes."""
+    conflicts = m4l_sync_conflicts(source)
     if conflicts:
-        raise ValueError("Existing M4L companions differ from the pinned source or changed during inspection; left untouched: "
+        raise M4LConflict("Existing M4L companions differ from the pinned source or changed during inspection; left untouched: "
                          + ", ".join(conflicts) + ". Sync and installation were not started.")
     print("Existing M4L companions match the pinned source; missing companions may be created.")
+
+
+def replace_file(path, data, mode):
+    """Replace one regular file atomically, keeping its original permissions."""
+    with tempfile.NamedTemporaryFile(dir=path.parent, prefix=".tembro-update-", delete=False) as handle:
+        temporary = Path(handle.name)
+        handle.write(data)
+    try:
+        temporary.chmod(mode)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def backup_and_replace_m4l_targets(source, backup_root):
+    """Explicit user-selected upgrade: verify every backup before any replacement."""
+    conflicts = m4l_sync_conflicts(source)
+    if not conflicts:
+        check_m4l_sync_targets(source)
+        return None
+    originals = []
+    for raw_path in conflicts:
+        path = Path(raw_path)
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("A linked or non-file M4L companion cannot be upgraded automatically: " + str(path))
+        originals.append((path, path.read_bytes(), stat.S_IMODE(path.stat().st_mode)))
+    if backup_root.is_symlink():
+        raise ValueError("The backup directory must not be a symlink")
+    backup_root.mkdir(parents=True, exist_ok=True)
+    backup = Path(tempfile.mkdtemp(prefix=datetime.now(timezone.utc).strftime("m4l-%Y%m%dT%H%M%SZ-"), dir=backup_root))
+    records = []
+    for index, (path, data, mode) in enumerate(originals):
+        name = "%02d-agent_m4l_host.js" % index
+        target = backup / name
+        target.write_bytes(data)
+        digest = hashlib.sha256(data).hexdigest()
+        if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
+            raise ValueError("M4L backup readback failed; original files were left untouched")
+        records.append({"path": str(path), "backup": name, "sha256": digest, "mode": mode})
+    manifest = {"schema": "tembro.m4l-upgrade-backup.v1", "pinned_commit": PIN,
+                "status": "prepared", "files": records}
+    manifest_path = backup / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+    replacement = (source / "agent_m4l_host.js").read_bytes()
+    # Detect intervening edits after all backups have been verified.
+    for path, data, _mode in originals:
+        if path.is_symlink() or path.read_bytes() != data:
+            raise ValueError("M4L companion changed while preparing the backup; no replacement started: " + str(path))
+    replaced = []
+    try:
+        for path, data, mode in originals:
+            if path.is_symlink() or path.read_bytes() != data:
+                raise ValueError("M4L companion changed during the upgrade: " + str(path))
+            replace_file(path, replacement, mode)
+            replaced.append((path, data, mode))
+        check_m4l_sync_targets(source)
+        manifest["status"] = "updated"
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+    except Exception as error:
+        rollback_errors = []
+        for path, data, mode in reversed(replaced):
+            try:
+                if path.is_symlink() or not path.is_file() or path.read_bytes() != replacement:
+                    rollback_errors.append(str(path) + ": changed or removed during upgrade; left untouched")
+                    continue
+                replace_file(path, data, mode)
+            except OSError as rollback_error:
+                rollback_errors.append(str(path) + ": " + str(rollback_error))
+        manifest["status"] = "failed"
+        manifest["rollback_errors"] = rollback_errors
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+        if rollback_errors:
+            raise RuntimeError(str(error) + ". Some files changed during recovery; verified originals are in " + str(backup)) from error
+        raise
+    print("TEMBRO_BACKUP: " + str(backup))
+    return backup
 
 
 def verify_runtime(runtime_root, overlay_dir, remote_source):
@@ -157,12 +254,19 @@ def main(argv=None):
     action.add_argument("--pin-only", action="store_true")
     action.add_argument("--restore-m4l-assets", type=Path)
     action.add_argument("--check-m4l-targets", type=Path)
+    action.add_argument("--backup-m4l-targets", type=Path)
+    parser.add_argument("--backup-root", type=Path)
     parser.add_argument("--runtime-root", type=Path)
     parser.add_argument("--overlay-dir", type=Path)
     parser.add_argument("--remote-source", type=Path)
     args = parser.parse_args(argv)
     verify_pin()
     verify_dependencies()
+    if args.backup_m4l_targets:
+        if args.backup_root is None:
+            parser.error("backup-root is required for an explicit M4L upgrade")
+        backup_and_replace_m4l_targets(args.backup_m4l_targets, args.backup_root)
+        return 0
     if args.check_m4l_targets:
         check_m4l_sync_targets(args.check_m4l_targets)
         return 0
@@ -180,4 +284,11 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except M4LConflict as error:
+        print("TEMBRO_ERROR: " + str(error), file=sys.stderr)
+        raise SystemExit(20)
+    except Exception as error:
+        print("TEMBRO_ERROR: " + str(error), file=sys.stderr)
+        raise SystemExit(1)
