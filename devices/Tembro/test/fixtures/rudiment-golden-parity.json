@@ -1,50 +1,50 @@
 {
   "schema": "tembro.rudiment-golden-parity.v1",
-  "source_revision": "e9fafb8d970f40fc8c3fd7147d6f550278aa9206",
+  "source_revision": "3dfc08d51d040c5823408298797fffe5388c7469",
   "source_fixture": "test/fixtures/golden.json",
-  "source_fixture_git_blob_sha": "79131bf35a537c1b7c1e1cf8b528d9040add973c",
+  "source_fixture_git_blob_sha": "2a5627abd130f76fac3c1899e0c7d8dc17dce285",
   "cases": [
     {
       "name": "defaults-8-bars",
       "config": {
         "length": 8
       },
-      "result_sha256": "9f9a3755fe4e623548b4b14eb0fa26c5adb7f035ab6a2423bb091b5b728b5f7b"
+      "result_sha256": "04f998e66b41464745b6bf489df473916e8fdac1c4743ae20dc2b88e4489862e"
     },
     {
       "name": "defaults-16-bars",
       "config": {
         "length": 16
       },
-      "result_sha256": "c468e5ee4fb905694eee28828fc6bc5155d8187d056a8039b8652ea69cc90f57"
+      "result_sha256": "5ccb79dcbb72ad7d15609905a78d9e2f0a86bed8c72636115b73bbbcc4b92d60"
     },
     {
       "name": "defaults-32-bars",
       "config": {
         "length": 32
       },
-      "result_sha256": "25eceaaf8cf5739cadf8d8aaa448d3038b1e6bf3a6eea6486feedb49a1616b58"
+      "result_sha256": "88c676e03231c44c5234acd2d3bcf6e0e4534b67e780cd371fa5de3a89bcea27"
     },
     {
       "name": "defaults-64-bars",
       "config": {
         "length": 64
       },
-      "result_sha256": "b22b95bcf0810961efc86b084781a1e73017a46cae0ba946b2cc81b1309caadc"
+      "result_sha256": "fe35cf660c8f1c2d6e236e20cdeb1446e3c05dfca2b6ffd0bf3516dfaa15575f"
     },
     {
       "name": "defaults-96-bars",
       "config": {
         "length": 96
       },
-      "result_sha256": "09be5e980172cf393a49d465f56df1787df2b99a230385d4ed2229b88a2f45e3"
+      "result_sha256": "d8b42b6f06f78cec33f48c5c627f20925a14aaf44986f18ab39e0eb1b2ee9c24"
     },
     {
       "name": "defaults-128-bars",
       "config": {
         "length": 128
       },
-      "result_sha256": "928fdeb37000b4c9ad03c04e1d655183a8f91b34d0839c3d0c5867087bb0611e"
+      "result_sha256": "2263b13ff0a989c0dcb5208f9438bd399f4785aee87ed476404d615a4b919732"
     },
     {
       "name": "style-tech-house-32-bars",
@@ -52,7 +52,7 @@
         "style": "Tech House",
         "length": 32
       },
-      "result_sha256": "25eceaaf8cf5739cadf8d8aaa448d3038b1e6bf3a6eea6486feedb49a1616b58"
+      "result_sha256": "88c676e03231c44c5234acd2d3bcf6e0e4534b67e780cd371fa5de3a89bcea27"
     },
     {
       "name": "style-minimal-deep-tech-32-bars",
@@ -60,7 +60,7 @@
         "style": "Minimal / Deep Tech",
         "length": 32
       },
-      "result_sha256": "2b6486315810803e7411abb9838af59b07fccd8b23c50a3219ba3b71ecc066ce"
+      "result_sha256": "c86cd6a8d5e4cf363daf531af11bc8953f126e7f99e41ae22354f7f8a39ca613"
     },
     {
       "name": "style-house-32-bars",
@@ -84,7 +84,7 @@
         "style": "Techno",
         "length": 32
       },
-      "result_sha256": "14f1deb5b83ed71e13a578bc23ec5fbdbe5e8cae3519b6a8f3db800380c6eae4"
+      "result_sha256": "765ac06a41924ea1cea302be2692a46131b398943a9699e5ce8f6a630bc2517f"
     },
     {
       "name": "style-hypnotic-techno-32-bars",
@@ -92,7 +92,7 @@
         "style": "Hypnotic Techno",
         "length": 32
       },
-      "result_sha256": "2c81d3105bfe34ac4c5d6c964e4829c2bdcd7dfbbac2e2de1ecc92d9d9026072"
+      "result_sha256": "4f80d844f3f0ea0dafb25859452584889b73a0e32f9813ac359bcc6efb3ecc66"
     },
     {
       "name": "style-hardgroove-32-bars",
@@ -100,7 +100,7 @@
         "style": "Hardgroove",
         "length": 32
       },
-      "result_sha256": "e9a52335beae1a6d061e195f5e7f24b109df209acbb6a2684d4c72e29b6b1b96"
+      "result_sha256": "b309651a74f828ced9b7c5c5ece74d825b0defe728855035f14a97c47ea987a7"
     },
     {
       "name": "style-melodic-techno-32-bars",
@@ -108,7 +108,7 @@
         "style": "Melodic Techno",
         "length": 32
       },
-      "result_sha256": "d7c5f698bcaa76725a7642b1d8ba3af2754bc420a74d303972b9975ba8ee1629"
+      "result_sha256": "bcc554eb5706cb232c82424216412297de7ee37a03de064edff176bade15210c"
     },
     {
       "name": "style-electro-32-bars",
@@ -116,7 +116,7 @@
         "style": "Electro",
         "length": 32
       },
-      "result_sha256": "4a58427b33d46af8f5852519133cd65740f4af2534cca175013cfcbeb73bff47"
+      "result_sha256": "7922e7f62ed29f3411875041701b23ea5b784d8779bd11dd39ea942f6c012476"
     },
     {
       "name": "style-breakbeat-32-bars",
@@ -124,7 +124,7 @@
         "style": "Breakbeat",
         "length": 32
       },
-      "result_sha256": "767fc1afdc3457274fd3d997669617d82f0460a132d840635330698296e3e636"
+      "result_sha256": "4948044a7cedc329513c7f91166a0fec0e7fa4623ac62f9d04ad92419c44d46b"
     },
     {
       "name": "swing-0-32-bars",
@@ -132,7 +132,7 @@
         "swing": 0,
         "length": 32
       },
-      "result_sha256": "e26ecfc97d6c4734de60f4520f3006356cd51e388bf5a49b4fe88f846cc9a5e2"
+      "result_sha256": "7431575e7969d4072b9d0224c3b627c9ee58f3a1febd1a3eb1e07d89c9c1f428"
     },
     {
       "name": "swing-50-32-bars",
@@ -140,7 +140,7 @@
         "swing": 50,
         "length": 32
       },
-      "result_sha256": "630f8c20663ba2e3de59b908cb7d1cfa2f4436e9e104d09869105bb8202bb9ba"
+      "result_sha256": "5ad31bd71e73b25cc6bf302a5e06ac03f3d21e22279e124dc6b17b02a4f0450a"
     },
     {
       "name": "swing-100-32-bars",
@@ -148,7 +148,7 @@
         "swing": 100,
         "length": 32
       },
-      "result_sha256": "e26ecfc97d6c4734de60f4520f3006356cd51e388bf5a49b4fe88f846cc9a5e2"
+      "result_sha256": "7431575e7969d4072b9d0224c3b627c9ee58f3a1febd1a3eb1e07d89c9c1f428"
     },
     {
       "name": "kit-no-snare-no-clap-32-bars",
@@ -159,7 +159,7 @@
           "clap": false
         }
       },
-      "result_sha256": "f1371e0c5688c173adedc4f12a3132b6d31155b500b8719da0cfc0febcc9e95e"
+      "result_sha256": "d24a1575736a7f4ef675adc04a1e570f42295d7585d45152e09961199eda27df"
     },
     {
       "name": "kit-no-toms-no-perc-32-bars",
@@ -170,7 +170,7 @@
           "perc": false
         }
       },
-      "result_sha256": "e674924bf8af6b38b42b4fcefc62e94799c0d05a4902352fd5293a40a8a0ba94"
+      "result_sha256": "dea6d030c79bba7d86f1efc8f7a1e558af7da933cb547f1d7192abcfaa3983fd"
     },
     {
       "name": "kit-kick-hats-only-32-bars",
@@ -185,7 +185,7 @@
           "cymbals": false
         }
       },
-      "result_sha256": "b86ffed69d1c4157fd3ec5a98a6f996ad72ad0fe0f3910bd5783593aef00f4b5"
+      "result_sha256": "5f29f373fc45e3963f5063208aafdac2ab264b5d9f9a3ed09624191c29d6e08c"
     },
     {
       "name": "build-huge-pausona-off-64-bars",
@@ -194,7 +194,7 @@
         "build": "Huge",
         "pausona": false
       },
-      "result_sha256": "cbb7b5513d7cf5a12804229d71e1543ef8a5fc699a42f1ab1c9f316a573e5106"
+      "result_sha256": "c7871c345ac11cd51c10728e06a868bb30e8025de3fdd54531028364f3b5c81f"
     },
     {
       "name": "creative-max-tight-96-bars",
@@ -206,7 +206,7 @@
         "velocityCharacter": "Tight",
         "seed": 777
       },
-      "result_sha256": "317fc8307456f69b343963fe9669c384c397efe4b5d49013212ec50a9a02277e"
+      "result_sha256": "41384ef0cf135ab7649f79e9384ae50cac67a67d7e82f4198ec34669913dfab6"
     }
   ]
 }

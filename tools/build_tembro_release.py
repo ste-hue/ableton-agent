@@ -37,8 +37,8 @@ ENGINE_ASSETS = {
     "chordarium/manifest.json": "cdb19eba18338ad49d2ac0a9e89ecff67e3d5c72bb1aad532f81d90f11a8637b",
     "chordarium/pin.js": "f5ab1a81882a60b5a8b4516a1ba9db13f492a547d187da46f639492a3f4f5eee",
     "chordarium/runtime.js": "9bcdcf4330c3b162b5d0a5996646decd3645ba919699593fe0d5ebdee65d69be",
-    "rudiment/engine.bundle.js": "57b6ee87717eab58c51d68036697be454c28c76a7edd22d78a6896729112a387",
-    "rudiment/manifest.json": "be32eeec733a0378bd438c5211e34bfd7e7213d323c0c490924c9734a6960210",
+    "rudiment/engine.bundle.js": "1535d6e0ca29d734c69791897caa4592cbb8645b14738ee7290c633297f782c6",
+    "rudiment/manifest.json": "2b1511cb002a853977f1afab3596ae9a1cb0653ee05be9bb452f90cdd4ecd79e",
 }
 INSTALL_GUIDE = REPO / "devices" / "Tembro" / "INSTALL.md"
 UI_ASSETS = [

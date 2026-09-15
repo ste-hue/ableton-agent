@@ -58,6 +58,9 @@ test("checked-in bundle is the canonical composition of six independently pinned
   assert.equal(manifest.source_revision, parity.source_revision);
   assert.equal(manifest.sources.length, 6);
   assert.equal(manifest.declared_license, "UNLICENSED");
+  assert.equal(manifest.version, "0.1.1");
+  assert.equal(manifest.baseline_source_revision, "e9fafb8d970f40fc8c3fd7147d6f550278aa9206");
+  assert.equal(manifest.source_change, "seeded-fisher-yates-v1");
   assert.deepEqual(fs.readdirSync(runtimeDir).sort(), ["engine.bundle.js", "manifest.json"]);
 });
 
@@ -119,7 +122,7 @@ test("semantic roles stay unresolved and hats-only requests do not invent a MIDI
   const request = config({ kit: Object.fromEntries(Object.keys(allKit).map((key) => [key, key === "hats"])) });
   const proposal = adapter.compose(request);
   assert.deepEqual(proposal.mapping, { state: "unresolved", required_roles: ["closedHat", "openHat"] });
-  assert.equal(proposal.notes.length, 71);
+  assert.equal(proposal.notes.length, 60);
   assert.ok(proposal.notes.every((note) => !Object.hasOwn(note, "pitch") && Object.keys(note).length === 4));
   assert.deepEqual(proposal.harmony, []);
 });
@@ -127,7 +130,7 @@ test("semantic roles stay unresolved and hats-only requests do not invent a MIDI
 test("sustained final crash keeps its original tail beyond nominal arrangement length", () => {
   const request = config({ bars: 32 });
   const proposal = adapter.compose(request);
-  assert.equal(proposal.notes.length, 718);
+  assert.equal(proposal.notes.length, 723);
   assert.equal(proposal.duration_beats, 128);
   assert.equal(proposal.content_end_beats, 128.2);
   assert.ok(proposal.notes.some((note) => note.role === "crash" && note.start_beats === 127.5 && note.duration_beats === 0.7));

@@ -7,10 +7,10 @@ const path = require("path");
 const crypto = require("crypto");
 const vm = require("vm");
 
-const REVISION = "e9fafb8d970f40fc8c3fd7147d6f550278aa9206";
-const VERSION = "0.1.0";
-const BUNDLE_SHA256 = "57b6ee87717eab58c51d68036697be454c28c76a7edd22d78a6896729112a387";
-const MANIFEST_SHA256 = "be32eeec733a0378bd438c5211e34bfd7e7213d323c0c490924c9734a6960210";
+const REVISION = "3dfc08d51d040c5823408298797fffe5388c7469";
+const VERSION = "0.1.1";
+const BUNDLE_SHA256 = "1535d6e0ca29d734c69791897caa4592cbb8645b14738ee7290c633297f782c6";
+const MANIFEST_SHA256 = "2b1511cb002a853977f1afab3596ae9a1cb0653ee05be9bb452f90cdd4ecd79e";
 const ENGINE_DIR = path.join(__dirname, "engines", "rudiment");
 const STYLES = ["Tech House", "Minimal / Deep Tech", "House", "Disco House", "Techno", "Hypnotic Techno", "Hardgroove", "Melodic Techno", "Electro", "Breakbeat"];
 const BARS = [8, 16, 32, 64, 96, 128];

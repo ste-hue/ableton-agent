@@ -7,18 +7,21 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const REVISION = "e9fafb8d970f40fc8c3fd7147d6f550278aa9206";
-const VERSION = "0.1.0";
+// The authoritative source commit fixes runtime-dependent random comparators.
+// Keep its original baseline visible for review; no compatibility shim is used.
+const BASELINE_REVISION = "e9fafb8d970f40fc8c3fd7147d6f550278aa9206";
+const REVISION = "3dfc08d51d040c5823408298797fffe5388c7469";
+const VERSION = "0.1.1";
 const SOURCES = [
-  ["src/engine/core-config.js", "d82e9142597f2f33c9763364c49ba6634cdd0005"],
+  ["src/engine/core-config.js", "7ec23374f445028548a96824f596b97619d97bf1"],
   ["src/engine/drum-machine-theory-engine.js", "9f359348a045db48dde68304fab62bc48f7c7069"],
   ["src/engine/theory-rudiment-engine.js", "d0c5214500aafb89aad5d68b959875682fa8d294"],
   ["src/engine/fill-engine.js", "c55a19350a74ccb3983314d31d78b34a6d88324b"],
-  ["src/engine/arrangement-engine.js", "3f2c3765ce0453bd37313cc1d4cb865cfca5d6f4"],
+  ["src/engine/arrangement-engine.js", "5cfe69938fee061d196f0aeb97a02907aeae2fc8"],
   ["src/engine/timing-velocity-engine.js", "dbada6686b21de6e37d553390cb440c7c176dca8"],
 ];
 const GOLDEN_PATH = "test/fixtures/golden.json";
-const GOLDEN_BLOB = "79131bf35a537c1b7c1e1cf8b528d9040add973c";
+const GOLDEN_BLOB = "2a5627abd130f76fac3c1899e0c7d8dc17dce285";
 const DEFAULT_OUTPUT = path.resolve(__dirname, "../devices/Tembro/code/engines/rudiment");
 const DEFAULT_FIXTURE = path.resolve(__dirname, "../devices/Tembro/test/fixtures/rudiment-golden-parity.json");
 const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
@@ -47,6 +50,7 @@ function renderBundle(sourceBytes) {
   const manifest = {
     schema: "tembro.engine-bundle.v1", engine: "rudiment", version: VERSION,
     repository: "ste-hue/rudiment", source_revision: REVISION,
+    baseline_source_revision: BASELINE_REVISION, source_change: "seeded-fisher-yates-v1",
     declared_license: "UNLICENSED", minimum_node_major: 18,
     bundle_file: "engine.bundle.js", bundle_sha256: hash(bundle), bundle_bytes: bundle.length,
     sources,

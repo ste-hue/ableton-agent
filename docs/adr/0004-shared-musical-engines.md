@@ -21,6 +21,15 @@ HouseArranger IIFEs, excluding embedded Scaler catalogs and the UI. Rudiment
 provides its six original engine scripts, excluding its MIDI renderer, UI and
 JUCE wrapper. Original product repositories continue to own musical logic.
 
+The Mac runtime check exposed two random-comparator sorts in Rudiment. Their RNG
+consumption depends on V8's sorting algorithm: Node 18 and Max's Node 22 produced
+different material from Node 25/26 for the same request. Rudiment 0.1.1 fixes this
+at source with seeded Fisher–Yates, revision
+`3dfc08d51d040c5823408298797fffe5388c7469` on
+`feat/deterministic-engine-shuffle`. Its source tests deliberately update the
+affected golden outputs and prove independence from comparator invocation order.
+The original archived repository remains archived; this source commit is local.
+
 Each provider validates input independently of the model's schema, checks its
 source manifest and bundle hash, creates a fresh execution context and runs a
 fixed entry point under a timeout. Only trusted pinned source is loaded: Node's
@@ -96,6 +105,9 @@ Read and executed on 2026-09-14:
 
 - [Chordarium source revision](https://github.com/ste-hue/ChordBloom-v1/commit/9551df98030260188b728e1bf8915ad145dabb15)
 - [Rudiment source revision](https://github.com/ste-hue/rudiment/commit/e9fafb8d970f40fc8c3fd7147d6f550278aa9206)
+- Rudiment 0.1.1 source correction: local commit
+  `3dfc08d51d040c5823408298797fffe5388c7469`, parent is the linked archived revision;
+  preserved as `tools/engine-sources/rudiment-3dfc08d.bundle` for exact restoration.
 - Provider manifests under `devices/Tembro/code/engines/` and their deterministic
   builders under `tools/`.
 - [Studio-partner interaction](0003-studio-partner-interaction.md).
