@@ -4,6 +4,9 @@
 Source manifest: {"schema":"tembro.release-source.v1", "source_commit":"<40 hex>",
 "version":"<package version>", "files":[{"path":"<tracked relative path>",
 "sha256":"<64 hex>"}]}. Every tracked file must be listed exactly once.
+Regular files hash their bytes. Git mode 120000 symlinks hash the UTF-8 text
+returned by os.readlink, never the target's contents. Link targets must be
+relative and resolve inside the repository; source parents cannot be symlinks.
 """
 from __future__ import annotations
 
@@ -80,7 +83,17 @@ def check_source(manifest_path: Path, expected_commit: str, version: str,
     entries = manifest.get("files")
     if not isinstance(entries, list) or not entries:
         raise RuntimeError("Source manifest files must be a nonempty list")
-    expected_paths = set(git("ls-files", "-z").decode().split("\0")) - {""}
+    tracked_modes = {}
+    for record in git("ls-files", "--stage", "-z").decode().split("\0"):
+        if not record:
+            continue
+        metadata, name = record.split("\t", 1)
+        mode, _object_id, stage = metadata.split(" ")
+        if stage != "0" or name in tracked_modes:
+            raise RuntimeError("Source index must contain only unique stage-zero entries")
+        if mode not in {"100644", "100755", "120000"}:
+            raise RuntimeError("Unsupported tracked source mode: " + mode + " " + name)
+        tracked_modes[name] = mode
     paths = set()
     for item in entries:
         if not isinstance(item, dict) or set(item) != {"path", "sha256"}:
@@ -94,11 +107,26 @@ def check_source(manifest_path: Path, expected_commit: str, version: str,
         if not isinstance(expected_hash, str) or not re.fullmatch(r"[a-f0-9]{64}", expected_hash):
             raise RuntimeError("Invalid source hash: " + name)
         file = ROOT / relative
-        no_link_path(file)
-        if not file.is_file() or sha256(file) != expected_hash:
+        mode = tracked_modes.get(name)
+        if mode is None:
+            raise RuntimeError("Source manifest includes an untracked path: " + name)
+        if mode == "120000":
+            no_link_path(file.parent)
+            if not file.is_symlink():
+                raise RuntimeError("Tracked symlink is missing or replaced: " + name)
+            target = os.readlink(file)
+            if Path(target).is_absolute() or not (file.parent / target).resolve().is_relative_to(ROOT):
+                raise RuntimeError("Tracked symlink target must be relative and stay inside the repository: " + name)
+            actual_hash = hashlib.sha256(target.encode("utf-8")).hexdigest()
+        else:
+            no_link_path(file)
+            if not file.is_file():
+                raise RuntimeError("Tracked regular source file is missing: " + name)
+            actual_hash = sha256(file)
+        if actual_hash != expected_hash:
             raise RuntimeError("Source differs from the tested build: " + name)
         paths.add(name)
-    if paths != expected_paths:
+    if paths != set(tracked_modes):
         raise RuntimeError("Manifest must cover exactly every tracked file in this checkout")
     return len(paths)
 
