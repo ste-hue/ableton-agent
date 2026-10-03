@@ -130,8 +130,8 @@
         "platforms": [
           "macos"
         ],
-        "tag": null,
-        "sourceCommitSha": null,
+        "tag": "v0.4.0",
+        "sourceCommitSha": "d4cb147f41a74046b9edce23caf3373be212b3d3",
         "artifact": {
           "filename": "Rudiment-Blocks-0.4.0-macOS-universal.pkg",
           "sha256": "863f63c5628c153995acf8e13c008e26b1026048d9a7cbf9359395294673e972",
