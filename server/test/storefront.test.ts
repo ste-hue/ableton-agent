@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.js';
 import { MemoryStore } from '../src/store.js';
-import { CHORDARIUM } from '../src/products.js';
+import { BLOCKS, CHORDARIUM } from '../src/products.js';
 import { createStorefront } from '../src/storefront-routes.js';
 
 test('catalog connects available products to discovery and acquisition without advertising credits', async () => {
@@ -205,4 +205,50 @@ test('Chordarium purchase applies the fixed launch offer', async () => {
   const target = new URL(response.headers.get('location')!);
   assert.equal(target.searchParams.get('checkout[discount_code]'), 'LAUNCH59');
   assert.equal(target.pathname, '/checkout/buy/17e4b1a7-187d-4700-adba-cb07b41fb9ed');
+});
+
+test('Rudiment Blocks is in the catalog with its own page and one checkout destination', async () => {
+  const app = createStorefront();
+  const home = await (await app.request('/')).text();
+  assert.match(home, /href="\/blocks"/);
+  assert.match(home, /href="\/blocks\/buy"/);
+  assert.match(home, /Rudiment Blocks/);
+  assert.match(home, /src="\/media\/blocks\/01-rack\.png"/);
+  assert.match(home, /Coming soon/);
+  const page = await app.request('/blocks?utm_source=mail');
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
+  const body = await page.text();
+  assert.match(body, /rel="canonical" href="https:\/\/gettembro.com\/blocks"/);
+  assert.match(body, /href="\/blocks\/buy"/);
+  assert.match(body, /license key/i);
+  assert.match(body, /two computers/i);
+  assert.match(body, /MIDI track/);
+  assert.doesNotMatch(body, /Standalone/);
+  assert.doesNotMatch(body, /lemonsqueezy\.com\/checkout/);
+  for (const path of ['/blocks/buy', '/blocks/buy?utm_source=mail&checkout[discount_code]=anything&redirect=https://example.com']) {
+    const response = await app.request(path);
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get('location'), BLOCKS.checkoutUrl);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+  }
+  assert.doesNotMatch(BLOCKS.checkoutUrl, /discount_code/);
+  const download = await app.request('/blocks/download?redirect=https://example.com');
+  assert.equal(download.status, 302);
+  assert.equal(download.headers.get('location'), 'https://app.lemonsqueezy.com/my-orders');
+});
+
+test('Rudiment Blocks routes canonicalise slashes and refuse other methods', async () => {
+  const app = createStorefront();
+  const slash = await app.request('https://gettembro.com/blocks/?utm_source=mail');
+  assert.equal(slash.status, 308);
+  assert.equal(slash.headers.get('location'), '/blocks?utm_source=mail');
+  for (const path of ['/blocks', '/blocks/buy', '/blocks/download']) {
+    const post = await app.request(path, { method: 'POST' });
+    assert.equal(post.status, 405);
+    assert.equal(post.headers.get('allow'), 'GET, HEAD');
+    assert.equal(post.headers.get('location'), null);
+  }
+  assert.equal((await app.request('/blocks/unknown')).status, 404);
 });

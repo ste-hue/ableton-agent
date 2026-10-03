@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import { CHORDARIUM } from './products.js';
-import { atlasPage, chordariumPage, publicHttpsUrl, storefrontPage } from './storefront.js';
+import { BLOCKS, CHORDARIUM } from './products.js';
+import { atlasPage, blocksPage, chordariumPage, publicHttpsUrl, storefrontPage } from './storefront.js';
 import type { StoreOptions } from './storefront.js';
 
 /** Public pages and product links have no database or payment-service dependency. */
 export function createStorefront(options: StoreOptions = {}) {
   const app = new Hono();
   app.use('*', async (c, next) => {
-    if (['/', '/tembro', '/tembro/', '/atlas', '/atlas/download', '/chordarium', '/chordarium/', '/chordarium/buy', '/chordarium/buy/', '/chordarium/download', '/chordarium/download/'].includes(c.req.path)) {
+    if (['/', '/tembro', '/tembro/', '/atlas', '/atlas/download', '/chordarium', '/chordarium/', '/chordarium/buy', '/chordarium/buy/', '/chordarium/download', '/chordarium/download/', '/blocks', '/blocks/', '/blocks/buy', '/blocks/buy/', '/blocks/download', '/blocks/download/'].includes(c.req.path)) {
       c.header('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
       c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
       c.header('X-Content-Type-Options', 'nosniff');
@@ -42,7 +42,18 @@ export function createStorefront(options: StoreOptions = {}) {
     c.header('Referrer-Policy', 'no-referrer');
     return c.redirect('https://app.lemonsqueezy.com/my-orders', 302);
   });
-  for (const path of ['/chordarium', '/chordarium/buy', '/chordarium/download']) {
+  app.get(BLOCKS.path, (c) => c.html(blocksPage(options)));
+  app.get('/blocks/buy', (c) => {
+    c.header('Cache-Control', 'no-store');
+    c.header('Referrer-Policy', 'no-referrer');
+    return c.redirect(BLOCKS.checkoutUrl, 302);
+  });
+  app.get('/blocks/download', (c) => {
+    c.header('Cache-Control', 'no-store');
+    c.header('Referrer-Policy', 'no-referrer');
+    return c.redirect('https://app.lemonsqueezy.com/my-orders', 302);
+  });
+  for (const path of ['/chordarium', '/chordarium/buy', '/chordarium/download', '/blocks', '/blocks/buy', '/blocks/download']) {
     app.get(path + '/', (c) => {
       const url = new URL(c.req.url);
       return c.redirect(path + url.search, 308);

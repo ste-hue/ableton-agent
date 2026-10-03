@@ -123,6 +123,49 @@
         "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/51752dd4-3c30-466b-8e5d-d7c985ff9111"
       }
     },
+    "rudiment-blocks": {
+      "repository": "ste-hue/tembro-blocks",
+      "releaseTarget": {
+        "version": "0.4.0",
+        "platforms": [
+          "macos"
+        ],
+        "tag": null,
+        "sourceCommitSha": null,
+        "artifact": {
+          "filename": "Rudiment-Blocks-0.4.0-macOS-universal.pkg",
+          "sha256": "863f63c5628c153995acf8e13c008e26b1026048d9a7cbf9359395294673e972",
+          "notarizationStatus": "Accepted",
+          "notarizationRecord": "84fdd968-ca27-46b3-b7b6-a8c7542a55ea",
+          "lemonSqueezyDeliveryVerified": false,
+          "lemonSqueezyFileId": "748592"
+        },
+        "evidencePath": null,
+        "realOrderAndDawAcceptance": "owner-order-9644715-activated-in-ableton-live-2026-10-03"
+      },
+      "lemonSqueezy": {
+        "productId": "1409270",
+        "variantIds": [
+          "2200031"
+        ],
+        "checkoutUrl": "https://tembro.lemonsqueezy.com/checkout/buy/f1fe1532-222a-4ac8-bd04-ef02f2279ed5",
+        "price": {
+          "amount": "89.00",
+          "currency": "EUR"
+        },
+        "license": {
+          "termDays": null,
+          "activationLimit": 2,
+          "activationLimitEnforcedByPlugin": true,
+          "requiredByPlugin": true
+        }
+      },
+      "windowsPolicy": "not-available",
+      "linuxPolicy": "not-available",
+      "deliveryPolicy": "paid-order-download-via-lemonsqueezy",
+      "pluginActivationRequired": true,
+      "sitePublication": null
+    },
     "rudiment": {
       "repository": "ste-hue/rudiment",
       "lifecycle": "archived",

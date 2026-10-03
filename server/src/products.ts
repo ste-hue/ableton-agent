@@ -13,6 +13,19 @@ export const CHORDARIUM = {
   version: '0.3.2',
 } as const;
 
+export const BLOCKS = {
+  id: 'blocks',
+  name: 'Rudiment Blocks',
+  path: '/blocks',
+  category: 'Generative groove instrument',
+  description: 'Roll the dice for a new sound or a new pattern. A rack of generative cards, in sync with your DAW.',
+  platforms: 'macOS 12+ · Apple Silicon & Intel',
+  status: '0.4.0 · €89',
+  action: 'Explore Rudiment Blocks',
+  checkoutUrl: 'https://tembro.lemonsqueezy.com/checkout/buy/f1fe1532-222a-4ac8-bd04-ef02f2279ed5',
+  version: '0.4.0',
+} as const;
+
 export const PRODUCTS = [
   {
     id: 'atlas', name: 'VST Atlas', path: '/atlas', category: 'Visual plug-in browser',
@@ -20,6 +33,7 @@ export const PRODUCTS = [
     platforms: 'macOS · Linux beta', status: 'Free beta', action: 'Explore Atlas',
   },
   CHORDARIUM,
+  BLOCKS,
   {
     id: 'rudiment', name: 'Rudiment', path: null, category: 'In development',
     description: 'A new instrument is taking shape. More when it is ready.',
