@@ -57,7 +57,18 @@ promesso nel prodotto.
 | Aggiornamento → adozione | nuova versione osservata | adoption rate |
 
 Analytics e retention sono **unknown** finché non vengono scelti con una policy
-privacy esplicita.
+privacy esplicita. Fa eccezione la landing Blocks, stato verificato il 2026-10-15:
+
+| Strumento su `tembroaudio.com` | Stato | Prova |
+| --- | --- | --- |
+| Cloudflare Web Analytics | attivo, senza cookie, autorizzato 2026-09-26/27 | beacon nel HTML live |
+| Meta Pixel | autorizzato 2026-10-15, **slot vuoto**: nessuno script Meta servito finché manca l'ID | `lib/tracking.ts` + HTML live senza `fbevents.js` |
+| Click Buy → checkout | `gettembro.com/blocks/buy`, 302 verso il checkout Lemon Squeezy | `curl -I` |
+| Ordine → sorgente | **non tracciata**: il checkout non porta `utm_*`/`fbclid` e la tabella ordini in D1 non ha colonne di sorgente | schema `orders` |
+
+Il Pixel ID lo fornisce chi gestisce le inserzioni; non è un segreto. Il Pixel
+imposta cookie di terze parti: il layout della landing non include un meccanismo di
+consenso, da decidere prima di spendere traffico a pagamento.
 
 ## 2. Flusso del denaro e dei documenti
 
@@ -153,6 +164,8 @@ flowchart TD
 | Chordarium plugin | `ste-hue/ChordBloom-v1` | LS file/licenza + DAW | macOS 0.2.0 launch target |
 | Chordarium crediti legacy | `ChordBloom-v1/worker` | Worker + D1 separati | manuale/isolato |
 | Rudiment | `ste-hue/rudiment` | nessuna delivery attiva | archived/coming soon |
+| Rudiment Blocks plug-in | `ste-hue/tembro-blocks` | LS file/licenza + DAW | macOS 0.4.0, vedi `ops/products.json` |
+| Rudiment Blocks landing (`tembroaudio.com`) | `ste-hue/rudiment-landing` | Cloudflare (vinext) + Worker/D1 per ordini | demo giocabile con un'unica uscita Buy, 89 EUR |
 | Archivio release | `ste-hue/tembro-releases` | GitHub Releases | solo artifact intenzionali |
 
 Non modellare Chordarium web, plugin, crediti legacy e pagina prodotto Tembro come
@@ -198,4 +211,6 @@ Le decisioni vanno chiuse nell'[issue Business OS #73](https://github.com/ste-hu
 - costi ricorrenti e unit economics;
 - sistema contabile e procedura di riconciliazione;
 - diritti di distribuzione del corpus e base di licenza JUCE;
+- consenso cookie per il Meta Pixel su `tembroaudio.com` (UE) e base giuridica;
+- attribuzione degli ordini alla sorgente: portare `utm_*`/`fbclid` dal click Buy al checkout e al webhook, con migrazione D1 da applicare dall'owner;
 - passaggio futuro da repository personali a GitHub Organization Tembro.
