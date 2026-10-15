@@ -201,6 +201,15 @@ superano gate umani.
 
 ## Decisioni aperte
 
+### Esperienze interattive e protezione dei motori — 24 settembre 2026
+
+Il [piano demo e plugin Tembro](strategy/2026-09-24-protected-plugin-demos.md)
+definisce il percorso marketing → prova musicale → versione gratuita o acquisto
+Lemon Squeezy, con generazione web privata e un rollout che parte da Rudiment.
+Include il [contratto API proposto](strategy/demo-api-v1.md), verifiche, fallback
+e decisioni ancora aperte. È una proposta di implementazione: non modifica lo
+stato dei prodotti, i prezzi, le licenze o i sistemi in produzione descritti qui.
+
 Le decisioni vanno chiuse nell'[issue Business OS #73](https://github.com/ste-hue/ableton-agent/issues/73):
 
 - soggetto e paese che incassano oggi; paese previsto per Tembro;
