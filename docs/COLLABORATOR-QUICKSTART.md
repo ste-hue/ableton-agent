@@ -1,5 +1,8 @@
 # GitHub in 20 minutes — collaborator + coding agent
 
+For Marco's first session, start with the Italian [Marco — parti da qui](MARCO-START-HERE.md)
+and track completion in [issue #72](https://github.com/ste-hue/ableton-agent/issues/72).
+
 This is the minimum workflow for contributing to any Tembro repository without
 creating a second, drifting version of the product.
 
