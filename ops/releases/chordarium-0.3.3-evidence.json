@@ -1,0 +1,194 @@
+{
+  "version": "0.3.3",
+  "buildId": "8654eff7",
+  "sourceCommit": "8654eff73acec20245efe57182b06d8f8c00c7d5",
+  "sourceBranch": "main",
+  "verifiedAt": "2026-09-12T16:13:09.453140+00:00",
+  "artifact": {
+    "filename": "Chordarium-0.3.3-macOS-universal.pkg",
+    "sha256": "15ceac964a53f5370675c3ba5ab5d18894f538fdeb82d182e888aad0a21cf5f5",
+    "bytes": 22827797,
+    "notarization": "Accepted",
+    "gatekeeper": "Notarized Developer ID",
+    "notarizationSubmissions": {
+      "Chordarium.vst3": "88dbc45b-9225-4250-9c3a-60623c25e9d9",
+      "Chordarium.component": "e872bcfd-d9ae-4b0b-900a-e8b3aaed6556",
+      "Chordarium.app": "34aab596-21d6-4a18-a57c-874ce055d876",
+      "Chordarium-0.3.3-macOS-universal.pkg": "ef9a7735-1b29-4baf-888b-6006af3c2700"
+    }
+  },
+  "bundles": [
+    {
+      "name": "Chordarium.vst3",
+      "version": "0.3.3",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySha256": "1c3f9727a7619e9c8583b5fd0f4e260994bb36155fc9bebac0f7a17aab12a9dd",
+      "signature": "strict-valid",
+      "notarizationTicket": "valid",
+      "installPath": "/Library/Audio/Plug-Ins/VST3/Chordarium.vst3",
+      "sourcePayloadByteMatch": true,
+      "embeddedBuildId": "8654eff7"
+    },
+    {
+      "name": "Chordarium.component",
+      "version": "0.3.3",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySha256": "9b41266b2c936b07f76a907ac5509baf9ea418cf5e784574917ab8a3b7c3b06f",
+      "signature": "strict-valid",
+      "notarizationTicket": "valid",
+      "installPath": "/Library/Audio/Plug-Ins/Components/Chordarium.component",
+      "sourcePayloadByteMatch": true,
+      "embeddedBuildId": "8654eff7"
+    },
+    {
+      "name": "Chordarium.app",
+      "version": "0.3.3",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binarySha256": "eb6b88bdd3a1052e4276a09612302d18c4f949cd7cefb79bd76b02e4dac0fba4",
+      "signature": "strict-valid",
+      "notarizationTicket": "valid",
+      "installPath": "/Applications/Chordarium.app",
+      "sourcePayloadByteMatch": true,
+      "embeddedBuildId": "8654eff7"
+    }
+  ],
+  "tests": {
+    "javascriptPassed": 83,
+    "nativeSuitesPassed": 3,
+    "rosettaProcessorFailures": 0,
+    "final033AbletonAcceptance": "not-observed",
+    "nativeLinkUserAcceptance": {
+      "result": "confirmed-working",
+      "buildId": "ed019083",
+      "note": "Prior preview of the same link fix; not final 0.3.3 artifact acceptance."
+    }
+  },
+  "delivery": {
+    "lemonSqueezyProductId": 1353284,
+    "lemonSqueezyVerified": true,
+    "status": "customer-files-verified-store-metadata-stale",
+    "uploadOwner": "Stefano",
+    "website033Deployed": false,
+    "lemonSqueezyFileIds": [
+      "697484",
+      "697482",
+      "697483"
+    ],
+    "newCustomerFilesVerified": true,
+    "legacyCleanup": "complete",
+    "lemonSqueezyVerifiedAt": "2026-09-12T16:20:28.178Z",
+    "storeCopyVerified": false,
+    "fileVersionVerified": true
+  },
+  "customerFiles": [
+    {
+      "name": "Chordarium-0.3.3-macOS-universal.pkg",
+      "bytes": 22827797,
+      "sha256": "15ceac964a53f5370675c3ba5ab5d18894f538fdeb82d182e888aad0a21cf5f5"
+    },
+    {
+      "name": "INSTALL.txt",
+      "bytes": 2480,
+      "sha256": "174cb8cc0792779f07005a90ee4e9613f565a3ec7adfda712b1f132c42f1a0bf"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 103,
+      "sha256": "621ee349310770a47984ea856f1bd002ddaf48b2a145c57e784c137d762c8668"
+    }
+  ],
+  "knownIssues": [
+    {
+      "description": "DAW Sync tempo field shows full floating-point precision; musical tempo remains precise.",
+      "fixPullRequest": "https://github.com/ste-hue/ChordBloom-v1/pull/32",
+      "fixIncludedInArtifact": false
+    }
+  ],
+  "schemaVersion": 1,
+  "recordStatus": "customer-files-verified-copy-and-business-reconciliation-pending",
+  "customerDelivery": {
+    "verifiedAt": "2026-09-12T16:20:28.178Z",
+    "method": "Public Lemon Squeezy API and SHA256 comparison of downloaded customer files",
+    "productId": 1353284,
+    "variantId": 2113530,
+    "files": [
+      {
+        "id": "697484",
+        "name": "Chordarium-0.3.3-macOS-universal.pkg",
+        "bytes": 22827797,
+        "sha256": "15ceac964a53f5370675c3ba5ab5d18894f538fdeb82d182e888aad0a21cf5f5",
+        "status": "published",
+        "version": "0.3.3"
+      },
+      {
+        "id": "697482",
+        "name": "INSTALL.txt",
+        "bytes": 2480,
+        "sha256": "174cb8cc0792779f07005a90ee4e9613f565a3ec7adfda712b1f132c42f1a0bf",
+        "status": "published",
+        "version": null
+      },
+      {
+        "id": "697483",
+        "name": "SHA256SUMS.txt",
+        "bytes": 103,
+        "sha256": "621ee349310770a47984ea856f1bd002ddaf48b2a145c57e784c137d762c8668",
+        "status": "published",
+        "version": null
+      }
+    ],
+    "price": 8900,
+    "hasLicenseKeys": true,
+    "licenseLength": {
+      "value": 1,
+      "unit": "years",
+      "unlimited": true
+    },
+    "activationLimit": {
+      "value": 5,
+      "unlimited": false
+    },
+    "productStatus": "published",
+    "description": "<p>Create piano-house phrases, basslines and arrangement variations. Explore harmonies and drag MIDI directly into your DAW.<br><br>Chordarium 0.3.2 includes macOS VST3, Audio Unit and standalone formats for Apple Silicon and Intel. MIDI out plays Serum or another receiving instrument. DAW Sync follows your DAW tempo and Play/Stop; switch it off for manual BPM. Export or drag the main phrase and individual cards.<br><br>Your purchase includes a one-year plugin license, the installer and license key. On first launch, paste the key from your order or receipt into Activate Chordarium. This enables all MIDI features without web credits.<br><br>Preview piano uses your system audio output. A receiving instrument creates the DAW audio. Try the free online demo at chordarium.com. Installation and MIDI routing: gettembro.com/chordarium.</p>",
+    "descriptionReleaseMatches": false,
+    "descriptionLicenseMatches": false,
+    "fileVersionMatches": true,
+    "descriptionSaysOneYear": true,
+    "legacyFiles": [],
+    "legacyCleanup": "complete",
+    "knownIssue": {
+      "description": "DAW Sync tempo field shows full floating-point precision; musical tempo remains precise.",
+      "fixPullRequest": "https://github.com/ste-hue/ChordBloom-v1/pull/32",
+      "fixIncludedInArtifact": false
+    }
+  },
+  "evidenceSource": "Release manifest, Lemon Squeezy delivery observation, and independently rehashed downloaded customer files",
+  "nextAction": "Reconcile customer-facing release/license wording and the central business decision with the observed variant before updating current pointers and publishing the website version.",
+  "knownLimitations": [
+    {
+      "description": "The variant reports an activation limit of five with unlimited=false, but the native plug-in validates a license with /v1/licenses/validate and does not register/count device activations.",
+      "deviceCapEnforcedByPlugin": false,
+      "sourceCommit": "8654eff73acec20245efe57182b06d8f8c00c7d5",
+      "sourcePath": "plugin/Source/License.cpp"
+    },
+    {
+      "description": "The observed unlimited license-length flag is true while the storefront description and central desired-state record still describe one year. This observation is not authorization to choose or change commercial terms.",
+      "businessReconciliationRequired": true
+    }
+  ],
+  "priorAcceptance": {
+    "version": "0.3.2",
+    "sourceCommit": "a866abf45f2f8ae6750923d33e4f63c1d1e0b4fb",
+    "result": "User reported plug-in load, MIDI drag and tempo toggle working; not final 0.3.3 acceptance",
+    "evidence": "https://github.com/ste-hue/ChordBloom-v1/issues/23#issuecomment-5646807543"
+  }
+}
