@@ -24,7 +24,7 @@
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
     body { color: var(--white); background: var(--black); }
-    button, input, textarea { font: inherit; color: inherit; }
+    button, input, textarea, select { font: inherit; color: inherit; }
     button { border: 0; cursor: pointer; }
     .app {
       height: 100%;
@@ -255,7 +255,21 @@
     .tool-step .step-detail { padding: 7px 0 1px 18px; line-height: 1.45; }
     .tool-step.success { border-color: var(--sage); background: var(--paper); }
     .tool-step.error { border: 2px solid var(--rust); }
-    .composer-wrap { padding: 10px clamp(10px, 3vw, 20px) 14px; border-top: 1px solid var(--soft); }
+    .composer-wrap { min-height: 0; max-height: calc(100vh - 180px); overflow-y: auto; padding: 10px clamp(10px, 3vw, 20px) 14px; border-top: 1px solid var(--soft); scrollbar-width: thin; }
+    .variation-panel { margin-bottom: 9px; border: 1px solid var(--line); border-radius: 12px; background: #25212c; }
+    .variation-panel > summary { padding: 9px 10px; cursor: pointer; font-size: 11px; }
+    .variation-body { padding: 0 10px 10px; }
+    .variation-heading, .variation-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .variation-heading { justify-content: space-between; }
+    .variation-source { min-width: 0; flex: 1 1 140px; font-size: 11px; overflow-wrap: anywhere; }
+    .variation-message, .variation-candidate, .variation-help { margin: 7px 0; color: var(--mid); font-size: 10px; line-height: 1.45; overflow-wrap: anywhere; }
+    .variation-help { color: var(--quiet); }
+    .variation-lane { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; margin: 8px 0; }
+    .variation-lane select { min-width: 0; width: 100%; min-height: 30px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); font-size: 11px; }
+    .variation-panel .chip { min-height: 30px; font-size: 8px; }
+    .variation-panel button:disabled, .variation-panel select:disabled { opacity: .4; cursor: default; }
+    .variation-panel .chip:disabled:hover { color: var(--mid); border-color: var(--line); background: transparent; }
+    .variation-panel button:focus-visible, .variation-panel select:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
     .skill-rail { display: flex; gap: 6px; margin-bottom: 9px; overflow-x: auto; scrollbar-width: none; }
     .skill-rail::-webkit-scrollbar { display: none; }
     .skill-rail.disabled { opacity: .42; pointer-events: none; }
@@ -420,6 +434,33 @@
           </div>
         </div>
         <div class="composer-wrap">
+          <details class="variation-panel" id="variationPanel" open>
+            <summary>Clip variation</summary>
+            <div class="variation-body">
+              <div class="variation-heading">
+                <strong class="variation-source" id="variationSource">No clip captured</strong>
+                <button type="button" class="chip" id="variationCapture" disabled>Capture selected clip</button>
+              </div>
+              <p class="variation-message" id="variationMessage" role="status" aria-live="polite" aria-atomic="true">Waiting for the device engine. Select a MIDI clip in Session View.</p>
+              <div id="variationEditor" class="hidden">
+                <div class="variation-lane">
+                  <label for="variationLane">Note lane</label>
+                  <select id="variationLane" aria-describedby="variationHelp" disabled><option value="">Choose a note lane…</option></select>
+                </div>
+                <p class="variation-help" id="variationHelp">Create a copy with roughly half the hits on this lane. The original stays available.</p>
+                <p class="variation-candidate hidden" id="variationCandidate"></p>
+                <div class="variation-actions" role="group" aria-label="Clip variation actions">
+                  <button type="button" class="chip" id="variationCreate" disabled>Create variation</button>
+                  <button type="button" class="chip" id="variationThin" disabled>Less dense</button>
+                  <button type="button" class="chip" id="variationAuditionSource" aria-label="Audition original clip" disabled>Play original</button>
+                  <button type="button" class="chip" id="variationAuditionCandidate" aria-label="Audition candidate clip" disabled>Play candidate</button>
+                  <button type="button" class="chip" id="variationKeep" disabled>Keep</button>
+                  <button type="button" class="chip" id="variationDiscard" disabled>Discard</button>
+                </div>
+              </div>
+              <button type="button" class="chip hidden" id="variationReconcile" disabled>Recheck</button>
+            </div>
+          </details>
           <details class="trace-terminal" id="traceTerminal" open>
             <summary><span class="trace-title">Liveworks</span><span>agent calls</span><span class="trace-state" id="traceState">idle</span><span class="trace-count" id="traceCount">0</span></summary>
             <div class="trace-body">
@@ -553,7 +594,9 @@
         traceLog: $("traceLog"), tracePlaceholder: $("tracePlaceholder"), traceInspector: $("traceInspector"),
         traceObject: $("traceObject"), traceTool: $("traceTool"), traceDescription: $("traceDescription"),
         tracePath: $("tracePath"), traceArgs: $("traceArgs"), traceDoc: $("traceDoc"), traceClose: $("traceClose"),
-        pasteAccess: $("pasteAccess"), pastePrompt: $("pastePrompt")
+        pasteAccess: $("pasteAccess"), pastePrompt: $("pastePrompt"),
+        variationPanel: $("variationPanel"), variationSource: $("variationSource"), variationMessage: $("variationMessage"),
+        variationEditor: $("variationEditor"), variationLane: $("variationLane"), variationCandidate: $("variationCandidate")
       };
       let connected = false;
       let busy = false;
@@ -564,6 +607,97 @@
       let thoughtTimer = null;
       const toolRows = new Map();
       let currentDocUrl = LIVE_DOCS.lom.url;
+      let variationState = null;
+      let variationPending = false;
+      let variationNeedsRefresh = false;
+      let variationPitch = null;
+      const variationCommands = [
+        ["variationCapture", "capture", "capture"],
+        ["variationCreate", "create", "create"],
+        ["variationThin", "thin", "thin"],
+        ["variationAuditionSource", "audition_source", "auditionSource"],
+        ["variationAuditionCandidate", "audition_candidate", "auditionCandidate"],
+        ["variationKeep", "keep", "keep"],
+        ["variationDiscard", "discard", "discard"],
+        ["variationReconcile", "reconcile", "reconcile"]
+      ];
+
+      function variationLanes() {
+        return (variationState?.lanes || []).filter((lane) => lane && Number.isInteger(lane.pitch) && lane.pitch >= 0 && lane.pitch <= 127);
+      }
+      function variationLocked() {
+        return !connected || busy || variationPending || variationNeedsRefresh || !variationState || variationState.busy === true;
+      }
+      function renderVariation() {
+        const state = variationState;
+        const locked = variationLocked();
+        const lanes = variationLanes();
+        if (!lanes.some((lane) => lane.pitch === variationPitch)) variationPitch = null;
+        ui.variationPanel.setAttribute("aria-busy", String(variationPending || state?.busy === true));
+        ui.variationSource.textContent = state?.source
+          ? [state.source.name || "Captured clip", state.source.trackName].filter(Boolean).join(" · ")
+          : "No clip captured";
+        ui.variationMessage.textContent = variationNeedsRefresh
+          ? "Clip controls are unavailable until the device sends a fresh state."
+          : variationPending
+            ? "Request sent. Waiting for Live to be checked…"
+            : !state
+              ? "Waiting for the device engine. Select a MIDI clip in Session View."
+              : state.message || "Select a MIDI clip in Session View, then capture it to choose a note lane.";
+        ui.variationEditor.classList.toggle("hidden", !state?.source && !state?.candidate);
+        ui.variationLane.disabled = locked || !state?.can?.create || !lanes.length;
+        ui.variationLane.value = variationPitch === null ? "" : String(variationPitch);
+        const candidate = state?.candidate;
+        ui.variationCandidate.classList.toggle("hidden", !candidate);
+        const counts = [];
+        if (Number.isInteger(candidate?.noteCount)) counts.push(candidate.noteCount + " notes");
+        if (Number.isInteger(candidate?.removedCount)) counts.push(candidate.removedCount + " hits removed");
+        ui.variationCandidate.textContent = candidate ? [candidate.name || "Candidate", ...counts].join(" · ") : "";
+        for (const [id, action, capability] of variationCommands) {
+          $(id).disabled = locked || state?.can?.[capability] !== true || (action === "create" && variationPitch === null);
+        }
+        $("variationReconcile").classList.toggle("hidden", state?.can?.reconcile !== true);
+      }
+      function acceptVariationState(...args) {
+        try {
+          const next = JSON.parse(args.join(" "));
+          if (!next || typeof next !== "object" || typeof next.state !== "string" || typeof next.busy !== "boolean" || !next.can || typeof next.can !== "object" || !Array.isArray(next.lanes)) throw new Error("Invalid variation state");
+          const identity = (source) => source ? [source.path || source.id || "", source.name, source.trackName].join("|") : "";
+          if (identity(next.source) !== identity(variationState?.source)) variationPitch = null;
+          variationState = next;
+          variationPending = false;
+          variationNeedsRefresh = false;
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = "Choose a note lane…";
+          ui.variationLane.replaceChildren(placeholder);
+          for (const lane of variationLanes()) {
+            const option = document.createElement("option");
+            option.value = String(lane.pitch);
+            option.textContent = (lane.label || "MIDI " + lane.pitch) + (Number.isInteger(lane.count) ? " · " + lane.count + " hits" : "");
+            ui.variationLane.appendChild(option);
+          }
+        } catch (_) {
+          variationNeedsRefresh = true;
+        }
+        renderVariation();
+      }
+      for (const [id, action] of variationCommands) {
+        $(id).addEventListener("click", () => {
+          if ($(id).disabled || variationLocked()) return;
+          const pitch = variationPitch;
+          if (action === "capture") variationPitch = null;
+          variationPending = true;
+          renderVariation();
+          if (action === "create") outlet("variation", action, pitch);
+          else outlet("variation", action);
+        });
+      }
+      ui.variationLane.addEventListener("change", () => {
+        if (ui.variationLane.disabled) return;
+        variationPitch = ui.variationLane.value === "" ? null : Number(ui.variationLane.value);
+        renderVariation();
+      });
 
       function loadLocal(key) {
         try { return localStorage.getItem(key) || ""; } catch (_) { return ""; }
@@ -595,7 +729,8 @@
         ui.auth.classList.toggle("hidden", value);
         ui.chat.classList.toggle("hidden", !value);
         ui.settings.classList.toggle("hidden", !value);
-        if (value) setTimeout(() => ui.prompt.focus(), 80);
+        renderVariation();
+        if (value) setTimeout(() => ui.prompt.focus({ preventScroll: true }), 80);
       }
       function estimateCost(text, skillId) {
         const requested = skillProfiles.find((profile) => profile.id === skillId);
@@ -674,11 +809,12 @@
         engineLastSeen = Date.now();
         engineWatchTimer = setInterval(() => {
           if (Date.now() - engineLastSeen < ENGINE_SILENCE_MS) return;
+          variationNeedsRefresh = true;
           setBusy(false);
           ui.status.textContent = "engine not responding — remove Tembro from the track and add it again";
           addMessage(
             "tembro",
-            "I lost contact with the device engine, so nothing was actually running. Remove Tembro from the track and add it back (or reopen the Set), then send your message again.",
+            "I lost contact with the device engine. A Live action may still have completed. Check Live before trying the request again.",
           );
         }, 3000);
       }
@@ -690,6 +826,7 @@
         if (value && !wasBusy) { startThoughts(); startEngineWatch(); }
         if (!value && wasBusy) { stopThoughts(); stopEngineWatch(); }
         if (label) ui.workingText.textContent = label.replace(/^[·⏳✓⚠]\s*/, "");
+        renderVariation();
       }
       function copyText(text, button) {
         const done = (ok) => {
@@ -1074,6 +1211,7 @@
           pendingAccess = "";
         }
       });
+      bind("variation_state", acceptVariationState);
       bind("credits", (...args) => {
         const value = args.join(" ").trim();
         ui.credits.textContent = value + (value === "1" ? " credit" : " credits");

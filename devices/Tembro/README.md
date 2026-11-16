@@ -18,6 +18,35 @@ card. Its embedded Liveworks terminal shows every real tool call as it happens;
 clicking a row explains the related Live object and can open its official Ableton
 or Cycling '74 documentation page.
 
+## Experimental clip variation
+
+The **Clip variation** panel adds an explicit local workflow: capture a selected
+Session MIDI clip on a Drum Rack track, choose a mapped pitch lane, and create a
+separate clip with alternate hits removed from that lane. **Less dense** repeats
+the operation on the candidate. **Play original** and **Play candidate** launch
+only when requested; **Keep** retains the exact candidate in its existing slot.
+These controls make no model requests and incur no agent-turn credit charge.
+
+Install the matching [fixed bridge patch](bridge/README.md) with the device.
+The official runtime validator must pass before the controls operate. Source
+and candidate notes are read back independently after changes. Clip automation,
+grooves, recording, frozen tracks and ambiguous drum mappings are unsupported.
+The source clip stays untouched. This experiment implements the first bounded
+interaction from ADR-0003, not a universal musical recommendation engine.
+
+**Discard is currently disabled**: the documented note API cannot verify all
+per-note expression edits. Delete unwanted candidates manually in Live. If an
+operation times out or cannot be verified, further Live requests are blocked.
+**Recheck** can inspect bridge health, but does not automatically clear an
+unknown outcome; manual reconciliation is required. **Stop** prevents new
+operations while allowing an already sent operation to finish verification.
+
+This code has automated tests; a real Live scratch-Set trial is required before
+calling a build ready for distribution. Select a simple unautomated drum clip,
+capture it, choose a lane, create, listen to both versions, thin, and keep. Check
+that the original and every other lane remain unchanged. Repeat with a manual
+note edit to confirm that stale operations refuse to overwrite it.
+
 ## Layout
 
 | File | Role |
@@ -28,6 +57,9 @@ or Cycling '74 documentation page.
 | `code/agent_loop.js` | Sequential Responses ↔ MCP loop with bounded results and iteration limits. |
 | `code/context.js` | Live context adapter — read-only, immediately before each request. |
 | `code/mcp_client.js` | Minimal MCP stdio JSON-RPC client; serializes all Live calls. |
+| `code/clip_variation.js` | Local variation state, explicit actions, full note readback, and shared quarantine. |
+| `code/runtime_preflight.js` | Strict companion-validator check of installed and loaded runtime fingerprints. |
+| `bridge/` | Exact pinned runtime patch, installer support, and fake-host safety tests. |
 | `tembro_ui.html` | Floating butter-and-ink chat, activation, skill menu, credit estimates, live work state, context, and updates. |
 
 ## Configuration (no secrets)
@@ -49,6 +81,7 @@ Env overrides: `TEMBRO_API_BASE`, `TEMBRO_MCP_COMMAND`.
 - `signin <email>` — local development only (server started with dev-signin enabled).
 - `chat <text…>` — starts the agent loop above. The chat composer emits this.
 - `chat_skill <skill-id> <text…>` — starts the same loop with a visible skill and its minimum credit tier.
+- `variation <action> [pitch]` — local panel actions; pitch is required only by `create`.
 - `status` — re-report connection/auth state.
 
 ## Tests

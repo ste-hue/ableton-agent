@@ -70,7 +70,7 @@ test("busy is driven by the state channel, and stop reaches inside the arrangeme
 
   const mcp = fs.readFileSync(path.join(__dirname, "..", "code", "mcp_client.js"), "utf8");
   // A missing bridge executable fails the call, not the whole engine.
-  assert.match(mcp, /this\.proc\.on\("error"/);
+  assert.match(mcp, /(?:this\.)?proc\.on\("error"/);
   assert.match(mcp, /not installed or failed to start/);
 });
 
